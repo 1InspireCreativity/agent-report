@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ReportState, ReportTemplate } from './types';
-import { buildReportPayload, emptyRptItem, CYCLE_OPTIONS, CHART_TYPE_OPTIONS } from './utils';
+import { buildReportPayload, emptyRptItem, CYCLE_OPTIONS, CHART_TYPE_OPTIONS, OWNER_DEPT_OPTIONS } from './utils';
 import PayloadPanel from './PayloadPanel';
 import LinkDrawer from './LinkDrawer';
 import Sg from './Sg';
@@ -84,6 +84,11 @@ export default function ReportTab({ state, setState, toast }: Props) {
       dept: '',
       cycle: 'W',
       chartType: 'wuhuaro',
+      description: '',
+      dataQueryId: '',
+      owner: '',
+      ownerEmail: '',
+      ownerDept: '',
       items: [],
     }));
   };
@@ -120,6 +125,11 @@ export default function ReportTab({ state, setState, toast }: Props) {
       name: '',
       dept: '',
       cycle: 'W',
+      description: '',
+      dataQueryId: '',
+      owner: '',
+      ownerEmail: '',
+      ownerDept: '',
       items: [emptyRptItem()],
     }));
     setSelectedTplId('');
@@ -222,7 +232,7 @@ export default function ReportTab({ state, setState, toast }: Props) {
               <div className="field-label">所属部门</div>
               <input
                 type="text"
-                placeholder="例：增长分析组"
+                placeholder="例：商业规划组"
                 value={state.dept}
                 onChange={(e) => update('dept', e.target.value)}
               />
@@ -247,6 +257,62 @@ export default function ReportTab({ state, setState, toast }: Props) {
                 onChange={(e) => update('chartType', e.target.value as ReportState['chartType'])}
               >
                 {CHART_TYPE_OPTIONS.map((o) => (
+                  <option value={o.value} key={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="field" style={{ margin: '16px 0 0' }}>
+            <div className="field-label">
+              周报描述 <span className="opt">可选</span>
+            </div>
+            <textarea
+              placeholder="简要描述该周报的分析目标与覆盖范围…"
+              value={state.description}
+              onChange={(e) => update('description', e.target.value)}
+            />
+          </div>
+          <div className="grid-2" style={{ margin: '16px 0 0' }}>
+            <div className="field" style={{ margin: 0 }}>
+              <div className="field-label">
+                Data Query ID <span className="hint">对应自动化周报 chart id</span>
+              </div>
+              <input
+                type="text"
+                placeholder="cht_auto_weekly_001"
+                value={state.dataQueryId}
+                onChange={(e) => update('dataQueryId', e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="grid-2" style={{ margin: '16px 0 0' }}>
+            <div className="field" style={{ margin: 0 }}>
+              <div className="field-label">Owner</div>
+              <input
+                type="text"
+                placeholder="负责人姓名"
+                value={state.owner}
+                onChange={(e) => update('owner', e.target.value)}
+              />
+            </div>
+            <div className="field" style={{ margin: 0 }}>
+              <div className="field-label">Owner Email</div>
+              <input
+                type="text"
+                placeholder="owner@example.com"
+                value={state.ownerEmail}
+                onChange={(e) => update('ownerEmail', e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="grid-2" style={{ margin: '16px 0 0' }}>
+            <div className="field" style={{ margin: 0 }}>
+              <div className="field-label">Owner Department</div>
+              <select value={state.ownerDept} onChange={(e) => update('ownerDept', e.target.value)}>
+                <option value="">请选择…</option>
+                {OWNER_DEPT_OPTIONS.map((o) => (
                   <option value={o.value} key={o.value}>
                     {o.label}
                   </option>

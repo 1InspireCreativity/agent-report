@@ -19,6 +19,14 @@ export const CHART_TYPE_OPTIONS: { value: ReportState['chartType']; label: strin
   { value: 'bar', label: '柱状图' },
 ];
 
+export const OWNER_DEPT_OPTIONS: { value: string; label: string }[] = [
+  { value: 'growth_analytics', label: '商业规划组' },
+  { value: 'data_intelligence', label: '数据智能组' },
+  { value: 'product_ops', label: '产品运营组' },
+  { value: 'market_growth', label: '市场增长组' },
+  { value: 'other', label: '其他' },
+];
+
 export function defaultExecutionConfig(): ExecutionConfig {
   return {
     tblDate: 'YYYY-MM-DD',
@@ -45,6 +53,8 @@ export function defaultStoryline(): StorylineState {
     analyst: '',
     background: '',
     framework: '',
+    fieldId: '',
+    chartId: '',
     nodes: [
       {
         id: 1,
@@ -68,6 +78,11 @@ export function defaultReport(): ReportState {
     dept: '',
     cycle: 'W',
     chartType: 'wuhuaro',
+    description: '',
+    dataQueryId: '',
+    owner: '',
+    ownerEmail: '',
+    ownerDept: '',
     templateName: '',
     items: [
       {
@@ -101,6 +116,8 @@ export function buildStorylinePayload(sl: StorylineState) {
     analyst: sl.analyst || null,
     background: sl.background || '（未填写）',
     drill_down_framework: sl.framework || null,
+    field_id: sl.fieldId || null,
+    chart_id: sl.chartId || null,
     attribution_nodes: sl.nodes.map((n, i) => ({
       index: i + 1,
       name: n.name || `节点${i + 1}`,
@@ -118,6 +135,11 @@ export function buildReportPayload(rpt: ReportState) {
     department: rpt.dept || null,
     cycle: rpt.cycle,
     chart_type: rpt.chartType,
+    description: rpt.description || null,
+    data_query_id: rpt.dataQueryId || null,
+    owner: rpt.owner || null,
+    owner_email: rpt.ownerEmail || null,
+    owner_dept: rpt.ownerDept || null,
     charts: rpt.items.map((it, i) => ({
       index: i + 1,
       title: it.title || `图表${i + 1}`,

@@ -24,6 +24,8 @@ export interface StorylineState {
   analyst: string;
   background: string;
   framework: string;
+  fieldId: string;
+  chartId: string;
   nodes: AttributionNode[];
 }
 
@@ -49,6 +51,11 @@ export interface ReportState {
   dept: string;
   cycle: ReportCycle;
   chartType: ChartType;
+  description: string;
+  dataQueryId: string;
+  owner: string;
+  ownerEmail: string;
+  ownerDept: string;
   templateName: string;
   items: ReportChartItem[];
   exec: ExecutionConfig;

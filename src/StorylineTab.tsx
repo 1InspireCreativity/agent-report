@@ -70,6 +70,8 @@ export default function StorylineTab({ state, setState, toast }: Props) {
       analyst: '',
       background: '',
       framework: '',
+      fieldId: '',
+      chartId: '',
       nodes: [],
     });
   };
@@ -167,6 +169,26 @@ export default function StorylineTab({ state, setState, toast }: Props) {
               value={state.background}
               onChange={(e) => update('background', e.target.value)}
             />
+          </div>
+          <div className="grid-2" style={{ marginTop: 14 }}>
+            <div className="field" style={{ margin: 0 }}>
+              <div className="field-label">Field ID</div>
+              <input
+                type="text"
+                placeholder="fld_12345"
+                value={state.fieldId}
+                onChange={(e) => update('fieldId', e.target.value)}
+              />
+            </div>
+            <div className="field" style={{ margin: 0 }}>
+              <div className="field-label">Chart ID</div>
+              <input
+                type="text"
+                placeholder="cht_67890"
+                value={state.chartId}
+                onChange={(e) => update('chartId', e.target.value)}
+              />
+            </div>
           </div>
         </div>
       </div>
