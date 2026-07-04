@@ -159,17 +159,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
               />
             </div>
           </div>
-          <div className="field" style={{ marginTop: 14, marginBottom: 0 }}>
-            <div className="field-label">
-              背景描述 <span className="req">*</span>
-            </div>
-            <textarea
-              rows={3}
-              placeholder="描述当前业务背景、问题现象、分析触发原因……"
-              value={state.background}
-              onChange={(e) => update('background', e.target.value)}
-            />
-          </div>
           <div className="grid-2" style={{ marginTop: 14 }}>
             <div className="field" style={{ margin: 0 }}>
               <div className="field-label">Field ID</div>
@@ -189,6 +178,17 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                 onChange={(e) => update('chartId', e.target.value)}
               />
             </div>
+          </div>
+          <div className="field" style={{ marginTop: 14, marginBottom: 0 }}>
+            <div className="field-label">
+              背景描述 <span className="req">*</span>
+            </div>
+            <textarea
+              rows={3}
+              placeholder="描述当前业务背景、问题现象、分析触发原因……"
+              value={state.background}
+              onChange={(e) => update('background', e.target.value)}
+            />
           </div>
         </div>
       </div>
