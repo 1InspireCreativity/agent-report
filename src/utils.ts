@@ -312,7 +312,9 @@ export function normalizeStoryline(raw: Partial<StorylineState> | null | undefin
     framework: typeof raw.framework === 'string' ? raw.framework : base.framework,
     fieldId: typeof raw.fieldId === 'string' ? raw.fieldId : base.fieldId,
     chartId: typeof raw.chartId === 'string' ? raw.chartId : base.chartId,
-    nodes: Array.isArray(raw.nodes) ? raw.nodes.map((n) => normalizeNode(n as Record<string, unknown>)) : base.nodes,
+    nodes: Array.isArray(raw.nodes)
+      ? raw.nodes.map((n) => normalizeNode(n as unknown as Record<string, unknown>))
+      : base.nodes,
   };
 }
 
