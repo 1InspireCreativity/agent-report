@@ -115,7 +115,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
       toast('⚠️ 请至少添加一个归因节点');
       return;
     }
-    toast('✅ 故事线已提交，Agent 下钻归因任务启动中…');
+    toast('✅ 图表配置已提交，Agent 下钻归因任务启动中…');
   };
 
   const reset = () => {
@@ -458,7 +458,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
             <path d="M5 12l5 5L20 7"></path>
           </svg>
-          提交故事线给 Agent
+          提交图表配置给 Agent
         </button>
         <div className="autosave">
           <div className="autosave-dot"></div>自动保存中
