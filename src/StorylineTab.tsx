@@ -245,7 +245,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                   <input
                     className="node-name"
                     type="text"
-                    placeholder="业务场景描述（如：GBS-1 Team revenue 和 YoY）"
+                    placeholder="业务场景描述（如：GBS-1 Team Revenue 和 YoY）"
                     value={n.scenario}
                     onChange={(e) => setNodeField(n.id, 'scenario', e.target.value)}
                   />
