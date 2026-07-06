@@ -428,7 +428,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
         Agent Payload
       </div>
       <PayloadPanel
-        label="Storyline Config"
+        label="Chart Config"
         meta={`${state.nodes.length} 节点`}
         payload={payload}
         onCopy={() => toast('✅ 已复制到剪贴板')}
