@@ -145,22 +145,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
             提交给 Agent
           </button>
         </div>
-        <div className="page-head-meta">
-          <div className="meta-chip">
-            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <path d="M12 6v6l4 2"></path>
-            </svg>
-            自动草稿保存
-          </div>
-          <div className="meta-chip">
-            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="3"></circle>
-              <path d="M12 1v4M12 19v4"></path>
-            </svg>
-            {state.nodes.length} 个归因节点
-          </div>
-        </div>
       </div>
 
       {/* 基础信息 */}
