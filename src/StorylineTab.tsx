@@ -401,7 +401,9 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                     </div>
                   </div>
                   <div className="field" style={{ margin: '14px 0 0' }}>
-                    <div className="field-label">Type</div>
+                    <div className="field-label">
+                      Type <span className="hint">支持 Public / Personal</span>
+                    </div>
                     <select value={n.type} onChange={(e) => setNodeType(n.id, e.target.value as StorylineDataType)}>
                       {STORYLINE_TYPE_OPTIONS.map((o) => (
                         <option value={o.value} key={o.value}>
