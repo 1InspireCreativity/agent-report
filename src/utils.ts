@@ -1,4 +1,4 @@
-import type { AttributionNode, ReportState, StorylineDataType, StorylineState } from './types';
+import type { AttributionNode, ChartGroup, ReportState, StorylineDataType, StorylineState } from './types';
 
 export const CYCLE_OPTIONS: { value: ReportState['cycle']; label: string }[] = [
   { value: 'W', label: '每周（W）' },
@@ -39,9 +39,19 @@ export function defaultStoryline(): StorylineState {
       {
         id: 1,
         scenario: 'GBS-1Team revenue和yoy',
-        chartIds: ['GBSrev', 'GBSYOY'],
+        chartGroups: [
+          {
+            id: 1,
+            chartId: 'GBSrev',
+            queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1145582?dataset=1159057&queryId=64894787'],
+          },
+          {
+            id: 2,
+            chartId: 'GBSYOY',
+            queryLinks: [],
+          },
+        ],
         joinMethods: ['other'],
-        queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1145582?dataset=1159057&queryId=64894787'],
         templateId: 'motz7cum6ntsj6',
         drillDimension: 'NAAP Lever L1 Industry 4.0 Level 1',
         type: 'public',
@@ -49,9 +59,14 @@ export function defaultStoryline(): StorylineState {
       {
         id: 2,
         scenario: 'NAAP-1Team revenue和yoy',
-        chartIds: [],
+        chartGroups: [
+          {
+            id: 3,
+            chartId: '',
+            queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1147165?dataset=1159057&queryId=648951830'],
+          },
+        ],
         joinMethods: [],
-        queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1147165?dataset=1159057&queryId=648951830'],
         templateId: 'mp3ue3hglacfiq',
         drillDimension: 'NAAP Lever L1 Industry 4.0 Level 1',
         type: 'personal',
@@ -83,9 +98,8 @@ export function buildStorylinePayload(sl: StorylineState) {
     attribution_nodes: sl.nodes.map((n, i) => ({
       index: i + 1,
       scenario: n.scenario || `节点${i + 1}`,
-      chart_ids: n.chartIds,
+      chart_groups: n.chartGroups.map((g) => ({ chart_id: g.chartId || null, query_links: g.queryLinks })),
       join_methods: n.joinMethods,
-      query_links: n.queryLinks,
       template_id: n.templateId || null,
       drill_dimension: n.drillDimension || null,
       type: n.type,
@@ -136,31 +150,68 @@ export function nextNodeId() {
   return nodeIdCounter;
 }
 
+let groupIdCounter = 100;
+export function nextGroupId() {
+  groupIdCounter += 1;
+  return groupIdCounter;
+}
+
+export function emptyChartGroup(): ChartGroup {
+  return { id: nextGroupId(), chartId: '', queryLinks: [] };
+}
+
 export function emptyNode(): AttributionNode {
   return {
     id: nextNodeId(),
     scenario: '',
-    chartIds: [],
+    chartGroups: [],
     joinMethods: [],
-    queryLinks: [],
     templateId: '',
     drillDimension: '',
     type: 'public',
   };
 }
 
-// Migrates persisted nodes from the pre-redesign shape ({ name, desc, links, joinMethod: string })
-// or any partially-shaped draft into the current AttributionNode shape.
+function normalizeChartGroup(raw: Partial<ChartGroup> | undefined): ChartGroup {
+  return {
+    id: typeof raw?.id === 'number' ? raw.id : nextGroupId(),
+    chartId: typeof raw?.chartId === 'string' ? raw.chartId : '',
+    queryLinks: Array.isArray(raw?.queryLinks) ? (raw.queryLinks as string[]) : [],
+  };
+}
+
+// Migrates persisted nodes from earlier shapes (pre-redesign { name, desc, links },
+// or the flat { chartIds, queryLinks, joinMethod } shape) into the current nested
+// chartGroups shape.
 function normalizeNode(raw: Record<string, unknown> | undefined): AttributionNode {
   const r = raw || {};
   const legacyLinks = Array.isArray(r.links) ? (r.links as string[]) : undefined;
   const legacyJoinMethod = typeof r.joinMethod === 'string' && r.joinMethod ? [r.joinMethod] : [];
+
+  let chartGroups: ChartGroup[];
+  if (Array.isArray(r.chartGroups)) {
+    chartGroups = (r.chartGroups as Partial<ChartGroup>[]).map(normalizeChartGroup);
+  } else {
+    const legacyChartIds = Array.isArray(r.chartIds) ? (r.chartIds as string[]) : [];
+    const legacyQueryLinks = Array.isArray(r.queryLinks) ? (r.queryLinks as string[]) : legacyLinks || [];
+    if (legacyChartIds.length) {
+      chartGroups = legacyChartIds.map((c, i) => ({
+        id: nextGroupId(),
+        chartId: c,
+        queryLinks: i === 0 ? legacyQueryLinks : [],
+      }));
+    } else if (legacyQueryLinks.length) {
+      chartGroups = [{ id: nextGroupId(), chartId: '', queryLinks: legacyQueryLinks }];
+    } else {
+      chartGroups = [];
+    }
+  }
+
   return {
     id: typeof r.id === 'number' ? r.id : nextNodeId(),
     scenario: typeof r.scenario === 'string' ? r.scenario : typeof r.name === 'string' ? r.name : '',
-    chartIds: Array.isArray(r.chartIds) ? (r.chartIds as string[]) : [],
+    chartGroups,
     joinMethods: Array.isArray(r.joinMethods) ? (r.joinMethods as string[]) : legacyJoinMethod,
-    queryLinks: Array.isArray(r.queryLinks) ? (r.queryLinks as string[]) : legacyLinks || [],
     templateId: typeof r.templateId === 'string' ? r.templateId : '',
     drillDimension:
       typeof r.drillDimension === 'string' ? r.drillDimension : typeof r.desc === 'string' ? r.desc : '',

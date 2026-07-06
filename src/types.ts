@@ -1,11 +1,16 @@
 export type StorylineDataType = 'public' | 'personal';
 
+export interface ChartGroup {
+  id: number;
+  chartId: string;
+  queryLinks: string[];
+}
+
 export interface AttributionNode {
   id: number;
   scenario: string;
-  chartIds: string[];
+  chartGroups: ChartGroup[];
   joinMethods: string[];
-  queryLinks: string[];
   templateId: string;
   drillDimension: string;
   type: StorylineDataType;

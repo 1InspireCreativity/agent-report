@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import type { StorylineState, StorylineDataType } from './types';
-import { buildStorylinePayload, emptyNode, joinMethodLabel, JOIN_METHOD_OPTIONS, STORYLINE_TYPE_OPTIONS } from './utils';
+import {
+  buildStorylinePayload,
+  emptyNode,
+  emptyChartGroup,
+  joinMethodLabel,
+  JOIN_METHOD_OPTIONS,
+  STORYLINE_TYPE_OPTIONS,
+} from './utils';
 import PayloadPanel from './PayloadPanel';
 
 interface Props {
@@ -13,7 +20,6 @@ type NodeTextField = 'scenario' | 'templateId' | 'drillDimension';
 
 export default function StorylineTab({ state, setState, toast }: Props) {
   const [linkDrafts, setLinkDrafts] = useState<Record<number, string>>({});
-  const [chartIdDrafts, setChartIdDrafts] = useState<Record<number, string>>({});
   const [joinMethodDrafts, setJoinMethodDrafts] = useState<Record<number, string>>({});
 
   const update = <K extends keyof StorylineState>(key: K, value: StorylineState[K]) => {
@@ -42,21 +48,67 @@ export default function StorylineTab({ state, setState, toast }: Props) {
     setState((prev) => ({ ...prev, nodes: prev.nodes.filter((n) => n.id !== id) }));
   };
 
-  const addChartId = (id: number) => {
-    const val = (chartIdDrafts[id] || '').trim();
-    if (!val) return;
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) => (n.id === id ? { ...n, chartIds: [...n.chartIds, val] } : n)),
-    }));
-    setChartIdDrafts((prev) => ({ ...prev, [id]: '' }));
-  };
-
-  const delChartId = (id: number, idx: number) => {
+  const addChartGroup = (nodeId: number) => {
     setState((prev) => ({
       ...prev,
       nodes: prev.nodes.map((n) =>
-        n.id === id ? { ...n, chartIds: n.chartIds.filter((_, i) => i !== idx) } : n
+        n.id === nodeId ? { ...n, chartGroups: [...n.chartGroups, emptyChartGroup()] } : n
+      ),
+    }));
+  };
+
+  const delChartGroup = (nodeId: number, groupId: number) => {
+    setState((prev) => ({
+      ...prev,
+      nodes: prev.nodes.map((n) =>
+        n.id === nodeId ? { ...n, chartGroups: n.chartGroups.filter((g) => g.id !== groupId) } : n
+      ),
+    }));
+  };
+
+  const setChartGroupId = (nodeId: number, groupId: number, value: string) => {
+    setState((prev) => ({
+      ...prev,
+      nodes: prev.nodes.map((n) =>
+        n.id === nodeId
+          ? { ...n, chartGroups: n.chartGroups.map((g) => (g.id === groupId ? { ...g, chartId: value } : g)) }
+          : n
+      ),
+    }));
+  };
+
+  const addGroupQueryLink = (nodeId: number, groupId: number) => {
+    const draftKey = groupId;
+    const val = (linkDrafts[draftKey] || '').trim();
+    if (!val) return;
+    setState((prev) => ({
+      ...prev,
+      nodes: prev.nodes.map((n) =>
+        n.id === nodeId
+          ? {
+              ...n,
+              chartGroups: n.chartGroups.map((g) =>
+                g.id === groupId ? { ...g, queryLinks: [...g.queryLinks, val] } : g
+              ),
+            }
+          : n
+      ),
+    }));
+    setLinkDrafts((prev) => ({ ...prev, [draftKey]: '' }));
+  };
+
+  const delGroupQueryLink = (nodeId: number, groupId: number, idx: number) => {
+    setState((prev) => ({
+      ...prev,
+      nodes: prev.nodes.map((n) =>
+        n.id === nodeId
+          ? {
+              ...n,
+              chartGroups: n.chartGroups.map((g) =>
+                g.id === groupId ? { ...g, queryLinks: g.queryLinks.filter((_, i) => i !== idx) } : g
+              ),
+            }
+          : n
       ),
     }));
   };
@@ -78,25 +130,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
       ...prev,
       nodes: prev.nodes.map((n) =>
         n.id === id ? { ...n, joinMethods: n.joinMethods.filter((_, i) => i !== idx) } : n
-      ),
-    }));
-  };
-
-  const addQueryLink = (id: number) => {
-    const val = (linkDrafts[id] || '').trim();
-    if (!val) return;
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) => (n.id === id ? { ...n, queryLinks: [...n.queryLinks, val] } : n)),
-    }));
-    setLinkDrafts((prev) => ({ ...prev, [id]: '' }));
-  };
-
-  const delQueryLink = (id: number, idx: number) => {
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) =>
-        n.id === id ? { ...n, queryLinks: n.queryLinks.filter((_, i) => i !== idx) } : n
       ),
     }));
   };
@@ -221,35 +254,69 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                 <div className="node-body" style={{ display: 'block', padding: '16px 18px' }}>
                   <div className="field" style={{ marginBottom: 14 }}>
                     <div className="field-label">
-                      Chart ID <span className="hint">支持添加多个 Chart ID</span> <span className="req">*</span>
+                      Chart ID <span className="hint">每个 Chart ID 下可添加多个 Query Link</span>{' '}
+                      <span className="req">*</span>
                     </div>
-                    <div className="tags-wrap">
-                      {n.chartIds.map((c, ci) => (
-                        <span className="tag" title={c} key={ci}>
-                          <span className="tag-text">{c}</span>
-                          <button className="tag-x" onClick={() => delChartId(n.id, ci)}>
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                    <div className="tag-input-row">
-                      <input
-                        type="text"
-                        placeholder="GBSrev"
-                        value={chartIdDrafts[n.id] || ''}
-                        onChange={(e) => setChartIdDrafts((prev) => ({ ...prev, [n.id]: e.target.value }))}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            addChartId(n.id);
-                            e.preventDefault();
-                          }
+                    {n.chartGroups.map((g) => (
+                      <div
+                        key={g.id}
+                        style={{
+                          border: '1px solid var(--c-border)',
+                          borderRadius: 'var(--r)',
+                          background: 'var(--c-surface-2)',
+                          padding: 12,
+                          marginBottom: 8,
                         }}
-                      />
-                      <button className="btn btn-secondary btn-xs" onClick={() => addChartId(n.id)}>
-                        + 添加
-                      </button>
-                    </div>
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                          <span className="id-bar-label" style={{ flexShrink: 0 }}>
+                            Chart ID
+                          </span>
+                          <input
+                            type="text"
+                            placeholder="aaa"
+                            value={g.chartId}
+                            onChange={(e) => setChartGroupId(n.id, g.id, e.target.value)}
+                            style={{ flex: 1 }}
+                          />
+                          <button className="icon-btn danger" onClick={() => delChartGroup(n.id, g.id)} title="删除">
+                            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                              <path d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                          </button>
+                        </div>
+                        <div className="tags-wrap">
+                          {g.queryLinks.map((l, li) => (
+                            <span className="tag" title={l} key={li}>
+                              <span className="tag-text">{l.length > 40 ? l.slice(0, 38) + '…' : l}</span>
+                              <button className="tag-x" onClick={() => delGroupQueryLink(n.id, g.id, li)}>
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                        <div className="tag-input-row">
+                          <input
+                            type="url"
+                            placeholder="粘贴 Query Link…"
+                            value={linkDrafts[g.id] || ''}
+                            onChange={(e) => setLinkDrafts((prev) => ({ ...prev, [g.id]: e.target.value }))}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                addGroupQueryLink(n.id, g.id);
+                                e.preventDefault();
+                              }
+                            }}
+                          />
+                          <button className="btn btn-secondary btn-xs" onClick={() => addGroupQueryLink(n.id, g.id)}>
+                            + 添加
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    <button className="btn btn-secondary btn-xs" onClick={() => addChartGroup(n.id)}>
+                      + 添加 Chart ID
+                    </button>
                   </div>
                   <div className="field" style={{ marginBottom: 14 }}>
                     <div className="field-label">
@@ -278,38 +345,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                         ))}
                       </select>
                       <button className="btn btn-secondary btn-xs" onClick={() => addJoinMethod(n.id)}>
-                        + 添加
-                      </button>
-                    </div>
-                  </div>
-                  <div className="field" style={{ marginBottom: 14 }}>
-                    <div className="field-label">
-                      Query Link <span className="hint">支持添加多个链接</span> <span className="req">*</span>
-                    </div>
-                    <div className="tags-wrap">
-                      {n.queryLinks.map((l, li) => (
-                        <span className="tag" title={l} key={li}>
-                          <span className="tag-text">{l.length > 46 ? l.slice(0, 44) + '…' : l}</span>
-                          <button className="tag-x" onClick={() => delQueryLink(n.id, li)}>
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                    <div className="tag-input-row">
-                      <input
-                        type="url"
-                        placeholder="粘贴 Query Links，如：Quarter Link, Month Link, Week Link"
-                        value={linkDrafts[n.id] || ''}
-                        onChange={(e) => setLinkDrafts((prev) => ({ ...prev, [n.id]: e.target.value }))}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            addQueryLink(n.id);
-                            e.preventDefault();
-                          }
-                        }}
-                      />
-                      <button className="btn btn-secondary btn-xs" onClick={() => addQueryLink(n.id)}>
                         + 添加
                       </button>
                     </div>
