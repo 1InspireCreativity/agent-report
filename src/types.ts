@@ -34,12 +34,9 @@ export type ChartType = 'wuhuaro' | 'fensi' | 'maomaochong' | 'bar';
 
 export interface StorylineState {
   topic: string;
-  period: string;
   analyst: string;
   background: string;
   framework: string;
-  fieldId: string;
-  chartId: string;
   nodes: AttributionNode[];
 }
 

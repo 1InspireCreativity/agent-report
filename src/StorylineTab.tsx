@@ -122,12 +122,9 @@ export default function StorylineTab({ state, setState, toast }: Props) {
     if (!confirm('确认重置所有图表配置？')) return;
     setState({
       topic: '',
-      period: '',
       analyst: '',
       background: '',
       framework: '',
-      fieldId: '',
-      chartId: '',
       nodes: [],
     });
   };
@@ -193,47 +190,14 @@ export default function StorylineTab({ state, setState, toast }: Props) {
               onChange={(e) => update('topic', e.target.value)}
             />
           </div>
-          <div className="grid-2">
-            <div className="field" style={{ margin: 0 }}>
-              <div className="field-label">
-                时间范围 <span className="opt">可选</span>
-              </div>
-              <input
-                type="text"
-                placeholder="2024-04-01 ~ 2024-06-30"
-                value={state.period}
-                onChange={(e) => update('period', e.target.value)}
-              />
-            </div>
-            <div className="field" style={{ margin: 0 }}>
-              <div className="field-label">负责分析师</div>
-              <input
-                type="text"
-                placeholder="姓名 / 花名"
-                value={state.analyst}
-                onChange={(e) => update('analyst', e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="grid-2" style={{ marginTop: 14 }}>
-            <div className="field" style={{ margin: 0 }}>
-              <div className="field-label">Field ID</div>
-              <input
-                type="text"
-                placeholder="fld_12345"
-                value={state.fieldId}
-                onChange={(e) => update('fieldId', e.target.value)}
-              />
-            </div>
-            <div className="field" style={{ margin: 0 }}>
-              <div className="field-label">Chart ID</div>
-              <input
-                type="text"
-                placeholder="cht_67890"
-                value={state.chartId}
-                onChange={(e) => update('chartId', e.target.value)}
-              />
-            </div>
+          <div className="field">
+            <div className="field-label">负责分析师</div>
+            <input
+              type="text"
+              placeholder="姓名 / 花名"
+              value={state.analyst}
+              onChange={(e) => update('analyst', e.target.value)}
+            />
           </div>
           <div className="field" style={{ marginTop: 14, marginBottom: 0 }}>
             <div className="field-label">

@@ -56,12 +56,9 @@ export function defaultExecutionConfig(): ExecutionConfig {
 export function defaultStoryline(): StorylineState {
   return {
     topic: '',
-    period: '',
     analyst: '',
     background: '',
     framework: '',
-    fieldId: '',
-    chartId: '',
     nodes: [
       {
         id: 1,
@@ -147,12 +144,9 @@ export function buildStorylinePayload(sl: StorylineState) {
   return {
     type: 'storyline_config',
     topic: sl.topic || '（未填写）',
-    period: sl.period || null,
     analyst: sl.analyst || null,
     background: sl.background || '（未填写）',
     drill_down_framework: sl.framework || null,
-    field_id: sl.fieldId || null,
-    chart_id: sl.chartId || null,
     attribution_nodes: sl.nodes.map((n, i) => ({
       index: i + 1,
       scenario: n.scenario || `节点${i + 1}`,
@@ -311,12 +305,9 @@ export function normalizeStoryline(raw: Partial<StorylineState> | null | undefin
   if (!raw) return base;
   return {
     topic: typeof raw.topic === 'string' ? raw.topic : base.topic,
-    period: typeof raw.period === 'string' ? raw.period : base.period,
     analyst: typeof raw.analyst === 'string' ? raw.analyst : base.analyst,
     background: typeof raw.background === 'string' ? raw.background : base.background,
     framework: typeof raw.framework === 'string' ? raw.framework : base.framework,
-    fieldId: typeof raw.fieldId === 'string' ? raw.fieldId : base.fieldId,
-    chartId: typeof raw.chartId === 'string' ? raw.chartId : base.chartId,
     nodes: Array.isArray(raw.nodes)
       ? raw.nodes.map((n) => normalizeNode(n as unknown as Record<string, unknown>))
       : base.nodes,
