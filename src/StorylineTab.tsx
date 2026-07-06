@@ -168,7 +168,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
       <div className="card">
         <div className="card-head">
           <div className="card-icon-wrap" style={{ background: '#EFF6FF' }}>
-            🎯
+            📁
           </div>
           <div className="card-head-text">
             <div className="card-head-title">文件夹</div>
