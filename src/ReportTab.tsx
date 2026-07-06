@@ -26,7 +26,7 @@ function saveTemplates(arr: ReportTemplate[]) {
 export default function ReportTab({ state, setState, toast }: Props) {
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
   const [selectedTplId, setSelectedTplId] = useState('');
-  const [chartIdDraft, setChartIdDraft] = useState('');
+  const [templateIdDraft, setTemplateIdDraft] = useState('');
 
   useEffect(() => {
     setTemplates(loadTemplates());
@@ -36,34 +36,34 @@ export default function ReportTab({ state, setState, toast }: Props) {
     setState((prev) => ({ ...prev, [key]: value }));
   };
 
-  const addChartId = () => {
-    const val = chartIdDraft.trim();
+  const addTemplateId = () => {
+    const val = templateIdDraft.trim();
     if (!val) return;
-    setState((prev) => ({ ...prev, chartIds: [...prev.chartIds, val] }));
-    setChartIdDraft('');
+    setState((prev) => ({ ...prev, templateIds: [...prev.templateIds, val] }));
+    setTemplateIdDraft('');
   };
 
-  const delChartId = (idx: number) => {
-    setState((prev) => ({ ...prev, chartIds: prev.chartIds.filter((_, i) => i !== idx) }));
+  const delTemplateId = (idx: number) => {
+    setState((prev) => ({ ...prev, templateIds: prev.templateIds.filter((_, i) => i !== idx) }));
   };
 
   const submit = () => {
     if (!state.name) {
-      toast('⚠️ 请填写周报名称');
+      toast('⚠️ 请填写报告名称');
       return;
     }
-    toast('✅ 配置已提交，周报生成中…');
+    toast('✅ 配置已提交，报告生成中…');
   };
 
   const reset = () => {
-    if (!confirm('确认重置所有周报配置？')) return;
+    if (!confirm('确认重置所有报告配置？')) return;
     setState((prev) => ({
       ...prev,
       name: '',
       cycle: 'W',
       chartType: 'wuhuaro',
       description: '',
-      chartIds: [],
+      templateIds: [],
       owner: '',
       ownerEmail: '',
       ownerDept: '',
@@ -102,7 +102,7 @@ export default function ReportTab({ state, setState, toast }: Props) {
       name: '',
       cycle: 'W',
       description: '',
-      chartIds: [],
+      templateIds: [],
       owner: '',
       ownerEmail: '',
       ownerDept: '',
@@ -139,13 +139,13 @@ export default function ReportTab({ state, setState, toast }: Props) {
       <div className="page-head">
         <div className="page-head-row">
           <div>
-            <div className="page-head-title">周报取数配置</div>
+            <div className="page-head-title">报告取数配置</div>
           </div>
         </div>
       </div>
 
-      {/* 周报信息 */}
-      <div className="section-label">周报信息</div>
+      {/* 报告信息 */}
+      <div className="section-label">报告信息</div>
       <div className="card">
         <div className="card-head">
           <div className="card-icon-wrap" style={{ background: '#FFFBEB' }}>
@@ -158,7 +158,7 @@ export default function ReportTab({ state, setState, toast }: Props) {
         <div className="card-body">
           <div className="field" style={{ margin: 0, marginBottom: 16 }}>
             <div className="field-label">
-              周报名称 <span className="req">*</span>
+              报告名称 <span className="req">*</span>
             </div>
             <input
               type="text"
@@ -169,10 +169,10 @@ export default function ReportTab({ state, setState, toast }: Props) {
           </div>
           <div className="field" style={{ margin: 0, marginBottom: 16 }}>
             <div className="field-label">
-              周报描述 <span className="opt">可选</span>
+              报告描述 <span className="opt">可选</span>
             </div>
             <textarea
-              placeholder="例：CNOB分析周报给XX周会使用"
+              placeholder="例：CNOB分析报告给XX周会使用"
               value={state.description}
               onChange={(e) => update('description', e.target.value)}
             />
@@ -209,13 +209,13 @@ export default function ReportTab({ state, setState, toast }: Props) {
           <div className="grid-2" style={{ margin: '16px 0 0' }}>
             <div className="field" style={{ margin: 0 }}>
               <div className="field-label">
-                Chart ID <span className="req">*</span> <span className="hint">支持添加多个 Chart ID</span>
+                Template ID <span className="req">*</span> <span className="hint">支持添加多个 Template ID</span>
               </div>
               <div className="tags-wrap">
-                {state.chartIds.map((c, i) => (
-                  <span className="tag" title={c} key={i}>
-                    <span className="tag-text">{c}</span>
-                    <button className="tag-x" onClick={() => delChartId(i)}>
+                {state.templateIds.map((t, i) => (
+                  <span className="tag" title={t} key={i}>
+                    <span className="tag-text">{t}</span>
+                    <button className="tag-x" onClick={() => delTemplateId(i)}>
                       ×
                     </button>
                   </span>
@@ -224,17 +224,17 @@ export default function ReportTab({ state, setState, toast }: Props) {
               <div className="tag-input-row">
                 <input
                   type="text"
-                  placeholder="1145582"
-                  value={chartIdDraft}
-                  onChange={(e) => setChartIdDraft(e.target.value)}
+                  placeholder="motz7cum6ntsj6"
+                  value={templateIdDraft}
+                  onChange={(e) => setTemplateIdDraft(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
-                      addChartId();
+                      addTemplateId();
                       e.preventDefault();
                     }
                   }}
                 />
-                <button className="btn btn-secondary btn-xs" onClick={addChartId}>
+                <button className="btn btn-secondary btn-xs" onClick={addTemplateId}>
                   + 添加
                 </button>
               </div>
@@ -347,7 +347,7 @@ export default function ReportTab({ state, setState, toast }: Props) {
       </div>
       <PayloadPanel
         label="Weekly Report Config"
-        meta={state.name || '未命名周报'}
+        meta={state.name || '未命名报告'}
         payload={payload}
         onCopy={() => toast('✅ 已复制到剪贴板')}
       />
@@ -363,7 +363,7 @@ export default function ReportTab({ state, setState, toast }: Props) {
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
             <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
           </svg>
-          提交周报取数配置给Agent
+          提交报告取数配置给Agent
         </button>
         <div className="autosave">
           <div className="autosave-dot"></div>自动保存中

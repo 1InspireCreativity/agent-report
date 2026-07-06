@@ -18,6 +18,18 @@ export const STORYLINE_TYPE_OPTIONS: { value: StorylineDataType; label: string }
   { value: 'personal', label: 'Personal' },
 ];
 
+export const JOIN_METHOD_OPTIONS: { value: string; label: string }[] = [
+  { value: 'quarter', label: 'Quarter' },
+  { value: 'month', label: 'Month' },
+  { value: 'week', label: 'Week' },
+  { value: 'other', label: '其他' },
+  { value: 'none', label: '无需拼数处理' },
+];
+
+export function joinMethodLabel(value: string): string {
+  return JOIN_METHOD_OPTIONS.find((o) => o.value === value)?.label || value;
+}
+
 export function defaultStoryline(): StorylineState {
   return {
     topic: '',
@@ -27,8 +39,9 @@ export function defaultStoryline(): StorylineState {
       {
         id: 1,
         scenario: 'GBS-1Team revenue和yoy',
+        chartIds: ['GBSrev', 'GBSYOY'],
+        joinMethods: ['other'],
         queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1145582?dataset=1159057&queryId=64894787'],
-        joinMethod: 'QMW/other type',
         templateId: 'motz7cum6ntsj6',
         drillDimension: 'NAAP Lever L1 Industry 4.0 Level 1',
         type: 'public',
@@ -36,8 +49,9 @@ export function defaultStoryline(): StorylineState {
       {
         id: 2,
         scenario: 'NAAP-1Team revenue和yoy',
+        chartIds: [],
+        joinMethods: [],
         queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1147165?dataset=1159057&queryId=648951830'],
-        joinMethod: '',
         templateId: 'mp3ue3hglacfiq',
         drillDimension: 'NAAP Lever L1 Industry 4.0 Level 1',
         type: 'personal',
@@ -52,7 +66,7 @@ export function defaultReport(): ReportState {
     cycle: 'W',
     chartType: 'wuhuaro',
     description: '',
-    chartIds: [],
+    templateIds: [],
     owner: '',
     ownerEmail: '',
     ownerDept: '',
@@ -69,8 +83,9 @@ export function buildStorylinePayload(sl: StorylineState) {
     attribution_nodes: sl.nodes.map((n, i) => ({
       index: i + 1,
       scenario: n.scenario || `节点${i + 1}`,
+      chart_ids: n.chartIds,
+      join_methods: n.joinMethods,
       query_links: n.queryLinks,
-      join_method: n.joinMethod || null,
       template_id: n.templateId || null,
       drill_dimension: n.drillDimension || null,
       type: n.type,
@@ -85,7 +100,7 @@ export function buildReportPayload(rpt: ReportState) {
     cycle: rpt.cycle,
     chart_type: rpt.chartType,
     description: rpt.description || null,
-    chart_ids: rpt.chartIds,
+    template_ids: rpt.templateIds,
     owner: rpt.owner || null,
     owner_email: rpt.ownerEmail || null,
     owner_dept: rpt.ownerDept || null,
@@ -125,24 +140,27 @@ export function emptyNode(): AttributionNode {
   return {
     id: nextNodeId(),
     scenario: '',
+    chartIds: [],
+    joinMethods: [],
     queryLinks: [],
-    joinMethod: '',
     templateId: '',
     drillDimension: '',
     type: 'public',
   };
 }
 
-// Migrates persisted nodes from the pre-redesign shape ({ name, desc, links })
+// Migrates persisted nodes from the pre-redesign shape ({ name, desc, links, joinMethod: string })
 // or any partially-shaped draft into the current AttributionNode shape.
 function normalizeNode(raw: Record<string, unknown> | undefined): AttributionNode {
   const r = raw || {};
   const legacyLinks = Array.isArray(r.links) ? (r.links as string[]) : undefined;
+  const legacyJoinMethod = typeof r.joinMethod === 'string' && r.joinMethod ? [r.joinMethod] : [];
   return {
     id: typeof r.id === 'number' ? r.id : nextNodeId(),
     scenario: typeof r.scenario === 'string' ? r.scenario : typeof r.name === 'string' ? r.name : '',
+    chartIds: Array.isArray(r.chartIds) ? (r.chartIds as string[]) : [],
+    joinMethods: Array.isArray(r.joinMethods) ? (r.joinMethods as string[]) : legacyJoinMethod,
     queryLinks: Array.isArray(r.queryLinks) ? (r.queryLinks as string[]) : legacyLinks || [],
-    joinMethod: typeof r.joinMethod === 'string' ? r.joinMethod : '',
     templateId: typeof r.templateId === 'string' ? r.templateId : '',
     drillDimension:
       typeof r.drillDimension === 'string' ? r.drillDimension : typeof r.desc === 'string' ? r.desc : '',
@@ -164,11 +182,12 @@ export function normalizeStoryline(raw: Partial<StorylineState> | null | undefin
 }
 
 export function normalizeReport(
-  raw: (Partial<ReportState> & { dataQueryId?: string; chartId?: string }) | null | undefined
+  raw: (Partial<ReportState> & { dataQueryId?: string; chartId?: string; chartIds?: string[] }) | null | undefined
 ): ReportState {
   const base = defaultReport();
   if (!raw) return base;
   const legacyChartId = typeof raw.chartId === 'string' ? raw.chartId : typeof raw.dataQueryId === 'string' ? raw.dataQueryId : '';
+  const legacyChartIds = Array.isArray(raw.chartIds) ? raw.chartIds : legacyChartId ? [legacyChartId] : [];
   return {
     name: typeof raw.name === 'string' ? raw.name : base.name,
     cycle: raw.cycle === '2W' || raw.cycle === 'M' || raw.cycle === 'W' ? raw.cycle : base.cycle,
@@ -177,7 +196,7 @@ export function normalizeReport(
         ? raw.chartType
         : base.chartType,
     description: typeof raw.description === 'string' ? raw.description : base.description,
-    chartIds: Array.isArray(raw.chartIds) ? raw.chartIds : legacyChartId ? [legacyChartId] : base.chartIds,
+    templateIds: Array.isArray(raw.templateIds) ? raw.templateIds : legacyChartIds.length ? legacyChartIds : base.templateIds,
     owner: typeof raw.owner === 'string' ? raw.owner : base.owner,
     ownerEmail: typeof raw.ownerEmail === 'string' ? raw.ownerEmail : base.ownerEmail,
     ownerDept: typeof raw.ownerDept === 'string' ? raw.ownerDept : base.ownerDept,

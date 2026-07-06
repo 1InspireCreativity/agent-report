@@ -72,7 +72,7 @@ function App() {
             className={`topbar-tab ${activeTab === 'report' ? 'active' : ''}`}
             onClick={() => setActiveTab('report')}
           >
-            <span className="t-icon">📅</span>周报取数配置
+            <span className="t-icon">📅</span>报告取数配置
           </button>
         </nav>
         <div className="topbar-right">

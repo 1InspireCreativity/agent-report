@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { StorylineState, StorylineDataType } from './types';
-import { buildStorylinePayload, emptyNode, STORYLINE_TYPE_OPTIONS } from './utils';
+import { buildStorylinePayload, emptyNode, joinMethodLabel, JOIN_METHOD_OPTIONS, STORYLINE_TYPE_OPTIONS } from './utils';
 import PayloadPanel from './PayloadPanel';
 
 interface Props {
@@ -9,10 +9,12 @@ interface Props {
   toast: (msg: string) => void;
 }
 
-type NodeTextField = 'scenario' | 'joinMethod' | 'templateId' | 'drillDimension';
+type NodeTextField = 'scenario' | 'templateId' | 'drillDimension';
 
 export default function StorylineTab({ state, setState, toast }: Props) {
   const [linkDrafts, setLinkDrafts] = useState<Record<number, string>>({});
+  const [chartIdDrafts, setChartIdDrafts] = useState<Record<number, string>>({});
+  const [joinMethodDrafts, setJoinMethodDrafts] = useState<Record<number, string>>({});
 
   const update = <K extends keyof StorylineState>(key: K, value: StorylineState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }));
@@ -38,6 +40,46 @@ export default function StorylineTab({ state, setState, toast }: Props) {
 
   const delNode = (id: number) => {
     setState((prev) => ({ ...prev, nodes: prev.nodes.filter((n) => n.id !== id) }));
+  };
+
+  const addChartId = (id: number) => {
+    const val = (chartIdDrafts[id] || '').trim();
+    if (!val) return;
+    setState((prev) => ({
+      ...prev,
+      nodes: prev.nodes.map((n) => (n.id === id ? { ...n, chartIds: [...n.chartIds, val] } : n)),
+    }));
+    setChartIdDrafts((prev) => ({ ...prev, [id]: '' }));
+  };
+
+  const delChartId = (id: number, idx: number) => {
+    setState((prev) => ({
+      ...prev,
+      nodes: prev.nodes.map((n) =>
+        n.id === id ? { ...n, chartIds: n.chartIds.filter((_, i) => i !== idx) } : n
+      ),
+    }));
+  };
+
+  const addJoinMethod = (id: number) => {
+    const val = joinMethodDrafts[id];
+    if (!val) return;
+    setState((prev) => ({
+      ...prev,
+      nodes: prev.nodes.map((n) =>
+        n.id === id && !n.joinMethods.includes(val) ? { ...n, joinMethods: [...n.joinMethods, val] } : n
+      ),
+    }));
+    setJoinMethodDrafts((prev) => ({ ...prev, [id]: '' }));
+  };
+
+  const delJoinMethod = (id: number, idx: number) => {
+    setState((prev) => ({
+      ...prev,
+      nodes: prev.nodes.map((n) =>
+        n.id === id ? { ...n, joinMethods: n.joinMethods.filter((_, i) => i !== idx) } : n
+      ),
+    }));
   };
 
   const addQueryLink = (id: number) => {
@@ -166,7 +208,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                   <input
                     className="node-name"
                     type="text"
-                    placeholder="业务场景描述（如：Template ID + NAAP Gaming | Daily Revenue & YoY）"
+                    placeholder="如：Template ID + NAAP Gaming | Daily Revenue & YOY"
                     value={n.scenario}
                     onChange={(e) => setNodeField(n.id, 'scenario', e.target.value)}
                   />
@@ -177,6 +219,69 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                   </button>
                 </div>
                 <div className="node-body" style={{ display: 'block', padding: '16px 18px' }}>
+                  <div className="field" style={{ marginBottom: 14 }}>
+                    <div className="field-label">
+                      Chart ID <span className="hint">支持添加多个 Chart ID</span> <span className="req">*</span>
+                    </div>
+                    <div className="tags-wrap">
+                      {n.chartIds.map((c, ci) => (
+                        <span className="tag" title={c} key={ci}>
+                          <span className="tag-text">{c}</span>
+                          <button className="tag-x" onClick={() => delChartId(n.id, ci)}>
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="tag-input-row">
+                      <input
+                        type="text"
+                        placeholder="GBSrev"
+                        value={chartIdDrafts[n.id] || ''}
+                        onChange={(e) => setChartIdDrafts((prev) => ({ ...prev, [n.id]: e.target.value }))}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            addChartId(n.id);
+                            e.preventDefault();
+                          }
+                        }}
+                      />
+                      <button className="btn btn-secondary btn-xs" onClick={() => addChartId(n.id)}>
+                        + 添加
+                      </button>
+                    </div>
+                  </div>
+                  <div className="field" style={{ marginBottom: 14 }}>
+                    <div className="field-label">
+                      拼数方式 <span className="hint">可选择多个拼数方式</span> <span className="req">*</span>
+                    </div>
+                    <div className="tags-wrap">
+                      {n.joinMethods.map((jm, ji) => (
+                        <span className="tag" title={jm} key={ji}>
+                          <span className="tag-text">{joinMethodLabel(jm)}</span>
+                          <button className="tag-x" onClick={() => delJoinMethod(n.id, ji)}>
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="tag-input-row">
+                      <select
+                        value={joinMethodDrafts[n.id] || ''}
+                        onChange={(e) => setJoinMethodDrafts((prev) => ({ ...prev, [n.id]: e.target.value }))}
+                      >
+                        <option value="">请选择…</option>
+                        {JOIN_METHOD_OPTIONS.map((o) => (
+                          <option value={o.value} key={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
+                      <button className="btn btn-secondary btn-xs" onClick={() => addJoinMethod(n.id)}>
+                        + 添加
+                      </button>
+                    </div>
+                  </div>
                   <div className="field" style={{ marginBottom: 14 }}>
                     <div className="field-label">
                       Query Link <span className="hint">支持添加多个链接</span> <span className="req">*</span>
@@ -208,17 +313,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                         + 添加
                       </button>
                     </div>
-                  </div>
-                  <div className="field" style={{ marginBottom: 14 }}>
-                    <div className="field-label">
-                      拼数方式 <span className="req">*</span>
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="如：QMW / 其他拼接方式"
-                      value={n.joinMethod}
-                      onChange={(e) => setNodeField(n.id, 'joinMethod', e.target.value)}
-                    />
                   </div>
                   <div className="field" style={{ marginBottom: 14 }}>
                     <div className="field-label">

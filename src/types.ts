@@ -3,8 +3,9 @@ export type StorylineDataType = 'public' | 'personal';
 export interface AttributionNode {
   id: number;
   scenario: string;
+  chartIds: string[];
+  joinMethods: string[];
   queryLinks: string[];
-  joinMethod: string;
   templateId: string;
   drillDimension: string;
   type: StorylineDataType;
@@ -25,7 +26,7 @@ export interface ReportState {
   cycle: ReportCycle;
   chartType: ChartType;
   description: string;
-  chartIds: string[];
+  templateIds: string[];
   owner: string;
   ownerEmail: string;
   ownerDept: string;
