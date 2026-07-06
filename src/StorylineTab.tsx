@@ -258,7 +258,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                 <div className="node-body" style={{ display: 'block', padding: '16px 18px' }}>
                   <div className="field" style={{ marginBottom: 14 }}>
                     <div className="field-label">
-                      Query Link <span className="hint">支持添加多个链接</span>
+                      Query Link <span className="hint">支持添加多个链接</span> <span className="req">*</span>
                     </div>
                     <div className="tags-wrap">
                       {n.queryLinks.map((l, li) => (
@@ -289,7 +289,9 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                     </div>
                   </div>
                   <div className="field" style={{ marginBottom: 14 }}>
-                    <div className="field-label">拼数方式</div>
+                    <div className="field-label">
+                      拼数方式 <span className="req">*</span>
+                    </div>
                     <input
                       type="text"
                       placeholder="如：QMW / 其他拼接方式"
@@ -298,7 +300,9 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                     />
                   </div>
                   <div className="field" style={{ marginBottom: 14 }}>
-                    <div className="field-label">Template ID</div>
+                    <div className="field-label">
+                      Template ID <span className="req">*</span>
+                    </div>
                     <input
                       type="text"
                       placeholder="motz7cum6ntsj6"
@@ -308,7 +312,8 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                   </div>
                   <div className="field" style={{ marginBottom: 14 }}>
                     <div className="field-label">
-                      Metric and Chart ID <span className="hint">按行填写 Metric 定义与对应 Chart ID 的映射关系</span>
+                      Metric and Chart ID <span className="hint">按行填写 Metric 定义与对应 Chart ID 的映射关系</span>{' '}
+                      <span className="req">*</span>
                     </div>
                     {n.metrics.map((m, mi) => (
                       <div className="id-bar" key={m.id} style={{ marginTop: mi === 0 ? 0 : 8 }}>
@@ -339,7 +344,9 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                     </button>
                   </div>
                   <div className="field" style={{ marginBottom: 14 }}>
-                    <div className="field-label">下钻Dimension</div>
+                    <div className="field-label">
+                      下钻Dimension <span className="req">*</span>
+                    </div>
                     <textarea
                       rows={2}
                       style={{ fontSize: 12.5 }}
@@ -350,7 +357,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                   </div>
                   <div className="field" style={{ marginBottom: 14 }}>
                     <div className="field-label">
-                      Dataset <span className="hint">支持添加多个数据集</span>
+                      Dataset <span className="hint">支持添加多个数据集</span> <span className="req">*</span>
                     </div>
                     <div className="tags-wrap">
                       {n.dataSets.map((d, di) => (
@@ -382,7 +389,9 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                   </div>
                   <div className="grid-2" style={{ margin: 0 }}>
                     <div className="field" style={{ margin: 0 }}>
-                      <div className="field-label">Creator</div>
+                      <div className="field-label">
+                        Creator <span className="req">*</span>
+                      </div>
                       <input
                         type="text"
                         placeholder="创建人姓名"
@@ -391,7 +400,9 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                       />
                     </div>
                     <div className="field" style={{ margin: 0 }}>
-                      <div className="field-label">Owner</div>
+                      <div className="field-label">
+                        Owner <span className="req">*</span>
+                      </div>
                       <input
                         type="text"
                         placeholder="负责人姓名"
@@ -402,7 +413,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                   </div>
                   <div className="field" style={{ margin: '14px 0 0' }}>
                     <div className="field-label">
-                      Type <span className="hint">支持 Public / Personal</span>
+                      Type <span className="hint">支持 Public / Personal</span> <span className="req">*</span>
                     </div>
                     <select value={n.type} onChange={(e) => setNodeType(n.id, e.target.value as StorylineDataType)}>
                       {STORYLINE_TYPE_OPTIONS.map((o) => (
