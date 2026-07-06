@@ -286,7 +286,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
             🧩
           </div>
           <div className="card-head-text">
-            <div className="card-head-title">归因节点配置</div>
+            <div className="card-head-title">图表配置</div>
             <div className="card-head-desc">每个节点对应一个业务场景，绑定取数链接、指标口径与数据集</div>
           </div>
           <div className="card-head-actions">
