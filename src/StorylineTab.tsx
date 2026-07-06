@@ -172,7 +172,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
           </div>
           <div className="card-head-text">
             <div className="card-head-title">文件夹</div>
-            <div className="card-head-desc">明确文件夹名称、时间范围与责任人</div>
           </div>
         </div>
         <div className="card-body">
