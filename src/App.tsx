@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import StorylineTab from './StorylineTab';
 import ReportTab from './ReportTab';
 import { useToast } from './useToast';
-import { defaultReport, defaultStoryline } from './utils';
+import { defaultReport, defaultStoryline, normalizeReport, normalizeStoryline } from './utils';
 import type { ReportState, StorylineState } from './types';
 
 const STORAGE_KEY = 'agentReportAppState';
@@ -21,8 +21,8 @@ function App() {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (parsed.storyline) setStoryline(parsed.storyline);
-        if (parsed.report) setReport(parsed.report);
+        if (parsed.storyline) setStoryline(normalizeStoryline(parsed.storyline));
+        if (parsed.report) setReport(normalizeReport(parsed.report));
       }
     } catch {
       // ignore corrupt storage

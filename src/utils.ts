@@ -273,3 +273,66 @@ export function emptyMetricMapping(): MetricMapping {
 export function emptyRptItem(): ReportChartItem {
   return { id: nextRptId(), title: '', link: '', tpl: '', chart: '', note: '', collapsed: false };
 }
+
+function normalizeMetric(raw: Partial<MetricMapping> | undefined): MetricMapping {
+  return {
+    id: typeof raw?.id === 'number' ? raw.id : nextMetricId(),
+    metric: typeof raw?.metric === 'string' ? raw.metric : '',
+    chartId: typeof raw?.chartId === 'string' ? raw.chartId : '',
+  };
+}
+
+// Migrates persisted nodes from the pre-redesign shape ({ name, desc, links })
+// or any partially-shaped draft into the current AttributionNode shape.
+function normalizeNode(raw: Record<string, unknown> | undefined): AttributionNode {
+  const r = raw || {};
+  const legacyLinks = Array.isArray(r.links) ? (r.links as string[]) : undefined;
+  return {
+    id: typeof r.id === 'number' ? r.id : nextNodeId(),
+    scenario: typeof r.scenario === 'string' ? r.scenario : typeof r.name === 'string' ? r.name : '',
+    queryLinks: Array.isArray(r.queryLinks) ? (r.queryLinks as string[]) : legacyLinks || [],
+    joinMethod: typeof r.joinMethod === 'string' ? r.joinMethod : '',
+    metrics: Array.isArray(r.metrics) ? (r.metrics as MetricMapping[]).map(normalizeMetric) : [],
+    drillDimension:
+      typeof r.drillDimension === 'string' ? r.drillDimension : typeof r.desc === 'string' ? r.desc : '',
+    dataSets: Array.isArray(r.dataSets) ? (r.dataSets as string[]) : [],
+    owner: typeof r.owner === 'string' ? r.owner : '',
+    type: r.type === 'personal' ? 'personal' : 'public',
+  };
+}
+
+export function normalizeStoryline(raw: Partial<StorylineState> | null | undefined): StorylineState {
+  const base = defaultStoryline();
+  if (!raw) return base;
+  return {
+    topic: typeof raw.topic === 'string' ? raw.topic : base.topic,
+    period: typeof raw.period === 'string' ? raw.period : base.period,
+    analyst: typeof raw.analyst === 'string' ? raw.analyst : base.analyst,
+    background: typeof raw.background === 'string' ? raw.background : base.background,
+    framework: typeof raw.framework === 'string' ? raw.framework : base.framework,
+    fieldId: typeof raw.fieldId === 'string' ? raw.fieldId : base.fieldId,
+    chartId: typeof raw.chartId === 'string' ? raw.chartId : base.chartId,
+    nodes: Array.isArray(raw.nodes) ? raw.nodes.map((n) => normalizeNode(n as Record<string, unknown>)) : base.nodes,
+  };
+}
+
+export function normalizeReport(raw: (Partial<ReportState> & { dataQueryId?: string }) | null | undefined): ReportState {
+  const base = defaultReport();
+  if (!raw) return base;
+  return {
+    name: typeof raw.name === 'string' ? raw.name : base.name,
+    cycle: raw.cycle === '2W' || raw.cycle === 'M' || raw.cycle === 'W' ? raw.cycle : base.cycle,
+    chartType:
+      raw.chartType === 'fensi' || raw.chartType === 'maomaochong' || raw.chartType === 'bar' || raw.chartType === 'wuhuaro'
+        ? raw.chartType
+        : base.chartType,
+    description: typeof raw.description === 'string' ? raw.description : base.description,
+    chartId: typeof raw.chartId === 'string' ? raw.chartId : typeof raw.dataQueryId === 'string' ? raw.dataQueryId : base.chartId,
+    owner: typeof raw.owner === 'string' ? raw.owner : base.owner,
+    ownerEmail: typeof raw.ownerEmail === 'string' ? raw.ownerEmail : base.ownerEmail,
+    ownerDept: typeof raw.ownerDept === 'string' ? raw.ownerDept : base.ownerDept,
+    templateName: typeof raw.templateName === 'string' ? raw.templateName : base.templateName,
+    items: Array.isArray(raw.items) && raw.items.length ? (raw.items as ReportState['items']) : base.items,
+    exec: raw.exec ? { ...base.exec, ...raw.exec } : base.exec,
+  };
+}

@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
 import type { ReportState, ReportTemplate } from './types';
-import { buildReportPayload, emptyRptItem, CYCLE_OPTIONS, CHART_TYPE_OPTIONS, OWNER_DEPT_OPTIONS } from './utils';
+import {
+  buildReportPayload,
+  emptyRptItem,
+  normalizeReport,
+  CYCLE_OPTIONS,
+  CHART_TYPE_OPTIONS,
+  OWNER_DEPT_OPTIONS,
+} from './utils';
 import PayloadPanel from './PayloadPanel';
 import LinkDrawer from './LinkDrawer';
 import Sg from './Sg';
@@ -141,7 +148,7 @@ export default function ReportTab({ state, setState, toast }: Props) {
       toast('⚠️ 未找到历史配置');
       return;
     }
-    setState(item.state);
+    setState(normalizeReport(item.state));
     setSelectedTplId(id);
     toast('✅ 已载入历史配置：' + item.name);
   };
