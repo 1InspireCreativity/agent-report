@@ -10,7 +10,7 @@ const STORAGE_KEY = 'agentReportAppState';
 type TabId = 'storyline' | 'report';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<TabId>('report');
+  const [activeTab, setActiveTab] = useState<TabId>('storyline');
   const [storyline, setStoryline] = useState<StorylineState>(defaultStoryline);
   const [report, setReport] = useState<ReportState>(defaultReport);
   const { msg, visible, toast } = useToast();
