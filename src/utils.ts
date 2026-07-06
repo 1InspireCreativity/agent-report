@@ -68,6 +68,7 @@ export function defaultStoryline(): StorylineState {
         scenario: 'GBS-1 Team revenue 和 YoY',
         queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1145582?dataset=1159057&queryId=64894787'],
         joinMethod: 'QMW/other type',
+        templateId: 'motz7cum6ntsj6',
         metrics: [
           {
             id: 1,
@@ -90,11 +91,12 @@ export function defaultStoryline(): StorylineState {
         scenario: 'NAAP-1 Team revenue 和 YoY',
         queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1147165?dataset=1159057&queryId=648951830'],
         joinMethod: '',
+        templateId: 'mp3ue3hglacfiq',
         metrics: [
           {
             id: 1,
             metric: 'Daily average of Dollar Revenue Real - Rev A YoY(Daily average of Latest Fx - Dollar Rever',
-            chartId: 'mp3ue3hglacfiq',
+            chartId: '',
           },
         ],
         drillDimension: '按 NAAP Lever L1、Industry 4.0 Level 1 两个维度下钻',
@@ -156,6 +158,7 @@ export function buildStorylinePayload(sl: StorylineState) {
       scenario: n.scenario || `节点${i + 1}`,
       query_links: n.queryLinks,
       join_method: n.joinMethod || null,
+      template_id: n.templateId || null,
       metric_chart_mappings: n.metrics.map((m) => ({ metric: m.metric || null, chart_id: m.chartId || null })),
       drill_dimension: n.drillDimension || null,
       data_sets: n.dataSets,
@@ -258,6 +261,7 @@ export function emptyNode(): AttributionNode {
     scenario: '',
     queryLinks: [],
     joinMethod: '',
+    templateId: '',
     metrics: [],
     drillDimension: '',
     dataSets: [],
@@ -292,6 +296,7 @@ function normalizeNode(raw: Record<string, unknown> | undefined): AttributionNod
     scenario: typeof r.scenario === 'string' ? r.scenario : typeof r.name === 'string' ? r.name : '',
     queryLinks: Array.isArray(r.queryLinks) ? (r.queryLinks as string[]) : legacyLinks || [],
     joinMethod: typeof r.joinMethod === 'string' ? r.joinMethod : '',
+    templateId: typeof r.templateId === 'string' ? r.templateId : '',
     metrics: Array.isArray(r.metrics) ? (r.metrics as MetricMapping[]).map(normalizeMetric) : [],
     drillDimension:
       typeof r.drillDimension === 'string' ? r.drillDimension : typeof r.desc === 'string' ? r.desc : '',

@@ -9,7 +9,7 @@ interface Props {
   toast: (msg: string) => void;
 }
 
-type NodeTextField = 'scenario' | 'joinMethod' | 'drillDimension' | 'owner';
+type NodeTextField = 'scenario' | 'joinMethod' | 'templateId' | 'drillDimension' | 'owner';
 
 export default function StorylineTab({ state, setState, toast }: Props) {
   const [linkDrafts, setLinkDrafts] = useState<Record<number, string>>({});
@@ -237,7 +237,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
           </div>
           <div className="field" style={{ marginTop: 14, marginBottom: 0 }}>
             <div className="field-label">
-              业务场景描述 <span className="req">*</span>
+              背景描述 <span className="req">*</span>
             </div>
             <textarea
               rows={3}
@@ -314,15 +314,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                 </div>
                 <div className="node-body" style={{ display: 'block', padding: '16px 18px' }}>
                   <div className="field" style={{ marginBottom: 14 }}>
-                    <div className="field-label">拼数方式</div>
-                    <input
-                      type="text"
-                      placeholder="如：QMW / 其他拼接方式"
-                      value={n.joinMethod}
-                      onChange={(e) => setNodeField(n.id, 'joinMethod', e.target.value)}
-                    />
-                  </div>
-                  <div className="field" style={{ marginBottom: 14 }}>
                     <div className="field-label">
                       Query Link <span className="hint">支持添加多个链接</span>
                     </div>
@@ -353,6 +344,24 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                         + 添加
                       </button>
                     </div>
+                  </div>
+                  <div className="field" style={{ marginBottom: 14 }}>
+                    <div className="field-label">拼数方式</div>
+                    <input
+                      type="text"
+                      placeholder="如：QMW / 其他拼接方式"
+                      value={n.joinMethod}
+                      onChange={(e) => setNodeField(n.id, 'joinMethod', e.target.value)}
+                    />
+                  </div>
+                  <div className="field" style={{ marginBottom: 14 }}>
+                    <div className="field-label">Template ID</div>
+                    <input
+                      type="text"
+                      placeholder="tpl_12345"
+                      value={n.templateId}
+                      onChange={(e) => setNodeField(n.id, 'templateId', e.target.value)}
+                    />
                   </div>
                   <div className="field" style={{ marginBottom: 14 }}>
                     <div className="field-label">

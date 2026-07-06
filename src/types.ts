@@ -11,6 +11,7 @@ export interface AttributionNode {
   scenario: string;
   queryLinks: string[];
   joinMethod: string;
+  templateId: string;
   metrics: MetricMapping[];
   drillDimension: string;
   dataSets: string[];
