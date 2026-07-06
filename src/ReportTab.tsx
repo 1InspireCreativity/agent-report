@@ -185,7 +185,9 @@ export default function ReportTab({ state, setState, toast }: Props) {
           </div>
           <div className="grid-2" style={{ margin: 0 }}>
             <div className="field" style={{ margin: 0 }}>
-              <div className="field-label">汇报周期</div>
+              <div className="field-label">
+                汇报周期 <span className="req">*</span>
+              </div>
               <select value={state.cycle} onChange={(e) => update('cycle', e.target.value as ReportState['cycle'])}>
                 {CYCLE_OPTIONS.map((o) => (
                   <option value={o.value} key={o.value}>
@@ -195,7 +197,9 @@ export default function ReportTab({ state, setState, toast }: Props) {
               </select>
             </div>
             <div className="field" style={{ margin: 0 }}>
-              <div className="field-label">图表类型</div>
+              <div className="field-label">
+                图表类型 <span className="req">*</span>
+              </div>
               <select
                 value={state.chartType}
                 onChange={(e) => update('chartType', e.target.value as ReportState['chartType'])}
