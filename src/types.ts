@@ -19,16 +19,6 @@ export interface AttributionNode {
   type: StorylineDataType;
 }
 
-export interface ReportChartItem {
-  id: number;
-  title: string;
-  link: string;
-  tpl: string;
-  chart: string;
-  note: string;
-  collapsed: boolean;
-}
-
 export type ReportCycle = 'W' | '2W' | 'M';
 export type ChartType = 'wuhuaro' | 'fensi' | 'maomaochong' | 'bar';
 
@@ -38,23 +28,6 @@ export interface StorylineState {
   background: string;
   framework: string;
   nodes: AttributionNode[];
-}
-
-export interface ExecutionConfig {
-  tblDate: string;
-  tblRange: string;
-  tblSort: string;
-  sortDir: 'DESC' | 'ASC';
-  cols: [string, string, string, string];
-  joinCross: boolean;
-  joinNull: string;
-  joinShare: string;
-  yoyOn: boolean;
-  yoyFormula: string;
-  yoySort: string;
-  wbName: string;
-  wbTab: string;
-  wbMode: string;
 }
 
 export interface ReportState {
@@ -67,8 +40,6 @@ export interface ReportState {
   ownerEmail: string;
   ownerDept: string;
   templateName: string;
-  items: ReportChartItem[];
-  exec: ExecutionConfig;
 }
 
 export interface ReportTemplate {

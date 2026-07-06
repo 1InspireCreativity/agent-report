@@ -1,12 +1,4 @@
-import type {
-  AttributionNode,
-  ExecutionConfig,
-  MetricMapping,
-  ReportChartItem,
-  ReportState,
-  StorylineDataType,
-  StorylineState,
-} from './types';
+import type { AttributionNode, MetricMapping, ReportState, StorylineDataType, StorylineState } from './types';
 
 export const CYCLE_OPTIONS: { value: ReportState['cycle']; label: string }[] = [
   { value: 'W', label: '每周（W）' },
@@ -33,25 +25,6 @@ export const STORYLINE_TYPE_OPTIONS: { value: StorylineDataType; label: string }
   { value: 'public', label: 'Public' },
   { value: 'personal', label: 'Personal' },
 ];
-
-export function defaultExecutionConfig(): ExecutionConfig {
-  return {
-    tblDate: 'YYYY-MM-DD',
-    tblRange: 'current_year',
-    tblSort: 'Date',
-    sortDir: 'DESC',
-    cols: ['', '', '', ''],
-    joinCross: false,
-    joinNull: 'fill_zero',
-    joinShare: 'Value / Total * 100',
-    yoyOn: true,
-    yoyFormula: '(Current - Previous) / Previous * 100',
-    yoySort: 'abs_desc',
-    wbName: '飞书表格 Sheet',
-    wbTab: 'Sheet1',
-    wbMode: 'overwrite',
-  };
-}
 
 export function defaultStoryline(): StorylineState {
   return {
@@ -116,27 +89,6 @@ export function defaultReport(): ReportState {
     ownerEmail: '',
     ownerDept: '',
     templateName: '',
-    items: [
-      {
-        id: 1,
-        title: 'DAU 周趋势',
-        link: 'https://data.example.com/dau/weekly',
-        tpl: 'tpl_001',
-        chart: 'cht_dau_trend',
-        note: '7 日 DAU 折线图',
-        collapsed: false,
-      },
-      {
-        id: 2,
-        title: 'GMV 分渠道',
-        link: 'https://data.example.com/gmv/channel',
-        tpl: 'tpl_001',
-        chart: 'cht_gmv_channel',
-        note: '按直播/搜索/推荐拆分',
-        collapsed: false,
-      },
-    ],
-    exec: defaultExecutionConfig(),
   };
 }
 
@@ -163,7 +115,6 @@ export function buildStorylinePayload(sl: StorylineState) {
 }
 
 export function buildReportPayload(rpt: ReportState) {
-  const e = rpt.exec;
   return {
     type: 'weekly_report_config',
     report_name: rpt.name || '（未填写）',
@@ -174,37 +125,6 @@ export function buildReportPayload(rpt: ReportState) {
     owner: rpt.owner || null,
     owner_email: rpt.ownerEmail || null,
     owner_dept: rpt.ownerDept || null,
-    charts: rpt.items.map((it, i) => ({
-      index: i + 1,
-      title: it.title || `图表${i + 1}`,
-      data_link: it.link || null,
-      template_id: it.tpl || null,
-      chart_id: it.chart || null,
-      note: it.note || null,
-    })),
-    execution: {
-      table_rules: {
-        core_fields: e.cols.filter(Boolean),
-        date_format: e.tblDate,
-        data_range: e.tblRange,
-        sort: { field: e.tblSort || 'Date', direction: e.sortDir },
-      },
-      join_rules: {
-        cross_section_merge: e.joinCross,
-        null_handling: e.joinNull,
-        share_formula: e.joinShare,
-      },
-      yoy_attribution: {
-        enabled: e.yoyOn,
-        formula: e.yoyFormula,
-        sort_rule: e.yoySort,
-      },
-      writeback: {
-        target_sheet: e.wbName,
-        tab: e.wbTab,
-        mode: e.wbMode,
-      },
-    },
   };
 }
 
@@ -237,12 +157,6 @@ export function nextNodeId() {
   return nodeIdCounter;
 }
 
-let rptIdCounter = 100;
-export function nextRptId() {
-  rptIdCounter += 1;
-  return rptIdCounter;
-}
-
 let metricIdCounter = 100;
 export function nextMetricId() {
   metricIdCounter += 1;
@@ -266,10 +180,6 @@ export function emptyNode(): AttributionNode {
 
 export function emptyMetricMapping(): MetricMapping {
   return { id: nextMetricId(), metric: '', chartId: '' };
-}
-
-export function emptyRptItem(): ReportChartItem {
-  return { id: nextRptId(), title: '', link: '', tpl: '', chart: '', note: '', collapsed: false };
 }
 
 function normalizeMetric(raw: Partial<MetricMapping> | undefined): MetricMapping {
@@ -330,7 +240,5 @@ export function normalizeReport(raw: (Partial<ReportState> & { dataQueryId?: str
     ownerEmail: typeof raw.ownerEmail === 'string' ? raw.ownerEmail : base.ownerEmail,
     ownerDept: typeof raw.ownerDept === 'string' ? raw.ownerDept : base.ownerDept,
     templateName: typeof raw.templateName === 'string' ? raw.templateName : base.templateName,
-    items: Array.isArray(raw.items) && raw.items.length ? (raw.items as ReportState['items']) : base.items,
-    exec: raw.exec ? { ...base.exec, ...raw.exec } : base.exec,
   };
 }

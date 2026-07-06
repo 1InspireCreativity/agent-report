@@ -73,7 +73,6 @@ function App() {
             onClick={() => setActiveTab('report')}
           >
             <span className="t-icon">📅</span>周报取数配置
-            <span className="t-badge">{report.items.length}</span>
           </button>
         </nav>
         <div className="topbar-right">
