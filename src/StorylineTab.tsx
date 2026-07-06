@@ -254,7 +254,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                 <div className="node-body" style={{ display: 'block', padding: '16px 18px' }}>
                   <div className="field" style={{ marginBottom: 14 }}>
                     <div className="field-label">
-                      Template ID <span className="req">*</span>
+                      Template ID <span className="hint">一个Template ID下可有多个Chart IDs</span> <span className="req">*</span>
                     </div>
                     <input
                       type="text"
@@ -265,7 +265,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                   </div>
                   <div className="field" style={{ marginBottom: 14 }}>
                     <div className="field-label">
-                      Chart ID <span className="hint">每个 Chart ID 下可添加多个 Query Link，一个 Template ID 可以有多个 Chart ID</span>{' '}
+                      Chart ID <span className="hint">一个Chart ID下可有多个Query Links</span>{' '}
                       <span className="req">*</span>
                     </div>
                     {n.chartGroups.map((g) => (
