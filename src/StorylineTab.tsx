@@ -319,7 +319,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                   </div>
                   <div className="field" style={{ marginBottom: 14 }}>
                     <div className="field-label">
-                      下钻Dimension <span className="req">*</span>
+                      下钻Dimension <span className="opt">可选</span>
                     </div>
                     <textarea
                       rows={2}
