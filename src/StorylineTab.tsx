@@ -187,7 +187,9 @@ export default function StorylineTab({ state, setState, toast }: Props) {
             />
           </div>
           <div className="field">
-            <div className="field-label">负责分析师</div>
+            <div className="field-label">
+              Owner <span className="req">*</span>
+            </div>
             <input
               type="text"
               placeholder="姓名 / 花名"
