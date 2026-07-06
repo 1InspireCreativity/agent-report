@@ -236,7 +236,7 @@ export default function ReportTab({ state, setState, toast }: Props) {
               <div className="tag-input-row">
                 <input
                   type="text"
-                  placeholder="cht_auto_weekly_001"
+                  placeholder="1145582"
                   value={chartIdDraft}
                   onChange={(e) => setChartIdDraft(e.target.value)}
                   onKeyDown={(e) => {
