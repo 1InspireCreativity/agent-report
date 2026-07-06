@@ -173,7 +173,7 @@ export default function ReportTab({ state, setState, toast }: Props) {
           </div>
           <div className="field" style={{ margin: 0, marginBottom: 16 }}>
             <div className="field-label">
-              周报描述 <span className="req">*</span>
+              周报描述 <span className="opt">可选</span>
             </div>
             <textarea
               placeholder="简要描述该周报的分析目标与覆盖范围…"
@@ -221,7 +221,9 @@ export default function ReportTab({ state, setState, toast }: Props) {
           </div>
           <div className="grid-2" style={{ margin: '16px 0 0' }}>
             <div className="field" style={{ margin: 0 }}>
-              <div className="field-label">Owner</div>
+              <div className="field-label">
+                Owner <span className="req">*</span>
+              </div>
               <input
                 type="text"
                 placeholder="负责人姓名"
