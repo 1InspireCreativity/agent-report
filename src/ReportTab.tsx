@@ -218,8 +218,6 @@ export default function ReportTab({ state, setState, toast }: Props) {
                 onChange={(e) => update('chartId', e.target.value)}
               />
             </div>
-          </div>
-          <div className="grid-2" style={{ margin: '16px 0 0' }}>
             <div className="field" style={{ margin: 0 }}>
               <div className="field-label">
                 Owner <span className="req">*</span>
@@ -231,6 +229,8 @@ export default function ReportTab({ state, setState, toast }: Props) {
                 onChange={(e) => update('owner', e.target.value)}
               />
             </div>
+          </div>
+          <div className="grid-2" style={{ margin: '16px 0 0' }}>
             <div className="field" style={{ margin: 0 }}>
               <div className="field-label">
                 Owner Email <span className="opt">可选</span>
@@ -242,8 +242,6 @@ export default function ReportTab({ state, setState, toast }: Props) {
                 onChange={(e) => update('ownerEmail', e.target.value)}
               />
             </div>
-          </div>
-          <div className="grid-2" style={{ margin: '16px 0 0' }}>
             <div className="field" style={{ margin: 0 }}>
               <div className="field-label">
                 Owner Department <span className="opt">可选</span>
