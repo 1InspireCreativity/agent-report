@@ -1,4 +1,4 @@
-import type { AttributionNode, MetricMapping, ReportState, StorylineDataType, StorylineState } from './types';
+import type { AttributionNode, ReportState, StorylineDataType, StorylineState } from './types';
 
 export const CYCLE_OPTIONS: { value: ReportState['cycle']; label: string }[] = [
   { value: 'W', label: '每周（W）' },
@@ -23,7 +23,6 @@ export function defaultStoryline(): StorylineState {
     topic: '',
     analyst: '',
     background: '',
-    framework: '',
     nodes: [
       {
         id: 1,
@@ -31,21 +30,7 @@ export function defaultStoryline(): StorylineState {
         queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1145582?dataset=1159057&queryId=64894787'],
         joinMethod: 'QMW/other type',
         templateId: 'motz7cum6ntsj6',
-        metrics: [
-          {
-            id: 1,
-            metric: '["Stat Date", "Dollar Revenue Real - Rev Attain (HQ)", "Daily Latest DC GBS - 1(合并)"]',
-            chartId: 'GBSrev',
-          },
-          {
-            id: 2,
-            metric: '["Stat Date", "YoY", "Daily Latest DC GBS - 1(合并)"]',
-            chartId: 'GBSYOY',
-          },
-        ],
         drillDimension: 'NAAP Lever L1 Industry 4.0 Level 1',
-        creator: '',
-        owner: '',
         type: 'public',
       },
       {
@@ -54,16 +39,7 @@ export function defaultStoryline(): StorylineState {
         queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1147165?dataset=1159057&queryId=648951830'],
         joinMethod: '',
         templateId: 'mp3ue3hglacfiq',
-        metrics: [
-          {
-            id: 1,
-            metric: 'Daily average of Dollar Revenue Real - Rev A YoY(Daily average of Latest Fx - Dollar Rever',
-            chartId: '',
-          },
-        ],
         drillDimension: 'NAAP Lever L1 Industry 4.0 Level 1',
-        creator: '',
-        owner: '',
         type: 'personal',
       },
     ],
@@ -90,17 +66,13 @@ export function buildStorylinePayload(sl: StorylineState) {
     topic: sl.topic || '（未填写）',
     analyst: sl.analyst || null,
     background: sl.background || '（未填写）',
-    drill_down_framework: sl.framework || null,
     attribution_nodes: sl.nodes.map((n, i) => ({
       index: i + 1,
       scenario: n.scenario || `节点${i + 1}`,
       query_links: n.queryLinks,
       join_method: n.joinMethod || null,
       template_id: n.templateId || null,
-      metric_chart_mappings: n.metrics.map((m) => ({ metric: m.metric || null, chart_id: m.chartId || null })),
       drill_dimension: n.drillDimension || null,
-      creator: n.creator || null,
-      owner: n.owner || null,
       type: n.type,
     })),
   };
@@ -149,12 +121,6 @@ export function nextNodeId() {
   return nodeIdCounter;
 }
 
-let metricIdCounter = 100;
-export function nextMetricId() {
-  metricIdCounter += 1;
-  return metricIdCounter;
-}
-
 export function emptyNode(): AttributionNode {
   return {
     id: nextNodeId(),
@@ -162,23 +128,8 @@ export function emptyNode(): AttributionNode {
     queryLinks: [],
     joinMethod: '',
     templateId: '',
-    metrics: [],
     drillDimension: '',
-    creator: '',
-    owner: '',
     type: 'public',
-  };
-}
-
-export function emptyMetricMapping(): MetricMapping {
-  return { id: nextMetricId(), metric: '', chartId: '' };
-}
-
-function normalizeMetric(raw: Partial<MetricMapping> | undefined): MetricMapping {
-  return {
-    id: typeof raw?.id === 'number' ? raw.id : nextMetricId(),
-    metric: typeof raw?.metric === 'string' ? raw.metric : '',
-    chartId: typeof raw?.chartId === 'string' ? raw.chartId : '',
   };
 }
 
@@ -193,11 +144,8 @@ function normalizeNode(raw: Record<string, unknown> | undefined): AttributionNod
     queryLinks: Array.isArray(r.queryLinks) ? (r.queryLinks as string[]) : legacyLinks || [],
     joinMethod: typeof r.joinMethod === 'string' ? r.joinMethod : '',
     templateId: typeof r.templateId === 'string' ? r.templateId : '',
-    metrics: Array.isArray(r.metrics) ? (r.metrics as MetricMapping[]).map(normalizeMetric) : [],
     drillDimension:
       typeof r.drillDimension === 'string' ? r.drillDimension : typeof r.desc === 'string' ? r.desc : '',
-    creator: typeof r.creator === 'string' ? r.creator : '',
-    owner: typeof r.owner === 'string' ? r.owner : '',
     type: r.type === 'personal' ? 'personal' : 'public',
   };
 }
@@ -209,7 +157,6 @@ export function normalizeStoryline(raw: Partial<StorylineState> | null | undefin
     topic: typeof raw.topic === 'string' ? raw.topic : base.topic,
     analyst: typeof raw.analyst === 'string' ? raw.analyst : base.analyst,
     background: typeof raw.background === 'string' ? raw.background : base.background,
-    framework: typeof raw.framework === 'string' ? raw.framework : base.framework,
     nodes: Array.isArray(raw.nodes)
       ? raw.nodes.map((n) => normalizeNode(n as unknown as Record<string, unknown>))
       : base.nodes,

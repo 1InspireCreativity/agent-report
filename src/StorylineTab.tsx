@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { StorylineState, StorylineDataType } from './types';
-import { buildStorylinePayload, emptyNode, emptyMetricMapping, STORYLINE_TYPE_OPTIONS } from './utils';
+import { buildStorylinePayload, emptyNode, STORYLINE_TYPE_OPTIONS } from './utils';
 import PayloadPanel from './PayloadPanel';
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
   toast: (msg: string) => void;
 }
 
-type NodeTextField = 'scenario' | 'joinMethod' | 'templateId' | 'drillDimension' | 'creator' | 'owner';
+type NodeTextField = 'scenario' | 'joinMethod' | 'templateId' | 'drillDimension';
 
 export default function StorylineTab({ state, setState, toast }: Props) {
   const [linkDrafts, setLinkDrafts] = useState<Record<number, string>>({});
@@ -59,33 +59,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
     }));
   };
 
-  const addMetric = (id: number) => {
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) => (n.id === id ? { ...n, metrics: [...n.metrics, emptyMetricMapping()] } : n)),
-    }));
-  };
-
-  const delMetric = (id: number, metricId: number) => {
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) =>
-        n.id === id ? { ...n, metrics: n.metrics.filter((m) => m.id !== metricId) } : n
-      ),
-    }));
-  };
-
-  const setMetricField = (id: number, metricId: number, field: 'metric' | 'chartId', value: string) => {
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) =>
-        n.id === id
-          ? { ...n, metrics: n.metrics.map((m) => (m.id === metricId ? { ...m, [field]: value } : m)) }
-          : n
-      ),
-    }));
-  };
-
   const submit = () => {
     if (!state.topic) {
       toast('⚠️ 请填写文件夹名称');
@@ -104,7 +77,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
       topic: '',
       analyst: '',
       background: '',
-      framework: '',
       nodes: [],
     });
   };
@@ -169,31 +141,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
         </div>
       </div>
 
-      {/* 下钻思路 */}
-      <div className="section-label" style={{ marginTop: 20 }}>
-        分析框架
-      </div>
-      <div className="card">
-        <div className="card-head">
-          <div className="card-icon-wrap" style={{ background: '#F0FDF4' }}>
-            🔍
-          </div>
-          <div className="card-head-text">
-            <div className="card-head-title">下钻归因思路</div>
-          </div>
-        </div>
-        <div className="card-body">
-          <div className="field" style={{ margin: 0 }}>
-            <div className="field-label">整体分析框架</div>
-            <textarea
-              rows={4}
-              value={state.framework}
-              onChange={(e) => update('framework', e.target.value)}
-            />
-          </div>
-        </div>
-      </div>
-
       {/* 图表配置 */}
       <div className="section-label" style={{ marginTop: 20 }}>
         图表配置
@@ -219,7 +166,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                   <input
                     className="node-name"
                     type="text"
-                    placeholder="业务场景描述（如：GBS-1 Team Revenue 和 YoY）"
+                    placeholder="业务场景描述（如：Template ID + NAAP Gaming | Daily Revenue & YoY）"
                     value={n.scenario}
                     onChange={(e) => setNodeField(n.id, 'scenario', e.target.value)}
                   />
@@ -286,39 +233,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                   </div>
                   <div className="field" style={{ marginBottom: 14 }}>
                     <div className="field-label">
-                      Metric and Chart ID <span className="hint">按行填写 Metric 定义与对应 Chart ID 的映射关系</span>{' '}
-                      <span className="req">*</span>
-                    </div>
-                    {n.metrics.map((m, mi) => (
-                      <div className="id-bar" key={m.id} style={{ marginTop: mi === 0 ? 0 : 8 }}>
-                        <span className="id-bar-label">Metric</span>
-                        <input
-                          type="text"
-                          placeholder='如：["Stat Date", "Dollar Revenue Real"]'
-                          value={m.metric}
-                          onChange={(e) => setMetricField(n.id, m.id, 'metric', e.target.value)}
-                        />
-                        <span className="div">→</span>
-                        <span className="id-bar-label">Chart ID</span>
-                        <input
-                          type="text"
-                          placeholder="GBSrev"
-                          value={m.chartId}
-                          onChange={(e) => setMetricField(n.id, m.id, 'chartId', e.target.value)}
-                        />
-                        <button className="icon-btn danger" onClick={() => delMetric(n.id, m.id)} title="删除">
-                          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                            <path d="M6 18L18 6M6 6l12 12"></path>
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
-                    <button className="btn btn-secondary btn-xs" style={{ marginTop: 8 }} onClick={() => addMetric(n.id)}>
-                      + 添加映射关系
-                    </button>
-                  </div>
-                  <div className="field" style={{ marginBottom: 14 }}>
-                    <div className="field-label">
                       下钻Dimension <span className="opt">可选</span>
                     </div>
                     <textarea
@@ -329,31 +243,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                       onChange={(e) => setNodeField(n.id, 'drillDimension', e.target.value)}
                     />
                   </div>
-                  <div className="grid-2" style={{ margin: 0 }}>
-                    <div className="field" style={{ margin: 0 }}>
-                      <div className="field-label">
-                        Creator <span className="req">*</span>
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="创建人姓名"
-                        value={n.creator}
-                        onChange={(e) => setNodeField(n.id, 'creator', e.target.value)}
-                      />
-                    </div>
-                    <div className="field" style={{ margin: 0 }}>
-                      <div className="field-label">
-                        Owner <span className="req">*</span>
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="负责人姓名"
-                        value={n.owner}
-                        onChange={(e) => setNodeField(n.id, 'owner', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <div className="field" style={{ margin: '14px 0 0' }}>
+                  <div className="field" style={{ margin: 0 }}>
                     <div className="field-label">
                       Type <span className="hint">支持 Public / Personal</span> <span className="req">*</span>
                     </div>
