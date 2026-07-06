@@ -65,7 +65,7 @@ function App() {
             className={`topbar-tab ${activeTab === 'storyline' ? 'active' : ''}`}
             onClick={() => setActiveTab('storyline')}
           >
-            <span className="t-icon">📊</span>故事线配置
+            <span className="t-icon">📊</span>图表配置
             <span className="t-badge">{storyline.nodes.length}</span>
           </button>
           <button

@@ -108,7 +108,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
 
   const submit = () => {
     if (!state.topic) {
-      toast('⚠️ 请填写分析主题');
+      toast('⚠️ 请填写文件夹名称');
       return;
     }
     if (!state.nodes.length) {
@@ -119,7 +119,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
   };
 
   const reset = () => {
-    if (!confirm('确认重置所有故事线配置？')) return;
+    if (!confirm('确认重置所有图表配置？')) return;
     setState({
       topic: '',
       period: '',
@@ -139,7 +139,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
       <div className="page-head">
         <div className="page-head-row">
           <div>
-            <div className="page-head-title">故事线配置</div>
+            <div className="page-head-title">图表配置</div>
             <div className="page-head-desc">
               定义分析任务的主题、背景与归因节点，Agent 将按此上下文逐层下钻。
             </div>
@@ -178,13 +178,13 @@ export default function StorylineTab({ state, setState, toast }: Props) {
           </div>
           <div className="card-head-text">
             <div className="card-head-title">分析任务定义</div>
-            <div className="card-head-desc">明确分析主题、时间范围与责任人</div>
+            <div className="card-head-desc">明确文件夹名称、时间范围与责任人</div>
           </div>
         </div>
         <div className="card-body">
           <div className="field">
             <div className="field-label">
-              分析主题 <span className="req">*</span>
+              文件夹名称 <span className="req">*</span>
             </div>
             <input
               type="text"
