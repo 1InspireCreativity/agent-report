@@ -84,7 +84,7 @@ export function defaultReport(): ReportState {
     cycle: 'W',
     chartType: 'wuhuaro',
     description: '',
-    chartId: '',
+    chartIds: [],
     owner: '',
     ownerEmail: '',
     ownerDept: '',
@@ -121,7 +121,7 @@ export function buildReportPayload(rpt: ReportState) {
     cycle: rpt.cycle,
     chart_type: rpt.chartType,
     description: rpt.description || null,
-    chart_id: rpt.chartId || null,
+    chart_ids: rpt.chartIds,
     owner: rpt.owner || null,
     owner_email: rpt.ownerEmail || null,
     owner_dept: rpt.ownerDept || null,
@@ -224,9 +224,12 @@ export function normalizeStoryline(raw: Partial<StorylineState> | null | undefin
   };
 }
 
-export function normalizeReport(raw: (Partial<ReportState> & { dataQueryId?: string }) | null | undefined): ReportState {
+export function normalizeReport(
+  raw: (Partial<ReportState> & { dataQueryId?: string; chartId?: string }) | null | undefined
+): ReportState {
   const base = defaultReport();
   if (!raw) return base;
+  const legacyChartId = typeof raw.chartId === 'string' ? raw.chartId : typeof raw.dataQueryId === 'string' ? raw.dataQueryId : '';
   return {
     name: typeof raw.name === 'string' ? raw.name : base.name,
     cycle: raw.cycle === '2W' || raw.cycle === 'M' || raw.cycle === 'W' ? raw.cycle : base.cycle,
@@ -235,7 +238,7 @@ export function normalizeReport(raw: (Partial<ReportState> & { dataQueryId?: str
         ? raw.chartType
         : base.chartType,
     description: typeof raw.description === 'string' ? raw.description : base.description,
-    chartId: typeof raw.chartId === 'string' ? raw.chartId : typeof raw.dataQueryId === 'string' ? raw.dataQueryId : base.chartId,
+    chartIds: Array.isArray(raw.chartIds) ? raw.chartIds : legacyChartId ? [legacyChartId] : base.chartIds,
     owner: typeof raw.owner === 'string' ? raw.owner : base.owner,
     ownerEmail: typeof raw.ownerEmail === 'string' ? raw.ownerEmail : base.ownerEmail,
     ownerDept: typeof raw.ownerDept === 'string' ? raw.ownerDept : base.ownerDept,

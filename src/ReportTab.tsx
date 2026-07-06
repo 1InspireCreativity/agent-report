@@ -26,6 +26,7 @@ function saveTemplates(arr: ReportTemplate[]) {
 export default function ReportTab({ state, setState, toast }: Props) {
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
   const [selectedTplId, setSelectedTplId] = useState('');
+  const [chartIdDraft, setChartIdDraft] = useState('');
 
   useEffect(() => {
     setTemplates(loadTemplates());
@@ -33,6 +34,17 @@ export default function ReportTab({ state, setState, toast }: Props) {
 
   const update = <K extends keyof ReportState>(key: K, value: ReportState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const addChartId = () => {
+    const val = chartIdDraft.trim();
+    if (!val) return;
+    setState((prev) => ({ ...prev, chartIds: [...prev.chartIds, val] }));
+    setChartIdDraft('');
+  };
+
+  const delChartId = (idx: number) => {
+    setState((prev) => ({ ...prev, chartIds: prev.chartIds.filter((_, i) => i !== idx) }));
   };
 
   const submit = () => {
@@ -51,7 +63,7 @@ export default function ReportTab({ state, setState, toast }: Props) {
       cycle: 'W',
       chartType: 'wuhuaro',
       description: '',
-      chartId: '',
+      chartIds: [],
       owner: '',
       ownerEmail: '',
       ownerDept: '',
@@ -90,7 +102,7 @@ export default function ReportTab({ state, setState, toast }: Props) {
       name: '',
       cycle: 'W',
       description: '',
-      chartId: '',
+      chartIds: [],
       owner: '',
       ownerEmail: '',
       ownerDept: '',
@@ -209,14 +221,35 @@ export default function ReportTab({ state, setState, toast }: Props) {
           <div className="grid-2" style={{ margin: '16px 0 0' }}>
             <div className="field" style={{ margin: 0 }}>
               <div className="field-label">
-                Chart ID <span className="req">*</span>
+                Chart ID <span className="req">*</span> <span className="hint">支持添加多个 Chart ID</span>
               </div>
-              <input
-                type="text"
-                placeholder="cht_auto_weekly_001"
-                value={state.chartId}
-                onChange={(e) => update('chartId', e.target.value)}
-              />
+              <div className="tags-wrap">
+                {state.chartIds.map((c, i) => (
+                  <span className="tag" title={c} key={i}>
+                    <span className="tag-text">{c}</span>
+                    <button className="tag-x" onClick={() => delChartId(i)}>
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="tag-input-row">
+                <input
+                  type="text"
+                  placeholder="cht_auto_weekly_001"
+                  value={chartIdDraft}
+                  onChange={(e) => setChartIdDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      addChartId();
+                      e.preventDefault();
+                    }
+                  }}
+                />
+                <button className="btn btn-secondary btn-xs" onClick={addChartId}>
+                  + 添加
+                </button>
+              </div>
             </div>
             <div className="field" style={{ margin: 0 }}>
               <div className="field-label">

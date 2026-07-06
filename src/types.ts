@@ -35,7 +35,7 @@ export interface ReportState {
   cycle: ReportCycle;
   chartType: ChartType;
   description: string;
-  chartId: string;
+  chartIds: string[];
   owner: string;
   ownerEmail: string;
   ownerDept: string;
