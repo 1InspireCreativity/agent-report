@@ -229,7 +229,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
             <div className="field-label">整体分析框架</div>
             <textarea
               rows={4}
-              placeholder="例：先从供给侧（SKU 数量、价格带）和需求侧（流量、转化率、客单价）两个维度切入，再分渠道（直播、搜索、推荐）下钻，最后锁定核心归因…"
               value={state.framework}
               onChange={(e) => update('framework', e.target.value)}
             />
