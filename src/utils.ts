@@ -75,11 +75,10 @@ export function defaultStoryline(): StorylineState {
 export function defaultReport(): ReportState {
   return {
     name: '',
-    dept: '',
     cycle: 'W',
     chartType: 'wuhuaro',
     description: '',
-    dataQueryId: '',
+    chartId: '',
     owner: '',
     ownerEmail: '',
     ownerDept: '',
@@ -132,11 +131,10 @@ export function buildReportPayload(rpt: ReportState) {
   return {
     type: 'weekly_report_config',
     report_name: rpt.name || '（未填写）',
-    department: rpt.dept || null,
     cycle: rpt.cycle,
     chart_type: rpt.chartType,
     description: rpt.description || null,
-    data_query_id: rpt.dataQueryId || null,
+    chart_id: rpt.chartId || null,
     owner: rpt.owner || null,
     owner_email: rpt.ownerEmail || null,
     owner_dept: rpt.ownerDept || null,

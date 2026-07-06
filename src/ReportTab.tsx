@@ -81,11 +81,10 @@ export default function ReportTab({ state, setState, toast }: Props) {
     setState((prev) => ({
       ...prev,
       name: '',
-      dept: '',
       cycle: 'W',
       chartType: 'wuhuaro',
       description: '',
-      dataQueryId: '',
+      chartId: '',
       owner: '',
       ownerEmail: '',
       ownerDept: '',
@@ -123,10 +122,9 @@ export default function ReportTab({ state, setState, toast }: Props) {
       ...prev,
       templateName: '',
       name: '',
-      dept: '',
       cycle: 'W',
       description: '',
-      dataQueryId: '',
+      chartId: '',
       owner: '',
       ownerEmail: '',
       ownerDept: '',
@@ -212,33 +210,31 @@ export default function ReportTab({ state, setState, toast }: Props) {
           </div>
           <div className="card-head-text">
             <div className="card-head-title">基础设置</div>
-            <div className="card-head-desc">周报名称、部门与汇报周期</div>
+            <div className="card-head-desc">周报名称与汇报周期</div>
           </div>
         </div>
         <div className="card-body">
-          <div className="grid-2" style={{ margin: 0, marginBottom: 16 }}>
-            <div className="field" style={{ margin: 0 }}>
-              <div className="field-label">
-                周报名称 <span className="req">*</span>
-              </div>
-              <input
-                type="text"
-                placeholder="电商业务周报 W26"
-                value={state.name}
-                onChange={(e) => update('name', e.target.value)}
-              />
+          <div className="field" style={{ margin: 0, marginBottom: 16 }}>
+            <div className="field-label">
+              周报名称 <span className="req">*</span>
             </div>
-            <div className="field" style={{ margin: 0 }}>
-              <div className="field-label">所属部门</div>
-              <input
-                type="text"
-                placeholder="例：商业规划组"
-                value={state.dept}
-                onChange={(e) => update('dept', e.target.value)}
-              />
-            </div>
+            <input
+              type="text"
+              placeholder="电商业务周报 W26"
+              value={state.name}
+              onChange={(e) => update('name', e.target.value)}
+            />
           </div>
-          {/* 修复点：汇报周期 与 图表类型 拆分为两个独立的单选下拉框 */}
+          <div className="field" style={{ margin: 0, marginBottom: 16 }}>
+            <div className="field-label">
+              周报描述 <span className="opt">可选</span>
+            </div>
+            <textarea
+              placeholder="简要描述该周报的分析目标与覆盖范围…"
+              value={state.description}
+              onChange={(e) => update('description', e.target.value)}
+            />
+          </div>
           <div className="grid-2" style={{ margin: 0 }}>
             <div className="field" style={{ margin: 0 }}>
               <div className="field-label">汇报周期</div>
@@ -264,26 +260,14 @@ export default function ReportTab({ state, setState, toast }: Props) {
               </select>
             </div>
           </div>
-          <div className="field" style={{ margin: '16px 0 0' }}>
-            <div className="field-label">
-              周报描述 <span className="opt">可选</span>
-            </div>
-            <textarea
-              placeholder="简要描述该周报的分析目标与覆盖范围…"
-              value={state.description}
-              onChange={(e) => update('description', e.target.value)}
-            />
-          </div>
           <div className="grid-2" style={{ margin: '16px 0 0' }}>
             <div className="field" style={{ margin: 0 }}>
-              <div className="field-label">
-                Data Query ID <span className="hint">对应自动化周报 chart id</span>
-              </div>
+              <div className="field-label">Chart ID</div>
               <input
                 type="text"
                 placeholder="cht_auto_weekly_001"
-                value={state.dataQueryId}
-                onChange={(e) => update('dataQueryId', e.target.value)}
+                value={state.chartId}
+                onChange={(e) => update('chartId', e.target.value)}
               />
             </div>
           </div>

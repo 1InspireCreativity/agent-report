@@ -48,11 +48,10 @@ export interface ExecutionConfig {
 
 export interface ReportState {
   name: string;
-  dept: string;
   cycle: ReportCycle;
   chartType: ChartType;
   description: string;
-  dataQueryId: string;
+  chartId: string;
   owner: string;
   ownerEmail: string;
   ownerDept: string;
