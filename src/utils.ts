@@ -13,14 +13,6 @@ export const CHART_TYPE_OPTIONS: { value: ReportState['chartType']; label: strin
   { value: 'bar', label: '柱状图' },
 ];
 
-export const OWNER_DEPT_OPTIONS: { value: string; label: string }[] = [
-  { value: 'growth_analytics', label: '商业规划组' },
-  { value: 'data_intelligence', label: '数据智能组' },
-  { value: 'product_ops', label: '产品运营组' },
-  { value: 'market_growth', label: '市场增长组' },
-  { value: 'other', label: '其他' },
-];
-
 export const STORYLINE_TYPE_OPTIONS: { value: StorylineDataType; label: string }[] = [
   { value: 'public', label: 'Public' },
   { value: 'personal', label: 'Personal' },

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ReportState, ReportTemplate } from './types';
-import { buildReportPayload, normalizeReport, CYCLE_OPTIONS, CHART_TYPE_OPTIONS, OWNER_DEPT_OPTIONS } from './utils';
+import { buildReportPayload, normalizeReport, CYCLE_OPTIONS, CHART_TYPE_OPTIONS } from './utils';
 import PayloadPanel from './PayloadPanel';
 
 interface Props {
@@ -278,14 +278,12 @@ export default function ReportTab({ state, setState, toast }: Props) {
               <div className="field-label">
                 Owner Department <span className="opt">可选</span>
               </div>
-              <select value={state.ownerDept} onChange={(e) => update('ownerDept', e.target.value)}>
-                <option value="">请选择…</option>
-                {OWNER_DEPT_OPTIONS.map((o) => (
-                  <option value={o.value} key={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+              <input
+                type="text"
+                placeholder="例：商业规划组"
+                value={state.ownerDept}
+                onChange={(e) => update('ownerDept', e.target.value)}
+              />
             </div>
           </div>
         </div>
