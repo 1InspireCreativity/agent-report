@@ -140,7 +140,6 @@ export default function ReportTab({ state, setState, toast }: Props) {
         <div className="page-head-row">
           <div>
             <div className="page-head-title">周报取数配置</div>
-            <div className="page-head-desc">配置周报名称、汇报周期与图表 ID，以及负责人信息。</div>
           </div>
           <button className="btn btn-success" onClick={submit}>
             <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">

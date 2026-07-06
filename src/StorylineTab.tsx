@@ -181,7 +181,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
             </div>
             <input
               type="text"
-              placeholder="例：Q2 GMV 下滑归因分析"
+              placeholder="例：本周 Revenue下滑归因分析"
               value={state.topic}
               onChange={(e) => update('topic', e.target.value)}
             />
