@@ -400,7 +400,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                     <textarea
                       rows={2}
                       style={{ fontSize: 12.5 }}
-                      placeholder="说明该节点依据哪些维度下钻，如：按渠道（直播/搜索/推荐）、地域、产品线下钻…"
+                      placeholder="说明该节点依据哪些维度下钻，如：NAAP Lever L1、Industry 4.0 Level 1…"
                       value={n.drillDimension}
                       onChange={(e) => setNodeField(n.id, 'drillDimension', e.target.value)}
                     />
