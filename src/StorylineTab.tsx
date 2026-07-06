@@ -237,7 +237,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
           </div>
           <div className="field" style={{ marginTop: 14, marginBottom: 0 }}>
             <div className="field-label">
-              背景描述 <span className="req">*</span>
+              业务场景描述 <span className="req">*</span>
             </div>
             <textarea
               rows={3}
@@ -313,34 +313,13 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                   </button>
                 </div>
                 <div className="node-body" style={{ display: 'block', padding: '16px 18px' }}>
-                  <div className="grid-2" style={{ marginBottom: 14 }}>
-                    <div className="field" style={{ margin: 0 }}>
-                      <div className="field-label">拼数方式</div>
-                      <input
-                        type="text"
-                        placeholder="如：QMW / 其他拼接方式"
-                        value={n.joinMethod}
-                        onChange={(e) => setNodeField(n.id, 'joinMethod', e.target.value)}
-                      />
-                    </div>
-                    <div className="field" style={{ margin: 0 }}>
-                      <div className="field-label">Type</div>
-                      <select value={n.type} onChange={(e) => setNodeType(n.id, e.target.value as StorylineDataType)}>
-                        {STORYLINE_TYPE_OPTIONS.map((o) => (
-                          <option value={o.value} key={o.value}>
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
                   <div className="field" style={{ marginBottom: 14 }}>
-                    <div className="field-label">Owner</div>
+                    <div className="field-label">拼数方式</div>
                     <input
                       type="text"
-                      placeholder="负责人姓名"
-                      value={n.owner}
-                      onChange={(e) => setNodeField(n.id, 'owner', e.target.value)}
+                      placeholder="如：QMW / 其他拼接方式"
+                      value={n.joinMethod}
+                      onChange={(e) => setNodeField(n.id, 'joinMethod', e.target.value)}
                     />
                   </div>
                   <div className="field" style={{ marginBottom: 14 }}>
@@ -417,9 +396,9 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                       onChange={(e) => setNodeField(n.id, 'drillDimension', e.target.value)}
                     />
                   </div>
-                  <div className="field" style={{ marginBottom: 0 }}>
+                  <div className="field" style={{ marginBottom: 14 }}>
                     <div className="field-label">
-                      Data Set <span className="hint">支持添加多个数据集</span>
+                      Dataset <span className="hint">支持添加多个数据集</span>
                     </div>
                     <div className="tags-wrap">
                       {n.dataSets.map((d, di) => (
@@ -434,7 +413,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                     <div className="tag-input-row">
                       <input
                         type="text"
-                        placeholder="粘贴 Data Set 名称…"
+                        placeholder="粘贴 Dataset 名称…"
                         value={dataSetDrafts[n.id] || ''}
                         onChange={(e) => setDataSetDrafts((prev) => ({ ...prev, [n.id]: e.target.value }))}
                         onKeyDown={(e) => {
@@ -447,6 +426,27 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                       <button className="btn btn-secondary btn-xs" onClick={() => addDataSet(n.id)}>
                         + 添加
                       </button>
+                    </div>
+                  </div>
+                  <div className="grid-2" style={{ margin: 0 }}>
+                    <div className="field" style={{ margin: 0 }}>
+                      <div className="field-label">Owner</div>
+                      <input
+                        type="text"
+                        placeholder="负责人姓名"
+                        value={n.owner}
+                        onChange={(e) => setNodeField(n.id, 'owner', e.target.value)}
+                      />
+                    </div>
+                    <div className="field" style={{ margin: 0 }}>
+                      <div className="field-label">Type</div>
+                      <select value={n.type} onChange={(e) => setNodeType(n.id, e.target.value as StorylineDataType)}>
+                        {STORYLINE_TYPE_OPTIONS.map((o) => (
+                          <option value={o.value} key={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                 </div>
