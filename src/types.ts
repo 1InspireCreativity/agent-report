@@ -15,6 +15,7 @@ export interface AttributionNode {
   metrics: MetricMapping[];
   drillDimension: string;
   dataSets: string[];
+  creator: string;
   owner: string;
   type: StorylineDataType;
 }

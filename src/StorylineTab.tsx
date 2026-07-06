@@ -9,7 +9,7 @@ interface Props {
   toast: (msg: string) => void;
 }
 
-type NodeTextField = 'scenario' | 'joinMethod' | 'templateId' | 'drillDimension' | 'owner';
+type NodeTextField = 'scenario' | 'joinMethod' | 'templateId' | 'drillDimension' | 'creator' | 'owner';
 
 export default function StorylineTab({ state, setState, toast }: Props) {
   const [linkDrafts, setLinkDrafts] = useState<Record<number, string>>({});
@@ -320,7 +320,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                     <div className="field-label">Template ID</div>
                     <input
                       type="text"
-                      placeholder="tpl_12345"
+                      placeholder="motz7cum6ntsj6"
                       value={n.templateId}
                       onChange={(e) => setNodeField(n.id, 'templateId', e.target.value)}
                     />
@@ -401,6 +401,15 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                   </div>
                   <div className="grid-2" style={{ margin: 0 }}>
                     <div className="field" style={{ margin: 0 }}>
+                      <div className="field-label">Creator</div>
+                      <input
+                        type="text"
+                        placeholder="创建人姓名"
+                        value={n.creator}
+                        onChange={(e) => setNodeField(n.id, 'creator', e.target.value)}
+                      />
+                    </div>
+                    <div className="field" style={{ margin: 0 }}>
                       <div className="field-label">Owner</div>
                       <input
                         type="text"
@@ -409,16 +418,16 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                         onChange={(e) => setNodeField(n.id, 'owner', e.target.value)}
                       />
                     </div>
-                    <div className="field" style={{ margin: 0 }}>
-                      <div className="field-label">Type</div>
-                      <select value={n.type} onChange={(e) => setNodeType(n.id, e.target.value as StorylineDataType)}>
-                        {STORYLINE_TYPE_OPTIONS.map((o) => (
-                          <option value={o.value} key={o.value}>
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                  </div>
+                  <div className="field" style={{ margin: '14px 0 0' }}>
+                    <div className="field-label">Type</div>
+                    <select value={n.type} onChange={(e) => setNodeType(n.id, e.target.value as StorylineDataType)}>
+                      {STORYLINE_TYPE_OPTIONS.map((o) => (
+                        <option value={o.value} key={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>

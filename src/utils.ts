@@ -53,6 +53,7 @@ export function defaultStoryline(): StorylineState {
         ],
         drillDimension: 'NAAP Lever L1 Industry 4.0 Level 1',
         dataSets: ['[Restricted Access] NAAP_Performance_with_GBS_FullSnapshot_Dataset'],
+        creator: '',
         owner: '',
         type: 'public',
       },
@@ -71,6 +72,7 @@ export function defaultStoryline(): StorylineState {
         ],
         drillDimension: 'NAAP Lever L1 Industry 4.0 Level 1',
         dataSets: ['[Restricted Access] NAAP_Performance_with_GBS_FullSnapshot_Dataset'],
+        creator: '',
         owner: '',
         type: 'personal',
       },
@@ -108,6 +110,7 @@ export function buildStorylinePayload(sl: StorylineState) {
       metric_chart_mappings: n.metrics.map((m) => ({ metric: m.metric || null, chart_id: m.chartId || null })),
       drill_dimension: n.drillDimension || null,
       data_sets: n.dataSets,
+      creator: n.creator || null,
       owner: n.owner || null,
       type: n.type,
     })),
@@ -173,6 +176,7 @@ export function emptyNode(): AttributionNode {
     metrics: [],
     drillDimension: '',
     dataSets: [],
+    creator: '',
     owner: '',
     type: 'public',
   };
@@ -205,6 +209,7 @@ function normalizeNode(raw: Record<string, unknown> | undefined): AttributionNod
     drillDimension:
       typeof r.drillDimension === 'string' ? r.drillDimension : typeof r.desc === 'string' ? r.desc : '',
     dataSets: Array.isArray(r.dataSets) ? (r.dataSets as string[]) : [],
+    creator: typeof r.creator === 'string' ? r.creator : '',
     owner: typeof r.owner === 'string' ? r.owner : '',
     type: r.type === 'personal' ? 'personal' : 'public',
   };
