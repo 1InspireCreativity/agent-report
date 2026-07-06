@@ -138,12 +138,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
           <div>
             <div className="page-head-title">图表配置</div>
           </div>
-          <button className="btn btn-primary" onClick={submit}>
-            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
-              <path d="M5 12l5 5L20 7"></path>
-            </svg>
-            提交给 Agent
-          </button>
         </div>
       </div>
 
