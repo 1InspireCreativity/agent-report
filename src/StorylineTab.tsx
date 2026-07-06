@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { StorylineState } from './types';
-import { buildStorylinePayload, emptyNode } from './utils';
+import type { StorylineState, StorylineDataType } from './types';
+import { buildStorylinePayload, emptyNode, emptyMetricMapping, STORYLINE_TYPE_OPTIONS } from './utils';
 import PayloadPanel from './PayloadPanel';
 
 interface Props {
@@ -9,17 +9,27 @@ interface Props {
   toast: (msg: string) => void;
 }
 
+type NodeTextField = 'scenario' | 'joinMethod' | 'drillDimension' | 'owner';
+
 export default function StorylineTab({ state, setState, toast }: Props) {
   const [linkDrafts, setLinkDrafts] = useState<Record<number, string>>({});
+  const [dataSetDrafts, setDataSetDrafts] = useState<Record<number, string>>({});
 
   const update = <K extends keyof StorylineState>(key: K, value: StorylineState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }));
   };
 
-  const setNodeField = (id: number, field: 'name' | 'desc', value: string) => {
+  const setNodeField = (id: number, field: NodeTextField, value: string) => {
     setState((prev) => ({
       ...prev,
       nodes: prev.nodes.map((n) => (n.id === id ? { ...n, [field]: value } : n)),
+    }));
+  };
+
+  const setNodeType = (id: number, value: StorylineDataType) => {
+    setState((prev) => ({
+      ...prev,
+      nodes: prev.nodes.map((n) => (n.id === id ? { ...n, type: value } : n)),
     }));
   };
 
@@ -31,21 +41,67 @@ export default function StorylineTab({ state, setState, toast }: Props) {
     setState((prev) => ({ ...prev, nodes: prev.nodes.filter((n) => n.id !== id) }));
   };
 
-  const addNodeLink = (id: number) => {
+  const addQueryLink = (id: number) => {
     const val = (linkDrafts[id] || '').trim();
     if (!val) return;
     setState((prev) => ({
       ...prev,
-      nodes: prev.nodes.map((n) => (n.id === id ? { ...n, links: [...n.links, val] } : n)),
+      nodes: prev.nodes.map((n) => (n.id === id ? { ...n, queryLinks: [...n.queryLinks, val] } : n)),
     }));
     setLinkDrafts((prev) => ({ ...prev, [id]: '' }));
   };
 
-  const delNodeLink = (id: number, idx: number) => {
+  const delQueryLink = (id: number, idx: number) => {
     setState((prev) => ({
       ...prev,
       nodes: prev.nodes.map((n) =>
-        n.id === id ? { ...n, links: n.links.filter((_, i) => i !== idx) } : n
+        n.id === id ? { ...n, queryLinks: n.queryLinks.filter((_, i) => i !== idx) } : n
+      ),
+    }));
+  };
+
+  const addDataSet = (id: number) => {
+    const val = (dataSetDrafts[id] || '').trim();
+    if (!val) return;
+    setState((prev) => ({
+      ...prev,
+      nodes: prev.nodes.map((n) => (n.id === id ? { ...n, dataSets: [...n.dataSets, val] } : n)),
+    }));
+    setDataSetDrafts((prev) => ({ ...prev, [id]: '' }));
+  };
+
+  const delDataSet = (id: number, idx: number) => {
+    setState((prev) => ({
+      ...prev,
+      nodes: prev.nodes.map((n) =>
+        n.id === id ? { ...n, dataSets: n.dataSets.filter((_, i) => i !== idx) } : n
+      ),
+    }));
+  };
+
+  const addMetric = (id: number) => {
+    setState((prev) => ({
+      ...prev,
+      nodes: prev.nodes.map((n) => (n.id === id ? { ...n, metrics: [...n.metrics, emptyMetricMapping()] } : n)),
+    }));
+  };
+
+  const delMetric = (id: number, metricId: number) => {
+    setState((prev) => ({
+      ...prev,
+      nodes: prev.nodes.map((n) =>
+        n.id === id ? { ...n, metrics: n.metrics.filter((m) => m.id !== metricId) } : n
+      ),
+    }));
+  };
+
+  const setMetricField = (id: number, metricId: number, field: 'metric' | 'chartId', value: string) => {
+    setState((prev) => ({
+      ...prev,
+      nodes: prev.nodes.map((n) =>
+        n.id === id
+          ? { ...n, metrics: n.metrics.map((m) => (m.id === metricId ? { ...m, [field]: value } : m)) }
+          : n
       ),
     }));
   };
@@ -231,7 +287,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
           </div>
           <div className="card-head-text">
             <div className="card-head-title">归因节点配置</div>
-            <div className="card-head-desc">每个节点对应一个分析维度，绑定所需数据集或取数链接</div>
+            <div className="card-head-desc">每个节点对应一个业务场景，绑定取数链接、指标口径与数据集</div>
           </div>
           <div className="card-head-actions">
             <span style={{ fontSize: 12, color: 'var(--c-text-4)' }}>共 {state.nodes.length} 个节点</span>
@@ -246,9 +302,9 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                   <input
                     className="node-name"
                     type="text"
-                    placeholder="节点名称（如：流量层分析）"
-                    value={n.name}
-                    onChange={(e) => setNodeField(n.id, 'name', e.target.value)}
+                    placeholder="业务场景描述（如：GBS-1 Team revenue 和 YoY）"
+                    value={n.scenario}
+                    onChange={(e) => setNodeField(n.id, 'scenario', e.target.value)}
                   />
                   <button className="node-del" onClick={() => delNode(n.id)}>
                     <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -256,28 +312,46 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                     </svg>
                   </button>
                 </div>
-                <div className="node-body">
-                  <div className="node-body-col">
-                    <div className="field-label" style={{ marginBottom: 6 }}>
-                      节点描述
+                <div className="node-body" style={{ display: 'block', padding: '16px 18px' }}>
+                  <div className="grid-2" style={{ marginBottom: 14 }}>
+                    <div className="field" style={{ margin: 0 }}>
+                      <div className="field-label">拼数方式</div>
+                      <input
+                        type="text"
+                        placeholder="如：QMW / 其他拼接方式"
+                        value={n.joinMethod}
+                        onChange={(e) => setNodeField(n.id, 'joinMethod', e.target.value)}
+                      />
                     </div>
-                    <textarea
-                      rows={2}
-                      style={{ fontSize: 12.5 }}
-                      placeholder="该节点分析什么、判断逻辑…"
-                      value={n.desc}
-                      onChange={(e) => setNodeField(n.id, 'desc', e.target.value)}
+                    <div className="field" style={{ margin: 0 }}>
+                      <div className="field-label">Type</div>
+                      <select value={n.type} onChange={(e) => setNodeType(n.id, e.target.value as StorylineDataType)}>
+                        {STORYLINE_TYPE_OPTIONS.map((o) => (
+                          <option value={o.value} key={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="field" style={{ marginBottom: 14 }}>
+                    <div className="field-label">Owner</div>
+                    <input
+                      type="text"
+                      placeholder="负责人姓名"
+                      value={n.owner}
+                      onChange={(e) => setNodeField(n.id, 'owner', e.target.value)}
                     />
                   </div>
-                  <div className="node-body-col">
-                    <div className="field-label" style={{ marginBottom: 6 }}>
-                      取数链接 / 数据集
+                  <div className="field" style={{ marginBottom: 14 }}>
+                    <div className="field-label">
+                      Query Link <span className="hint">支持添加多个链接</span>
                     </div>
                     <div className="tags-wrap">
-                      {n.links.map((l, li) => (
+                      {n.queryLinks.map((l, li) => (
                         <span className="tag" title={l} key={li}>
-                          <span className="tag-text">{l.length > 34 ? l.slice(0, 32) + '…' : l}</span>
-                          <button className="tag-x" onClick={() => delNodeLink(n.id, li)}>
+                          <span className="tag-text">{l.length > 46 ? l.slice(0, 44) + '…' : l}</span>
+                          <button className="tag-x" onClick={() => delQueryLink(n.id, li)}>
                             ×
                           </button>
                         </span>
@@ -286,17 +360,91 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                     <div className="tag-input-row">
                       <input
                         type="url"
-                        placeholder="粘贴链接或数据集名称…"
+                        placeholder="粘贴 Query Link…"
                         value={linkDrafts[n.id] || ''}
                         onChange={(e) => setLinkDrafts((prev) => ({ ...prev, [n.id]: e.target.value }))}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
-                            addNodeLink(n.id);
+                            addQueryLink(n.id);
                             e.preventDefault();
                           }
                         }}
                       />
-                      <button className="btn btn-secondary btn-xs" onClick={() => addNodeLink(n.id)}>
+                      <button className="btn btn-secondary btn-xs" onClick={() => addQueryLink(n.id)}>
+                        + 添加
+                      </button>
+                    </div>
+                  </div>
+                  <div className="field" style={{ marginBottom: 14 }}>
+                    <div className="field-label">
+                      Metric and Chart ID <span className="hint">按行填写 Metric 定义与对应 Chart ID 的映射关系</span>
+                    </div>
+                    {n.metrics.map((m, mi) => (
+                      <div className="id-bar" key={m.id} style={{ marginTop: mi === 0 ? 0 : 8 }}>
+                        <span className="id-bar-label">Metric</span>
+                        <input
+                          type="text"
+                          placeholder='如：["Stat Date", "Dollar Revenue Real"]'
+                          value={m.metric}
+                          onChange={(e) => setMetricField(n.id, m.id, 'metric', e.target.value)}
+                        />
+                        <span className="div">→</span>
+                        <span className="id-bar-label">Chart ID</span>
+                        <input
+                          type="text"
+                          placeholder="GBSrev"
+                          value={m.chartId}
+                          onChange={(e) => setMetricField(n.id, m.id, 'chartId', e.target.value)}
+                        />
+                        <button className="icon-btn danger" onClick={() => delMetric(n.id, m.id)} title="删除">
+                          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <path d="M6 18L18 6M6 6l12 12"></path>
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                    <button className="btn btn-secondary btn-xs" style={{ marginTop: 8 }} onClick={() => addMetric(n.id)}>
+                      + 添加映射关系
+                    </button>
+                  </div>
+                  <div className="field" style={{ marginBottom: 14 }}>
+                    <div className="field-label">下钻Dimension</div>
+                    <textarea
+                      rows={2}
+                      style={{ fontSize: 12.5 }}
+                      placeholder="说明该节点依据哪些维度下钻，如：按渠道（直播/搜索/推荐）、地域、产品线下钻…"
+                      value={n.drillDimension}
+                      onChange={(e) => setNodeField(n.id, 'drillDimension', e.target.value)}
+                    />
+                  </div>
+                  <div className="field" style={{ marginBottom: 0 }}>
+                    <div className="field-label">
+                      Data Set <span className="hint">支持添加多个数据集</span>
+                    </div>
+                    <div className="tags-wrap">
+                      {n.dataSets.map((d, di) => (
+                        <span className="tag" title={d} key={di}>
+                          <span className="tag-text">{d.length > 46 ? d.slice(0, 44) + '…' : d}</span>
+                          <button className="tag-x" onClick={() => delDataSet(n.id, di)}>
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="tag-input-row">
+                      <input
+                        type="text"
+                        placeholder="粘贴 Data Set 名称…"
+                        value={dataSetDrafts[n.id] || ''}
+                        onChange={(e) => setDataSetDrafts((prev) => ({ ...prev, [n.id]: e.target.value }))}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            addDataSet(n.id);
+                            e.preventDefault();
+                          }
+                        }}
+                      />
+                      <button className="btn btn-secondary btn-xs" onClick={() => addDataSet(n.id)}>
                         + 添加
                       </button>
                     </div>

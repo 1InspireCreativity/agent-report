@@ -1,8 +1,21 @@
+export type StorylineDataType = 'public' | 'personal';
+
+export interface MetricMapping {
+  id: number;
+  metric: string;
+  chartId: string;
+}
+
 export interface AttributionNode {
   id: number;
-  name: string;
-  desc: string;
-  links: string[];
+  scenario: string;
+  queryLinks: string[];
+  joinMethod: string;
+  metrics: MetricMapping[];
+  drillDimension: string;
+  dataSets: string[];
+  owner: string;
+  type: StorylineDataType;
 }
 
 export interface ReportChartItem {

@@ -1,8 +1,10 @@
 import type {
   AttributionNode,
   ExecutionConfig,
+  MetricMapping,
   ReportChartItem,
   ReportState,
+  StorylineDataType,
   StorylineState,
 } from './types';
 
@@ -25,6 +27,11 @@ export const OWNER_DEPT_OPTIONS: { value: string; label: string }[] = [
   { value: 'product_ops', label: '产品运营组' },
   { value: 'market_growth', label: '市场增长组' },
   { value: 'other', label: '其他' },
+];
+
+export const STORYLINE_TYPE_OPTIONS: { value: StorylineDataType; label: string }[] = [
+  { value: 'public', label: 'Public' },
+  { value: 'personal', label: 'Personal' },
 ];
 
 export function defaultExecutionConfig(): ExecutionConfig {
@@ -58,15 +65,42 @@ export function defaultStoryline(): StorylineState {
     nodes: [
       {
         id: 1,
-        name: '流量层分析',
-        desc: '分析各渠道流量趋势，定位流量下滑来源渠道',
-        links: ['https://data.example.com/traffic/channel_trend'],
+        scenario: 'GBS-1 Team revenue 和 YoY',
+        queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1145582?dataset=1159057&queryId=64894787'],
+        joinMethod: 'QMW/other type',
+        metrics: [
+          {
+            id: 1,
+            metric: '["Stat Date", "Dollar Revenue Real - Rev Attain (HQ)", "Daily Latest DC GBS - 1(合并)"]',
+            chartId: 'GBSrev',
+          },
+          {
+            id: 2,
+            metric: '["Stat Date", "YoY", "Daily Latest DC GBS - 1(合并)"]',
+            chartId: 'GBSYOY',
+          },
+        ],
+        drillDimension: '按 NAAP Lever L1、Industry 4.0 Level 1 两个维度下钻',
+        dataSets: ['[Restricted Access] NAAP_Performance_with_GBS_FullSnapshot_Dataset'],
+        owner: '',
+        type: 'public',
       },
       {
         id: 2,
-        name: '转化率分析',
-        desc: '对比各类目转化漏斗，识别转化异常节点',
-        links: ['https://data.example.com/conversion/funnel'],
+        scenario: 'NAAP-1 Team revenue 和 YoY',
+        queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1147165?dataset=1159057&queryId=648951830'],
+        joinMethod: '',
+        metrics: [
+          {
+            id: 1,
+            metric: 'Daily average of Dollar Revenue Real - Rev A YoY(Daily average of Latest Fx - Dollar Rever',
+            chartId: 'mp3ue3hglacfiq',
+          },
+        ],
+        drillDimension: '按 NAAP Lever L1、Industry 4.0 Level 1 两个维度下钻',
+        dataSets: ['[Restricted Access] NAAP_Performance_with_GBS_FullSnapshot_Dataset'],
+        owner: '',
+        type: 'personal',
       },
     ],
   };
@@ -119,9 +153,14 @@ export function buildStorylinePayload(sl: StorylineState) {
     chart_id: sl.chartId || null,
     attribution_nodes: sl.nodes.map((n, i) => ({
       index: i + 1,
-      name: n.name || `节点${i + 1}`,
-      description: n.desc || null,
-      data_links: n.links,
+      scenario: n.scenario || `节点${i + 1}`,
+      query_links: n.queryLinks,
+      join_method: n.joinMethod || null,
+      metric_chart_mappings: n.metrics.map((m) => ({ metric: m.metric || null, chart_id: m.chartId || null })),
+      drill_dimension: n.drillDimension || null,
+      data_sets: n.dataSets,
+      owner: n.owner || null,
+      type: n.type,
     })),
   };
 }
@@ -207,8 +246,28 @@ export function nextRptId() {
   return rptIdCounter;
 }
 
+let metricIdCounter = 100;
+export function nextMetricId() {
+  metricIdCounter += 1;
+  return metricIdCounter;
+}
+
 export function emptyNode(): AttributionNode {
-  return { id: nextNodeId(), name: '', desc: '', links: [] };
+  return {
+    id: nextNodeId(),
+    scenario: '',
+    queryLinks: [],
+    joinMethod: '',
+    metrics: [],
+    drillDimension: '',
+    dataSets: [],
+    owner: '',
+    type: 'public',
+  };
+}
+
+export function emptyMetricMapping(): MetricMapping {
+  return { id: nextMetricId(), metric: '', chartId: '' };
 }
 
 export function emptyRptItem(): ReportChartItem {
