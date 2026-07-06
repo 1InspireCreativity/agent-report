@@ -157,7 +157,6 @@ export default function ReportTab({ state, setState, toast }: Props) {
           </div>
           <div className="card-head-text">
             <div className="card-head-title">基础设置</div>
-            <div className="card-head-desc">周报名称与汇报周期</div>
           </div>
         </div>
         <div className="card-body">
@@ -271,7 +270,6 @@ export default function ReportTab({ state, setState, toast }: Props) {
           </div>
           <div className="card-head-text">
             <div className="card-head-title">报表模版配置管理</div>
-            <div className="card-head-desc">选择 xx 周报模版，保存当前配置，新增其他报表配置，或更改历史配置</div>
           </div>
         </div>
         <div className="card-body">

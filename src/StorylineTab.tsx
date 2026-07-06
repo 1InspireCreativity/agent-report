@@ -137,9 +137,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
         <div className="page-head-row">
           <div>
             <div className="page-head-title">图表配置</div>
-            <div className="page-head-desc">
-              定义分析任务的主题、背景与归因节点，Agent 将按此上下文逐层下钻。
-            </div>
           </div>
           <button className="btn btn-primary" onClick={submit}>
             <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
