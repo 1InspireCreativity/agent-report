@@ -178,7 +178,7 @@ export default function ReportTab({ state, setState, toast }: Props) {
             </div>
             <input
               type="text"
-              placeholder="电商业务周报 W26"
+              placeholder="NAAP Weekly Report"
               value={state.name}
               onChange={(e) => update('name', e.target.value)}
             />
