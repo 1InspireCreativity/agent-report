@@ -266,7 +266,7 @@ export default function ReportTab({ state, setState, toast }: Props) {
       <div className="card">
         <div className="card-head">
           <div className="card-icon-wrap" style={{ background: '#EFF6FF' }}>
-            🧾
+            🏵️
           </div>
           <div className="card-head-text">
             <div className="card-head-title">报表模版配置管理</div>
