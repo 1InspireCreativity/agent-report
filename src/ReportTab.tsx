@@ -148,15 +148,6 @@ export default function ReportTab({ state, setState, toast }: Props) {
             提交配置 · 生成周报
           </button>
         </div>
-        <div className="page-head-meta">
-          <div className="meta-chip">
-            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <path d="M12 6v6l4 2"></path>
-            </svg>
-            自动草稿保存
-          </div>
-        </div>
       </div>
 
       {/* 周报信息 */}
