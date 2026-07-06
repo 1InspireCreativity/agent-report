@@ -187,7 +187,7 @@ export default function ReportTab({ state, setState, toast }: Props) {
               周报描述 <span className="opt">可选</span>
             </div>
             <textarea
-              placeholder="简要描述该周报的分析目标与覆盖范围…"
+              placeholder="例：CNOB分析周报给XX周会使用"
               value={state.description}
               onChange={(e) => update('description', e.target.value)}
             />
