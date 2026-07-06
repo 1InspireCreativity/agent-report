@@ -192,7 +192,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
             </div>
             <input
               type="text"
-              placeholder="姓名 / 花名"
+              placeholder="姓名"
               value={state.analyst}
               onChange={(e) => update('analyst', e.target.value)}
             />
