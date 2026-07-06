@@ -285,7 +285,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                           </span>
                           <input
                             type="text"
-                            placeholder="aaa"
+                            placeholder="GBSrev"
                             value={g.chartId}
                             onChange={(e) => setChartGroupId(n.id, g.id, e.target.value)}
                             style={{ flex: 1 }}
@@ -309,7 +309,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                         <div className="tag-input-row">
                           <input
                             type="url"
-                            placeholder="粘贴 Query Link…"
+                            placeholder="粘贴Query Links, 例：By Quarter , Month , Week"
                             value={linkDrafts[g.id] || ''}
                             onChange={(e) => setLinkDrafts((prev) => ({ ...prev, [g.id]: e.target.value }))}
                             onKeyDown={(e) => {
