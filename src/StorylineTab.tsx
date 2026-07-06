@@ -254,7 +254,18 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                 <div className="node-body" style={{ display: 'block', padding: '16px 18px' }}>
                   <div className="field" style={{ marginBottom: 14 }}>
                     <div className="field-label">
-                      Chart ID <span className="hint">每个 Chart ID 下可添加多个 Query Link</span>{' '}
+                      Template ID <span className="req">*</span>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="motz7cum6ntsj6"
+                      value={n.templateId}
+                      onChange={(e) => setNodeField(n.id, 'templateId', e.target.value)}
+                    />
+                  </div>
+                  <div className="field" style={{ marginBottom: 14 }}>
+                    <div className="field-label">
+                      Chart ID <span className="hint">每个 Chart ID 下可添加多个 Query Link，一个 Template ID 可以有多个 Chart ID</span>{' '}
                       <span className="req">*</span>
                     </div>
                     {n.chartGroups.map((g) => (
@@ -348,17 +359,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                         + 添加
                       </button>
                     </div>
-                  </div>
-                  <div className="field" style={{ marginBottom: 14 }}>
-                    <div className="field-label">
-                      Template ID <span className="req">*</span>
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="motz7cum6ntsj6"
-                      value={n.templateId}
-                      onChange={(e) => setNodeField(n.id, 'templateId', e.target.value)}
-                    />
                   </div>
                   <div className="field" style={{ marginBottom: 14 }}>
                     <div className="field-label">
