@@ -236,9 +236,9 @@ export default function StorylineTab({ state, setState, toast }: Props) {
         </div>
       </div>
 
-      {/* 归因节点 */}
+      {/* 图表配置 */}
       <div className="section-label" style={{ marginTop: 20 }}>
-        归因节点
+        图表配置
       </div>
       <div className="card">
         <div className="card-head">
