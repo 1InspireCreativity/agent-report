@@ -13,7 +13,6 @@ type NodeTextField = 'scenario' | 'joinMethod' | 'templateId' | 'drillDimension'
 
 export default function StorylineTab({ state, setState, toast }: Props) {
   const [linkDrafts, setLinkDrafts] = useState<Record<number, string>>({});
-  const [dataSetDrafts, setDataSetDrafts] = useState<Record<number, string>>({});
 
   const update = <K extends keyof StorylineState>(key: K, value: StorylineState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }));
@@ -56,25 +55,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
       ...prev,
       nodes: prev.nodes.map((n) =>
         n.id === id ? { ...n, queryLinks: n.queryLinks.filter((_, i) => i !== idx) } : n
-      ),
-    }));
-  };
-
-  const addDataSet = (id: number) => {
-    const val = (dataSetDrafts[id] || '').trim();
-    if (!val) return;
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) => (n.id === id ? { ...n, dataSets: [...n.dataSets, val] } : n)),
-    }));
-    setDataSetDrafts((prev) => ({ ...prev, [id]: '' }));
-  };
-
-  const delDataSet = (id: number, idx: number) => {
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) =>
-        n.id === id ? { ...n, dataSets: n.dataSets.filter((_, i) => i !== idx) } : n
       ),
     }));
   };
@@ -348,38 +328,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                       value={n.drillDimension}
                       onChange={(e) => setNodeField(n.id, 'drillDimension', e.target.value)}
                     />
-                  </div>
-                  <div className="field" style={{ marginBottom: 14 }}>
-                    <div className="field-label">
-                      Dataset <span className="hint">支持添加多个数据集</span> <span className="req">*</span>
-                    </div>
-                    <div className="tags-wrap">
-                      {n.dataSets.map((d, di) => (
-                        <span className="tag" title={d} key={di}>
-                          <span className="tag-text">{d.length > 46 ? d.slice(0, 44) + '…' : d}</span>
-                          <button className="tag-x" onClick={() => delDataSet(n.id, di)}>
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                    <div className="tag-input-row">
-                      <input
-                        type="text"
-                        placeholder="粘贴Dataset名称，如：[Restricted Access] NAAP_Performance_with_GBS_FullSnapshot_Dataset"
-                        value={dataSetDrafts[n.id] || ''}
-                        onChange={(e) => setDataSetDrafts((prev) => ({ ...prev, [n.id]: e.target.value }))}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            addDataSet(n.id);
-                            e.preventDefault();
-                          }
-                        }}
-                      />
-                      <button className="btn btn-secondary btn-xs" onClick={() => addDataSet(n.id)}>
-                        + 添加
-                      </button>
-                    </div>
                   </div>
                   <div className="grid-2" style={{ margin: 0 }}>
                     <div className="field" style={{ margin: 0 }}>
