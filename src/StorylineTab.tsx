@@ -330,7 +330,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                     <div className="tag-input-row">
                       <input
                         type="url"
-                        placeholder="粘贴 Query Link…"
+                        placeholder="粘贴 Query Links，如：Quarter Link, Month Link, Week Link"
                         value={linkDrafts[n.id] || ''}
                         onChange={(e) => setLinkDrafts((prev) => ({ ...prev, [n.id]: e.target.value }))}
                         onKeyDown={(e) => {
@@ -422,7 +422,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                     <div className="tag-input-row">
                       <input
                         type="text"
-                        placeholder="粘贴 Dataset 名称…"
+                        placeholder="粘贴Dataset名称，如：[Restricted Access] NAAP_Performance_with_GBS_FullSnapshot_Dataset"
                         value={dataSetDrafts[n.id] || ''}
                         onChange={(e) => setDataSetDrafts((prev) => ({ ...prev, [n.id]: e.target.value }))}
                         onKeyDown={(e) => {
