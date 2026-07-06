@@ -222,7 +222,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
           </div>
           <div className="card-head-text">
             <div className="card-head-title">下钻归因思路</div>
-            <div className="card-head-desc">Agent 将按此框架逐层展开分解</div>
           </div>
         </div>
         <div className="card-body">
@@ -249,7 +248,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
           </div>
           <div className="card-head-text">
             <div className="card-head-title">图表配置</div>
-            <div className="card-head-desc">每个节点对应一个业务场景，绑定取数链接、指标口径与数据集</div>
           </div>
           <div className="card-head-actions">
             <span style={{ fontSize: 12, color: 'var(--c-text-4)' }}>共 {state.nodes.length} 个节点</span>
