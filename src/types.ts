@@ -49,3 +49,13 @@ export interface ReportTemplate {
   updated_at: string;
   state: ReportState;
 }
+
+export interface StorylineFolder {
+  id: string;
+  name: string;
+  owner: string;
+  visibility: StorylineDataType;
+  color: string;
+  updated_at: string;
+  state: StorylineState;
+}

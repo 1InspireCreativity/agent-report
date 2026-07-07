@@ -37,6 +37,16 @@ export function joinMethodLabel(value: string): string {
   return JOIN_METHOD_OPTIONS.find((o) => o.value === value)?.label || value;
 }
 
+export const FOLDER_ICON_COLORS = ['#111827', '#059669', '#9CA3AF', '#D97706', '#2563EB', '#DC2626', '#7C3AED'];
+
+export function folderIconColor(index: number): string {
+  return FOLDER_ICON_COLORS[index % FOLDER_ICON_COLORS.length];
+}
+
+export function countStorylineItems(state: StorylineState): number {
+  return state.nodes.length;
+}
+
 export function defaultStoryline(): StorylineState {
   return {
     topic: '',

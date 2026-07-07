@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import StorylineTab from './StorylineTab';
+import StorylineSidebar from './StorylineSidebar';
 import ReportTab from './ReportTab';
 import { useToast } from './useToast';
 import { defaultReport, defaultStoryline, normalizeReport, normalizeStoryline } from './utils';
@@ -88,9 +89,14 @@ function App() {
         </div>
       </header>
 
-      <main className="page">
+      <main className={activeTab === 'storyline' ? 'sl-layout' : 'page'}>
         {activeTab === 'storyline' && (
-          <StorylineTab state={storyline} setState={setStoryline} toast={toast} />
+          <>
+            <StorylineSidebar state={storyline} onLoad={setStoryline} toast={toast} />
+            <div className="page" style={{ margin: 0, flex: 1 }}>
+              <StorylineTab state={storyline} setState={setStoryline} toast={toast} />
+            </div>
+          </>
         )}
         {activeTab === 'report' && <ReportTab state={report} setState={setReport} toast={toast} />}
       </main>
