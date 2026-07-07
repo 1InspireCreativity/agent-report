@@ -58,6 +58,10 @@ export const CAPABILITY_OPTIONS: { value: ChartCapability; label: string }[] = [
   { value: 'threshold', label: '阈值状态' },
 ];
 
+// 分类 taxonomy — placeholder options until the real business taxonomy is confirmed.
+export const CATEGORY_L1_OPTIONS = ['闭环电商', '非闭环电商', '游戏', '其他'];
+export const CATEGORY_L2_OPTIONS = ['直播', '短视频', '商城', '搜索', '其他'];
+
 export const FOLDER_ICON_COLORS = ['#111827', '#059669', '#9CA3AF', '#D97706', '#2563EB', '#DC2626', '#7C3AED'];
 
 export function folderIconColor(index: number): string {
@@ -70,25 +74,27 @@ export function defaultStoryline(): StorylineState {
     analyst: '',
     background: '',
     region: 'NAAP',
-    tags: [
-      { id: 1, category: 'lever', value: 'GBS' },
-      { id: 2, category: 'region', value: 'NAAP' },
-    ],
     nodes: [
       {
         id: 1,
         scenario: 'GBS-1Team revenue和yoy',
+        categoryL1: '闭环电商',
+        categoryL2: '',
         templateGroups: [
           {
             id: 1,
             templateId: 'motz7cum6ntsj6',
-            drillDimension: 'NAAP Lever L1 Industry 4.0 Level 1',
+            tags: [
+              { id: 1, category: 'lever', value: 'GBS' },
+              { id: 2, category: 'region', value: 'NAAP' },
+            ],
             chartGroups: [
               {
                 id: 1,
                 chartId: 'GBSrev',
                 queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1145582?dataset=1159057&queryId=64894787'],
                 joinMethods: ['other'],
+                drillDimension: 'NAAP Lever L1 Industry 4.0 Level 1',
                 capabilities: ['basic', 'attribution'],
                 threshold: '',
                 type: 'public',
@@ -98,6 +104,7 @@ export function defaultStoryline(): StorylineState {
                 chartId: 'GBSYOY',
                 queryLinks: [],
                 joinMethods: [],
+                drillDimension: '',
                 capabilities: ['basic'],
                 threshold: '',
                 type: 'public',
@@ -109,17 +116,20 @@ export function defaultStoryline(): StorylineState {
       {
         id: 2,
         scenario: 'NAAP-1Team revenue和yoy',
+        categoryL1: '',
+        categoryL2: '',
         templateGroups: [
           {
             id: 2,
             templateId: 'mp3ue3hglacfiq',
-            drillDimension: 'NAAP Lever L1 Industry 4.0 Level 1',
+            tags: [],
             chartGroups: [
               {
                 id: 3,
                 chartId: '',
                 queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1147165?dataset=1159057&queryId=648951830'],
                 joinMethods: [],
+                drillDimension: 'NAAP Lever L1 Industry 4.0 Level 1',
                 capabilities: ['basic'],
                 threshold: '',
                 type: 'personal',
@@ -153,17 +163,19 @@ export function buildStorylinePayload(sl: StorylineState) {
     analyst: sl.analyst || null,
     background: sl.background || '（未填写）',
     region: sl.region || null,
-    tags: sl.tags.map((t) => ({ category: t.category, value: t.value })),
     attribution_nodes: sl.nodes.map((n, i) => ({
       index: i + 1,
       scenario: n.scenario || `节点${i + 1}`,
+      category_l1: n.categoryL1 || null,
+      category_l2: n.categoryL2 || null,
       template_groups: n.templateGroups.map((tg) => ({
         template_id: tg.templateId || null,
-        drill_dimension: tg.drillDimension || null,
+        tags: tg.tags.map((t) => ({ category: t.category, value: t.value })),
         chart_groups: tg.chartGroups.map((g) => ({
           chart_id: g.chartId || null,
           query_links: g.queryLinks,
           join_methods: g.joinMethods,
+          drill_dimension: g.drillDimension || null,
           capabilities: g.capabilities,
           threshold: g.capabilities.includes('threshold') ? g.threshold || null : null,
           type: g.type,
@@ -234,6 +246,7 @@ export function emptyChartGroup(): ChartGroup {
     chartId: '',
     queryLinks: [],
     joinMethods: [],
+    drillDimension: '',
     capabilities: ['basic'],
     threshold: '',
     type: 'public',
@@ -247,13 +260,15 @@ export function nextTagId() {
 }
 
 export function emptyTemplateGroup(): TemplateGroup {
-  return { id: nextTemplateGroupId(), templateId: '', drillDimension: '', chartGroups: [] };
+  return { id: nextTemplateGroupId(), templateId: '', tags: [], chartGroups: [] };
 }
 
 export function emptyNode(): AttributionNode {
   return {
     id: nextNodeId(),
     scenario: '',
+    categoryL1: '',
+    categoryL2: '',
     templateGroups: [],
   };
 }
@@ -273,21 +288,13 @@ function normalizeChartGroup(raw: Record<string, unknown> | undefined, legacy: L
     chartId: typeof r.chartId === 'string' ? r.chartId : '',
     queryLinks: Array.isArray(r.queryLinks) ? (r.queryLinks as string[]) : [],
     joinMethods: Array.isArray(r.joinMethods) ? (r.joinMethods as string[]) : legacy.joinMethods,
+    drillDimension: typeof r.drillDimension === 'string' ? r.drillDimension : legacy.drillDimension,
     capabilities: Array.isArray(r.capabilities)
       ? (r.capabilities as ChartCapability[]).filter((c) => VALID_CAPABILITIES.includes(c))
       : ['basic'],
     threshold: typeof r.threshold === 'string' ? r.threshold : '',
     type: r.type === 'personal' || r.type === 'public' ? r.type : legacy.type,
   };
-}
-
-// drillDimension used to live on each chart group; when reading old data, lift the
-// first non-empty chart-level value up to the template group.
-function chartLevelDrillDimension(chartGroups: Record<string, unknown>[]): string {
-  for (const g of chartGroups) {
-    if (g && typeof g.drillDimension === 'string' && g.drillDimension) return g.drillDimension;
-  }
-  return '';
 }
 
 function normalizeTag(raw: Partial<ReportTag> | undefined): ReportTag | null {
@@ -297,17 +304,24 @@ function normalizeTag(raw: Partial<ReportTag> | undefined): ReportTag | null {
   return { id: typeof raw.id === 'number' ? raw.id : nextTagId(), category, value: raw.value };
 }
 
+function normalizeTags(raw: unknown): ReportTag[] {
+  return Array.isArray(raw)
+    ? (raw as Partial<ReportTag>[]).map(normalizeTag).filter((t): t is ReportTag => t !== null)
+    : [];
+}
+
 function normalizeTemplateGroup(raw: Record<string, unknown> | undefined, legacy: LegacyChartDefaults): TemplateGroup {
   const r = raw || {};
   const chartGroupsRaw = Array.isArray(r.chartGroups) ? (r.chartGroups as Record<string, unknown>[]) : [];
+  // drillDimension briefly lived at the template level; push it back down as the
+  // per-chart default when reading data saved in that shape.
+  const chartLegacy: LegacyChartDefaults =
+    typeof r.drillDimension === 'string' && r.drillDimension ? { ...legacy, drillDimension: r.drillDimension } : legacy;
   return {
     id: typeof r.id === 'number' ? r.id : nextTemplateGroupId(),
     templateId: typeof r.templateId === 'string' ? r.templateId : '',
-    drillDimension:
-      typeof r.drillDimension === 'string'
-        ? r.drillDimension
-        : chartLevelDrillDimension(chartGroupsRaw) || legacy.drillDimension,
-    chartGroups: chartGroupsRaw.map((g) => normalizeChartGroup(g, legacy)),
+    tags: normalizeTags(r.tags),
+    chartGroups: chartGroupsRaw.map((g) => normalizeChartGroup(g, chartLegacy)),
   };
 }
 
@@ -335,12 +349,9 @@ function normalizeNode(raw: Record<string, unknown> | undefined): AttributionNod
   if (Array.isArray(r.templateGroups)) {
     templateGroups = (r.templateGroups as Record<string, unknown>[]).map((tg) => normalizeTemplateGroup(tg, legacy));
   } else {
-    let liftedDrill = legacy.drillDimension;
     let chartGroups: ChartGroup[];
     if (Array.isArray(r.chartGroups)) {
-      const rawGroups = r.chartGroups as Record<string, unknown>[];
-      liftedDrill = chartLevelDrillDimension(rawGroups) || legacy.drillDimension;
-      chartGroups = rawGroups.map((g) => normalizeChartGroup(g, legacy));
+      chartGroups = (r.chartGroups as Record<string, unknown>[]).map((g) => normalizeChartGroup(g, legacy));
     } else {
       const legacyChartIds = Array.isArray(r.chartIds) ? (r.chartIds as string[]) : [];
       const legacyQueryLinks = Array.isArray(r.queryLinks) ? (r.queryLinks as string[]) : legacyLinks || [];
@@ -356,31 +367,39 @@ function normalizeNode(raw: Record<string, unknown> | undefined): AttributionNod
     }
     templateGroups =
       typeof r.templateId === 'string' && (r.templateId || chartGroups.length)
-        ? [{ id: nextTemplateGroupId(), templateId: r.templateId, drillDimension: liftedDrill, chartGroups }]
+        ? [{ id: nextTemplateGroupId(), templateId: r.templateId, tags: [], chartGroups }]
         : [];
   }
 
   return {
     id: typeof r.id === 'number' ? r.id : nextNodeId(),
     scenario: typeof r.scenario === 'string' ? r.scenario : typeof r.name === 'string' ? r.name : '',
+    categoryL1: typeof r.categoryL1 === 'string' ? r.categoryL1 : '',
+    categoryL2: typeof r.categoryL2 === 'string' ? r.categoryL2 : '',
     templateGroups,
   };
 }
 
-export function normalizeStoryline(raw: Partial<StorylineState> | null | undefined): StorylineState {
+export function normalizeStoryline(
+  raw: (Partial<StorylineState> & { tags?: unknown }) | null | undefined
+): StorylineState {
   const base = defaultStoryline();
   if (!raw) return base;
+  const nodes = Array.isArray(raw.nodes)
+    ? raw.nodes.map((n) => normalizeNode(n as unknown as Record<string, unknown>))
+    : base.nodes;
+  // tags briefly lived at the report level; move any saved ones into the first template group.
+  const legacyTags = normalizeTags(raw.tags);
+  if (legacyTags.length && nodes[0]?.templateGroups[0]) {
+    const tg = nodes[0].templateGroups[0];
+    tg.tags = [...tg.tags, ...legacyTags.filter((t) => !tg.tags.some((e) => e.category === t.category && e.value === t.value))];
+  }
   return {
     topic: typeof raw.topic === 'string' ? raw.topic : base.topic,
     analyst: typeof raw.analyst === 'string' ? raw.analyst : base.analyst,
     background: typeof raw.background === 'string' ? raw.background : base.background,
     region: typeof raw.region === 'string' && raw.region ? raw.region : 'NAAP',
-    tags: Array.isArray(raw.tags)
-      ? (raw.tags as Partial<ReportTag>[]).map(normalizeTag).filter((t): t is ReportTag => t !== null)
-      : [],
-    nodes: Array.isArray(raw.nodes)
-      ? raw.nodes.map((n) => normalizeNode(n as unknown as Record<string, unknown>))
-      : base.nodes,
+    nodes,
   };
 }
 

@@ -9,6 +9,8 @@ import {
   nextTagId,
   tagCategoryLabel,
   CAPABILITY_OPTIONS,
+  CATEGORY_L1_OPTIONS,
+  CATEGORY_L2_OPTIONS,
   JOIN_METHOD_OPTIONS,
   REGION_OPTIONS,
   STORYLINE_TYPE_OPTIONS,
@@ -26,22 +28,51 @@ interface Props {
 export default function StorylineTab({ state, setState, toast }: Props) {
   const [linkDrafts, setLinkDrafts] = useState<Record<number, string>>({});
   const [joinMethodDrafts, setJoinMethodDrafts] = useState<Record<number, string>>({});
-  const [tagCategoryDraft, setTagCategoryDraft] = useState<TagCategory>('lever');
-  const [tagValueDraft, setTagValueDraft] = useState('');
+  const [tagCategoryDrafts, setTagCategoryDrafts] = useState<Record<number, TagCategory>>({});
+  const [tagValueDrafts, setTagValueDrafts] = useState<Record<number, string>>({});
   const [submitting, setSubmitting] = useState(false);
 
-  const addTag = () => {
-    const val = tagValueDraft.trim();
+  const addTemplateTag = (nodeId: number, tgId: number) => {
+    const val = (tagValueDrafts[tgId] || '').trim();
     if (!val) return;
+    const category = tagCategoryDrafts[tgId] || 'lever';
     setState((prev) => ({
       ...prev,
-      tags: [...prev.tags, { id: nextTagId(), category: tagCategoryDraft, value: val }],
+      nodes: prev.nodes.map((n) =>
+        n.id === nodeId
+          ? {
+              ...n,
+              templateGroups: n.templateGroups.map((tg) =>
+                tg.id === tgId ? { ...tg, tags: [...tg.tags, { id: nextTagId(), category, value: val }] } : tg
+              ),
+            }
+          : n
+      ),
     }));
-    setTagValueDraft('');
+    setTagValueDrafts((prev) => ({ ...prev, [tgId]: '' }));
   };
 
-  const delTag = (tagId: number) => {
-    setState((prev) => ({ ...prev, tags: prev.tags.filter((t) => t.id !== tagId) }));
+  const delTemplateTag = (nodeId: number, tgId: number, tagId: number) => {
+    setState((prev) => ({
+      ...prev,
+      nodes: prev.nodes.map((n) =>
+        n.id === nodeId
+          ? {
+              ...n,
+              templateGroups: n.templateGroups.map((tg) =>
+                tg.id === tgId ? { ...tg, tags: tg.tags.filter((t) => t.id !== tagId) } : tg
+              ),
+            }
+          : n
+      ),
+    }));
+  };
+
+  const setNodeCategory = (nodeId: number, level: 'categoryL1' | 'categoryL2', value: string) => {
+    setState((prev) => ({
+      ...prev,
+      nodes: prev.nodes.map((n) => (n.id === nodeId ? { ...n, [level]: value } : n)),
+    }));
   };
 
   const update = <K extends keyof StorylineState>(key: K, value: StorylineState[K]) => {
@@ -178,20 +209,8 @@ export default function StorylineTab({ state, setState, toast }: Props) {
     updateChartGroup(nodeId, tgId, groupId, (g) => ({ ...g, joinMethods: g.joinMethods.filter((_, i) => i !== idx) }));
   };
 
-  const setTemplateDrillDimension = (nodeId: number, tgId: number, value: string) => {
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) =>
-        n.id === nodeId
-          ? {
-              ...n,
-              templateGroups: n.templateGroups.map((tg) =>
-                tg.id === tgId ? { ...tg, drillDimension: value } : tg
-              ),
-            }
-          : n
-      ),
-    }));
+  const setDrillDimension = (nodeId: number, tgId: number, groupId: number, value: string) => {
+    updateChartGroup(nodeId, tgId, groupId, (g) => ({ ...g, drillDimension: value }));
   };
 
   const toggleCapability = (nodeId: number, tgId: number, groupId: number, cap: ChartCapability) => {
@@ -239,7 +258,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
       analyst: '',
       background: '',
       region: 'NAAP',
-      tags: [],
       nodes: [],
     });
   };
@@ -304,51 +322,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
               </select>
             </div>
           </div>
-          <div className="field" style={{ marginTop: 14 }}>
-            <div className="field-label">
-              标签 <span className="hint">Lever / 产品 / Region，打在报告这一层</span>
-            </div>
-            <div className="tags-wrap">
-              {state.tags.map((t) => (
-                <span className="tag" title={`${tagCategoryLabel(t.category)}: ${t.value}`} key={t.id}>
-                  <span className="tag-text">
-                    {tagCategoryLabel(t.category)} · {t.value}
-                  </span>
-                  <button className="tag-x" onClick={() => delTag(t.id)}>
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-            <div className="tag-input-row">
-              <select
-                style={{ width: 120, flex: 'none' }}
-                value={tagCategoryDraft}
-                onChange={(e) => setTagCategoryDraft(e.target.value as TagCategory)}
-              >
-                {TAG_CATEGORY_OPTIONS.map((o) => (
-                  <option value={o.value} key={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="text"
-                placeholder="标签内容，如：GBS / Gaming / NAAP"
-                value={tagValueDraft}
-                onChange={(e) => setTagValueDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    addTag();
-                    e.preventDefault();
-                  }
-                }}
-              />
-              <button className="btn btn-secondary btn-xs" onClick={addTag}>
-                + 添加
-              </button>
-            </div>
-          </div>
           <div className="field" style={{ marginTop: 14, marginBottom: 0 }}>
             <div className="field-label">
               背景描述 <span className="req">*</span>
@@ -399,6 +372,34 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                   </button>
                 </div>
                 <div className="node-body" style={{ display: 'block', padding: '16px 18px' }}>
+                  <div className="grid-2" style={{ marginBottom: 14 }}>
+                    <div className="field" style={{ margin: 0 }}>
+                      <div className="field-label">
+                        一级分类 <span className="req">*</span>
+                      </div>
+                      <select value={n.categoryL1} onChange={(e) => setNodeCategory(n.id, 'categoryL1', e.target.value)}>
+                        <option value="">请选择…</option>
+                        {CATEGORY_L1_OPTIONS.map((o) => (
+                          <option value={o} key={o}>
+                            {o}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="field" style={{ margin: 0 }}>
+                      <div className="field-label">
+                        二级分类 <span className="req">*</span>
+                      </div>
+                      <select value={n.categoryL2} onChange={(e) => setNodeCategory(n.id, 'categoryL2', e.target.value)}>
+                        <option value="">请选择…</option>
+                        {CATEGORY_L2_OPTIONS.map((o) => (
+                          <option value={o} key={o}>
+                            {o}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                   <div className="field" style={{ margin: 0 }}>
                     <div className="field-label">
                       Template ID <span className="hint">一个图表配置下可有多个 Template ID</span>{' '}
@@ -437,20 +438,54 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                           </button>
                         </div>
                         <div className="field-label" style={{ marginBottom: 6 }}>
-                          下钻Dimension <span className="hint">属于该 Template ID</span>{' '}
-                          <span className="opt">可选</span>
+                          标签 <span className="hint">Lever / 产品 / Region，属于该 Template ID</span>
                         </div>
-                        <textarea
-                          rows={2}
-                          style={{ fontSize: 12.5, marginBottom: 12 }}
-                          placeholder="说明该 Template ID 依据哪些维度下钻，如：NAAP Lever L1、Industry 4.0 Level 1…"
-                          value={tg.drillDimension}
-                          onChange={(e) => setTemplateDrillDimension(n.id, tg.id, e.target.value)}
-                        />
+                        <div className="tags-wrap">
+                          {tg.tags.map((t) => (
+                            <span className="tag" title={`${tagCategoryLabel(t.category)}: ${t.value}`} key={t.id}>
+                              <span className="tag-text">
+                                {tagCategoryLabel(t.category)} · {t.value}
+                              </span>
+                              <button className="tag-x" onClick={() => delTemplateTag(n.id, tg.id, t.id)}>
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                        <div className="tag-input-row" style={{ marginBottom: 12 }}>
+                          <select
+                            style={{ width: 110, flex: 'none' }}
+                            value={tagCategoryDrafts[tg.id] || 'lever'}
+                            onChange={(e) =>
+                              setTagCategoryDrafts((prev) => ({ ...prev, [tg.id]: e.target.value as TagCategory }))
+                            }
+                          >
+                            {TAG_CATEGORY_OPTIONS.map((o) => (
+                              <option value={o.value} key={o.value}>
+                                {o.label}
+                              </option>
+                            ))}
+                          </select>
+                          <input
+                            type="text"
+                            placeholder="标签内容，如：GBS / Gaming / NAAP"
+                            value={tagValueDrafts[tg.id] || ''}
+                            onChange={(e) => setTagValueDrafts((prev) => ({ ...prev, [tg.id]: e.target.value }))}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                addTemplateTag(n.id, tg.id);
+                                e.preventDefault();
+                              }
+                            }}
+                          />
+                          <button className="btn btn-secondary btn-xs" onClick={() => addTemplateTag(n.id, tg.id)}>
+                            + 添加
+                          </button>
+                        </div>
                         <div className="field-label" style={{ marginBottom: 8 }}>
                           Chart ID{' '}
                           <span className="hint">
-                            一个Template ID下可有多个Chart ID，拼数方式/分析能力/Type 属于每个 Chart ID
+                            一个Template ID下可有多个Chart ID，拼数方式/下钻Dimension/分析能力/Type 属于每个 Chart ID
                           </span>
                         </div>
                         {tg.chartGroups.map((g) => (
@@ -586,6 +621,17 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                                 />
                               </>
                             )}
+
+                            <div className="field-label" style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}>
+                              下钻Dimension <span className="opt">可选</span>
+                            </div>
+                            <textarea
+                              rows={2}
+                              style={{ fontSize: 12.5 }}
+                              placeholder="说明该 Chart ID 依据哪些维度下钻，如：NAAP Lever L1、Industry 4.0 Level 1…"
+                              value={g.drillDimension}
+                              onChange={(e) => setDrillDimension(n.id, tg.id, g.id, e.target.value)}
+                            />
 
                             <div
                               className="field-label"

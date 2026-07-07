@@ -93,6 +93,7 @@ function App() {
         {activeTab === 'storyline' && (
           <>
             <FolderSidebar
+              key="storyline"
               subtitle="图表配置"
               storageKey="storylineFolders"
               nameLabel="文件夹名称"
@@ -112,6 +113,7 @@ function App() {
         {activeTab === 'report' && (
           <>
             <FolderSidebar
+              key="report"
               subtitle="报告取数配置"
               storageKey="reportFolders"
               nameLabel="报告名称"

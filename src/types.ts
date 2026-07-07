@@ -15,6 +15,7 @@ export interface ChartGroup {
   chartId: string;
   queryLinks: string[];
   joinMethods: string[];
+  drillDimension: string;
   capabilities: ChartCapability[];
   threshold: string;
   type: StorylineDataType;
@@ -23,13 +24,15 @@ export interface ChartGroup {
 export interface TemplateGroup {
   id: number;
   templateId: string;
-  drillDimension: string;
+  tags: ReportTag[];
   chartGroups: ChartGroup[];
 }
 
 export interface AttributionNode {
   id: number;
   scenario: string;
+  categoryL1: string;
+  categoryL2: string;
   templateGroups: TemplateGroup[];
 }
 
@@ -41,7 +44,6 @@ export interface StorylineState {
   analyst: string;
   background: string;
   region: string;
-  tags: ReportTag[];
   nodes: AttributionNode[];
 }
 
