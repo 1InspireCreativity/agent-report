@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { StorylineDataType, StorylineFolder, StorylineState } from './types';
-import { countStorylineItems, folderIconColor } from './utils';
+import { countStorylineItems, folderIconColor, normalizeStoryline } from './utils';
 
 interface Props {
   state: StorylineState;
@@ -67,7 +67,7 @@ export default function StorylineSidebar({ state, onLoad, toast }: Props) {
   };
 
   const openFolder = (f: StorylineFolder) => {
-    onLoad(f.state);
+    onLoad(normalizeStoryline(f.state));
     setActiveId(f.id);
     toast('✅ 已载入文件夹：' + f.name);
   };

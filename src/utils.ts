@@ -1,9 +1,12 @@
 import type {
   AttributionNode,
+  ChartCapability,
   ChartGroup,
   ReportState,
+  ReportTag,
   StorylineDataType,
   StorylineState,
+  TagCategory,
   TemplateGroup,
 } from './types';
 
@@ -37,6 +40,24 @@ export function joinMethodLabel(value: string): string {
   return JOIN_METHOD_OPTIONS.find((o) => o.value === value)?.label || value;
 }
 
+export const REGION_OPTIONS = ['CNOB', 'SEA', 'APAC', 'NAAP'];
+
+export const TAG_CATEGORY_OPTIONS: { value: TagCategory; label: string }[] = [
+  { value: 'lever', label: 'Lever' },
+  { value: 'product', label: '产品' },
+  { value: 'region', label: 'Region' },
+];
+
+export function tagCategoryLabel(value: TagCategory): string {
+  return TAG_CATEGORY_OPTIONS.find((o) => o.value === value)?.label || value;
+}
+
+export const CAPABILITY_OPTIONS: { value: ChartCapability; label: string }[] = [
+  { value: 'basic', label: '基础画图' },
+  { value: 'attribution', label: '归因 / 下钻' },
+  { value: 'threshold', label: '阈值状态' },
+];
+
 export const FOLDER_ICON_COLORS = ['#111827', '#059669', '#9CA3AF', '#D97706', '#2563EB', '#DC2626', '#7C3AED'];
 
 export function folderIconColor(index: number): string {
@@ -52,6 +73,11 @@ export function defaultStoryline(): StorylineState {
     topic: '',
     analyst: '',
     background: '',
+    region: 'NAAP',
+    tags: [
+      { id: 1, category: 'lever', value: 'GBS' },
+      { id: 2, category: 'region', value: 'NAAP' },
+    ],
     nodes: [
       {
         id: 1,
@@ -67,6 +93,8 @@ export function defaultStoryline(): StorylineState {
                 queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1145582?dataset=1159057&queryId=64894787'],
                 joinMethods: ['other'],
                 drillDimension: 'NAAP Lever L1 Industry 4.0 Level 1',
+                capabilities: ['basic', 'attribution'],
+                threshold: '',
                 type: 'public',
               },
               {
@@ -75,6 +103,8 @@ export function defaultStoryline(): StorylineState {
                 queryLinks: [],
                 joinMethods: [],
                 drillDimension: '',
+                capabilities: ['basic'],
+                threshold: '',
                 type: 'public',
               },
             ],
@@ -95,6 +125,8 @@ export function defaultStoryline(): StorylineState {
                 queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1147165?dataset=1159057&queryId=648951830'],
                 joinMethods: [],
                 drillDimension: 'NAAP Lever L1 Industry 4.0 Level 1',
+                capabilities: ['basic'],
+                threshold: '',
                 type: 'personal',
               },
             ],
@@ -125,6 +157,8 @@ export function buildStorylinePayload(sl: StorylineState) {
     topic: sl.topic || '（未填写）',
     analyst: sl.analyst || null,
     background: sl.background || '（未填写）',
+    region: sl.region || null,
+    tags: sl.tags.map((t) => ({ category: t.category, value: t.value })),
     attribution_nodes: sl.nodes.map((n, i) => ({
       index: i + 1,
       scenario: n.scenario || `节点${i + 1}`,
@@ -135,6 +169,8 @@ export function buildStorylinePayload(sl: StorylineState) {
           query_links: g.queryLinks,
           join_methods: g.joinMethods,
           drill_dimension: g.drillDimension || null,
+          capabilities: g.capabilities,
+          threshold: g.capabilities.includes('threshold') ? g.threshold || null : null,
           type: g.type,
         })),
       })),
@@ -198,7 +234,22 @@ export function nextGroupId() {
 }
 
 export function emptyChartGroup(): ChartGroup {
-  return { id: nextGroupId(), chartId: '', queryLinks: [], joinMethods: [], drillDimension: '', type: 'public' };
+  return {
+    id: nextGroupId(),
+    chartId: '',
+    queryLinks: [],
+    joinMethods: [],
+    drillDimension: '',
+    capabilities: ['basic'],
+    threshold: '',
+    type: 'public',
+  };
+}
+
+let tagIdCounter = 100;
+export function nextTagId() {
+  tagIdCounter += 1;
+  return tagIdCounter;
 }
 
 export function emptyTemplateGroup(): TemplateGroup {
@@ -219,6 +270,8 @@ interface LegacyChartDefaults {
   type: StorylineDataType;
 }
 
+const VALID_CAPABILITIES: ChartCapability[] = ['basic', 'attribution', 'threshold'];
+
 function normalizeChartGroup(raw: Record<string, unknown> | undefined, legacy: LegacyChartDefaults): ChartGroup {
   const r = raw || {};
   return {
@@ -227,8 +280,19 @@ function normalizeChartGroup(raw: Record<string, unknown> | undefined, legacy: L
     queryLinks: Array.isArray(r.queryLinks) ? (r.queryLinks as string[]) : [],
     joinMethods: Array.isArray(r.joinMethods) ? (r.joinMethods as string[]) : legacy.joinMethods,
     drillDimension: typeof r.drillDimension === 'string' ? r.drillDimension : legacy.drillDimension,
+    capabilities: Array.isArray(r.capabilities)
+      ? (r.capabilities as ChartCapability[]).filter((c) => VALID_CAPABILITIES.includes(c))
+      : ['basic'],
+    threshold: typeof r.threshold === 'string' ? r.threshold : '',
     type: r.type === 'personal' || r.type === 'public' ? r.type : legacy.type,
   };
+}
+
+function normalizeTag(raw: Partial<ReportTag> | undefined): ReportTag | null {
+  if (!raw || typeof raw.value !== 'string' || !raw.value) return null;
+  const category: TagCategory =
+    raw.category === 'lever' || raw.category === 'product' || raw.category === 'region' ? raw.category : 'lever';
+  return { id: typeof raw.id === 'number' ? raw.id : nextTagId(), category, value: raw.value };
 }
 
 function normalizeTemplateGroup(raw: Record<string, unknown> | undefined, legacy: LegacyChartDefaults): TemplateGroup {
@@ -302,6 +366,10 @@ export function normalizeStoryline(raw: Partial<StorylineState> | null | undefin
     topic: typeof raw.topic === 'string' ? raw.topic : base.topic,
     analyst: typeof raw.analyst === 'string' ? raw.analyst : base.analyst,
     background: typeof raw.background === 'string' ? raw.background : base.background,
+    region: typeof raw.region === 'string' && raw.region ? raw.region : 'NAAP',
+    tags: Array.isArray(raw.tags)
+      ? (raw.tags as Partial<ReportTag>[]).map(normalizeTag).filter((t): t is ReportTag => t !== null)
+      : [],
     nodes: Array.isArray(raw.nodes)
       ? raw.nodes.map((n) => normalizeNode(n as unknown as Record<string, unknown>))
       : base.nodes,

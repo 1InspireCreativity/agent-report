@@ -194,7 +194,7 @@ input[type="color"]{padding:4px 6px;height:36px;cursor:pointer;border-radius:var
 
 /* ══════════ RADIO PILL ══════════ */
 .radio-pills{display:flex;gap:6px;flex-wrap:wrap;}
-.radio-pill input[type="radio"]{display:none;}
+.radio-pill input[type="radio"],.radio-pill input[type="checkbox"]{display:none;}
 .radio-pill label{
   display:inline-flex;align-items:center;gap:5px;
   padding:6px 14px;border:1px solid var(--c-border);border-radius:20px;

@@ -1,11 +1,23 @@
 export type StorylineDataType = 'public' | 'personal';
 
+export type TagCategory = 'lever' | 'product' | 'region';
+
+export interface ReportTag {
+  id: number;
+  category: TagCategory;
+  value: string;
+}
+
+export type ChartCapability = 'basic' | 'attribution' | 'threshold';
+
 export interface ChartGroup {
   id: number;
   chartId: string;
   queryLinks: string[];
   joinMethods: string[];
   drillDimension: string;
+  capabilities: ChartCapability[];
+  threshold: string;
   type: StorylineDataType;
 }
 
@@ -28,6 +40,8 @@ export interface StorylineState {
   topic: string;
   analyst: string;
   background: string;
+  region: string;
+  tags: ReportTag[];
   nodes: AttributionNode[];
 }
 

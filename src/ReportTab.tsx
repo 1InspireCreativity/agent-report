@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { ReportState, ReportTemplate } from './types';
 import { buildReportPayload, normalizeReport, CYCLE_OPTIONS, CHART_TYPE_OPTIONS } from './utils';
+import { submitReportConfig } from './api';
 import PayloadPanel from './PayloadPanel';
 
 interface Props {
@@ -27,6 +28,7 @@ export default function ReportTab({ state, setState, toast }: Props) {
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
   const [selectedTplId, setSelectedTplId] = useState('');
   const [templateIdDraft, setTemplateIdDraft] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     setTemplates(loadTemplates());
@@ -47,12 +49,21 @@ export default function ReportTab({ state, setState, toast }: Props) {
     setState((prev) => ({ ...prev, templateIds: prev.templateIds.filter((_, i) => i !== idx) }));
   };
 
-  const submit = () => {
+  const submit = async () => {
     if (!state.name) {
       toast('⚠️ 请填写报告名称');
       return;
     }
-    toast('✅ 配置已提交，报告生成中…');
+    setSubmitting(true);
+    const result = await submitReportConfig(buildReportPayload(state));
+    setSubmitting(false);
+    if (result.ok) {
+      toast('✅ 报告取数配置已提交给后端，报告生成中…');
+    } else if (result.offline) {
+      toast('✅ 配置已生成（后端未配置，可复制 Agent Payload 使用）');
+    } else {
+      toast('⚠️ 提交失败：' + result.error);
+    }
   };
 
   const reset = () => {
@@ -359,11 +370,11 @@ export default function ReportTab({ state, setState, toast }: Props) {
           </svg>
           重置
         </button>
-        <button className="btn btn-success" onClick={submit}>
+        <button className="btn btn-success" onClick={submit} disabled={submitting}>
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
             <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
           </svg>
-          提交报告取数配置给Agent
+          {submitting ? '提交中…' : '提交报告取数配置给Agent'}
         </button>
         <div className="autosave">
           <div className="autosave-dot"></div>自动保存中

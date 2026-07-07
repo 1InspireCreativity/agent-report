@@ -1,14 +1,20 @@
 import { useState } from 'react';
-import type { StorylineState, StorylineDataType, ChartGroup } from './types';
+import type { StorylineState, StorylineDataType, ChartGroup, ChartCapability, TagCategory } from './types';
 import {
   buildStorylinePayload,
   emptyNode,
   emptyTemplateGroup,
   emptyChartGroup,
   joinMethodLabel,
+  nextTagId,
+  tagCategoryLabel,
+  CAPABILITY_OPTIONS,
   JOIN_METHOD_OPTIONS,
+  REGION_OPTIONS,
   STORYLINE_TYPE_OPTIONS,
+  TAG_CATEGORY_OPTIONS,
 } from './utils';
+import { submitChartConfig } from './api';
 import PayloadPanel from './PayloadPanel';
 
 interface Props {
@@ -20,6 +26,23 @@ interface Props {
 export default function StorylineTab({ state, setState, toast }: Props) {
   const [linkDrafts, setLinkDrafts] = useState<Record<number, string>>({});
   const [joinMethodDrafts, setJoinMethodDrafts] = useState<Record<number, string>>({});
+  const [tagCategoryDraft, setTagCategoryDraft] = useState<TagCategory>('lever');
+  const [tagValueDraft, setTagValueDraft] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const addTag = () => {
+    const val = tagValueDraft.trim();
+    if (!val) return;
+    setState((prev) => ({
+      ...prev,
+      tags: [...prev.tags, { id: nextTagId(), category: tagCategoryDraft, value: val }],
+    }));
+    setTagValueDraft('');
+  };
+
+  const delTag = (tagId: number) => {
+    setState((prev) => ({ ...prev, tags: prev.tags.filter((t) => t.id !== tagId) }));
+  };
 
   const update = <K extends keyof StorylineState>(key: K, value: StorylineState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }));
@@ -159,11 +182,24 @@ export default function StorylineTab({ state, setState, toast }: Props) {
     updateChartGroup(nodeId, tgId, groupId, (g) => ({ ...g, drillDimension: value }));
   };
 
+  const toggleCapability = (nodeId: number, tgId: number, groupId: number, cap: ChartCapability) => {
+    updateChartGroup(nodeId, tgId, groupId, (g) => ({
+      ...g,
+      capabilities: g.capabilities.includes(cap)
+        ? g.capabilities.filter((c) => c !== cap)
+        : [...g.capabilities, cap],
+    }));
+  };
+
+  const setThreshold = (nodeId: number, tgId: number, groupId: number, value: string) => {
+    updateChartGroup(nodeId, tgId, groupId, (g) => ({ ...g, threshold: value }));
+  };
+
   const setChartType = (nodeId: number, tgId: number, groupId: number, value: StorylineDataType) => {
     updateChartGroup(nodeId, tgId, groupId, (g) => ({ ...g, type: value }));
   };
 
-  const submit = () => {
+  const submit = async () => {
     if (!state.topic) {
       toast('⚠️ 请填写文件夹名称');
       return;
@@ -172,7 +208,16 @@ export default function StorylineTab({ state, setState, toast }: Props) {
       toast('⚠️ 请至少添加一个归因节点');
       return;
     }
-    toast('✅ 图表配置已提交，Agent 下钻归因任务启动中…');
+    setSubmitting(true);
+    const result = await submitChartConfig(buildStorylinePayload(state));
+    setSubmitting(false);
+    if (result.ok) {
+      toast('✅ 图表配置已提交给后端，Agent 任务启动中…');
+    } else if (result.offline) {
+      toast('✅ 配置已生成（后端未配置，可复制 Agent Payload 使用）');
+    } else {
+      toast('⚠️ 提交失败：' + result.error);
+    }
   };
 
   const reset = () => {
@@ -181,6 +226,8 @@ export default function StorylineTab({ state, setState, toast }: Props) {
       topic: '',
       analyst: '',
       background: '',
+      region: 'NAAP',
+      tags: [],
       nodes: [],
     });
   };
@@ -220,16 +267,75 @@ export default function StorylineTab({ state, setState, toast }: Props) {
               onChange={(e) => update('topic', e.target.value)}
             />
           </div>
-          <div className="field">
-            <div className="field-label">
-              Owner <span className="req">*</span>
+          <div className="grid-2">
+            <div className="field" style={{ margin: 0 }}>
+              <div className="field-label">
+                Owner <span className="req">*</span>
+              </div>
+              <input
+                type="text"
+                placeholder="姓名"
+                value={state.analyst}
+                onChange={(e) => update('analyst', e.target.value)}
+              />
             </div>
-            <input
-              type="text"
-              placeholder="姓名"
-              value={state.analyst}
-              onChange={(e) => update('analyst', e.target.value)}
-            />
+            <div className="field" style={{ margin: 0 }}>
+              <div className="field-label">
+                数据范围 Region <span className="req">*</span>
+              </div>
+              <select value={state.region} onChange={(e) => update('region', e.target.value)}>
+                {REGION_OPTIONS.map((r) => (
+                  <option value={r} key={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="field" style={{ marginTop: 14 }}>
+            <div className="field-label">
+              标签 <span className="hint">Lever / 产品 / Region，打在报告这一层</span>
+            </div>
+            <div className="tags-wrap">
+              {state.tags.map((t) => (
+                <span className="tag" title={`${tagCategoryLabel(t.category)}: ${t.value}`} key={t.id}>
+                  <span className="tag-text">
+                    {tagCategoryLabel(t.category)} · {t.value}
+                  </span>
+                  <button className="tag-x" onClick={() => delTag(t.id)}>
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div className="tag-input-row">
+              <select
+                style={{ width: 120, flex: 'none' }}
+                value={tagCategoryDraft}
+                onChange={(e) => setTagCategoryDraft(e.target.value as TagCategory)}
+              >
+                {TAG_CATEGORY_OPTIONS.map((o) => (
+                  <option value={o.value} key={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="text"
+                placeholder="标签内容，如：GBS / Gaming / NAAP"
+                value={tagValueDraft}
+                onChange={(e) => setTagValueDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    addTag();
+                    e.preventDefault();
+                  }
+                }}
+              />
+              <button className="btn btn-secondary btn-xs" onClick={addTag}>
+                + 添加
+              </button>
+            </div>
           </div>
           <div className="field" style={{ marginTop: 14, marginBottom: 0 }}>
             <div className="field-label">
@@ -425,6 +531,40 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                             </div>
 
                             <div className="field-label" style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}>
+                              分析能力 <span className="hint">该 Chart ID 需要 Agent 执行的分析</span>{' '}
+                              <span className="req">*</span>
+                            </div>
+                            <div className="radio-pills">
+                              {CAPABILITY_OPTIONS.map((o) => (
+                                <div className="radio-pill" key={o.value}>
+                                  <input
+                                    type="checkbox"
+                                    id={`cap-${g.id}-${o.value}`}
+                                    checked={g.capabilities.includes(o.value)}
+                                    onChange={() => toggleCapability(n.id, tg.id, g.id, o.value)}
+                                  />
+                                  <label htmlFor={`cap-${g.id}-${o.value}`}>{o.label}</label>
+                                </div>
+                              ))}
+                            </div>
+                            {g.capabilities.includes('threshold') && (
+                              <>
+                                <div
+                                  className="field-label"
+                                  style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}
+                                >
+                                  阈值定义 <span className="hint">触发阈值状态提醒的条件</span>
+                                </div>
+                                <input
+                                  type="text"
+                                  placeholder="例：YoY < -10% 标红；Rev Attain < 90% 预警"
+                                  value={g.threshold}
+                                  onChange={(e) => setThreshold(n.id, tg.id, g.id, e.target.value)}
+                                />
+                              </>
+                            )}
+
+                            <div className="field-label" style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}>
                               下钻Dimension <span className="opt">可选</span>
                             </div>
                             <textarea
@@ -493,11 +633,11 @@ export default function StorylineTab({ state, setState, toast }: Props) {
           </svg>
           重置
         </button>
-        <button className="btn btn-primary" onClick={submit}>
+        <button className="btn btn-primary" onClick={submit} disabled={submitting}>
           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
             <path d="M5 12l5 5L20 7"></path>
           </svg>
-          提交图表配置给 Agent
+          {submitting ? '提交中…' : '提交图表配置给 Agent'}
         </button>
         <div className="autosave">
           <div className="autosave-dot"></div>自动保存中
