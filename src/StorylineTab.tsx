@@ -371,6 +371,51 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                     </svg>
                   </button>
                 </div>
+                <div className="field" style={{ margin: '12px 18px 0' }}>
+                  <div className="field-label">
+                    标签 <span className="hint">Lever / 产品 / Region，打在报告这一层</span>
+                  </div>
+                  <div className="tags-wrap">
+                    {state.tags.map((t) => (
+                      <span className="tag" title={`${tagCategoryLabel(t.category)}: ${t.value}`} key={t.id}>
+                        <span className="tag-text">
+                          {tagCategoryLabel(t.category)} · {t.value}
+                        </span>
+                        <button className="tag-x" onClick={() => delTag(t.id)}>
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="tag-input-row">
+                    <select
+                      style={{ width: 120, flex: 'none' }}
+                      value={tagCategoryDraft}
+                      onChange={(e) => setTagCategoryDraft(e.target.value as TagCategory)}
+                    >
+                      {TAG_CATEGORY_OPTIONS.map((o) => (
+                        <option value={o.value} key={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      placeholder="标签内容，如：GBS / Gaming / NAAP"
+                      value={tagValueDraft}
+                      onChange={(e) => setTagValueDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          addTag();
+                          e.preventDefault();
+                        }
+                      }}
+                    />
+                    <button className="btn btn-secondary btn-xs" onClick={addTag}>
+                      + 添加
+                    </button>
+                  </div>
+                </div>
                 <div className="node-body" style={{ display: 'block', padding: '16px 18px' }}>
                   <div className="grid-2" style={{ marginBottom: 14 }}>
                     <div className="field" style={{ margin: 0 }}>
