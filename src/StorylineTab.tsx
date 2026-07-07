@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import type { StorylineState, StorylineDataType } from './types';
+import type { StorylineState, StorylineDataType, ChartGroup } from './types';
 import {
   buildStorylinePayload,
   emptyNode,
+  emptyTemplateGroup,
   emptyChartGroup,
   joinMethodLabel,
   JOIN_METHOD_OPTIONS,
@@ -16,8 +17,6 @@ interface Props {
   toast: (msg: string) => void;
 }
 
-type NodeTextField = 'scenario' | 'templateId' | 'drillDimension';
-
 export default function StorylineTab({ state, setState, toast }: Props) {
   const [linkDrafts, setLinkDrafts] = useState<Record<number, string>>({});
   const [joinMethodDrafts, setJoinMethodDrafts] = useState<Record<number, string>>({});
@@ -26,17 +25,10 @@ export default function StorylineTab({ state, setState, toast }: Props) {
     setState((prev) => ({ ...prev, [key]: value }));
   };
 
-  const setNodeField = (id: number, field: NodeTextField, value: string) => {
+  const setScenario = (nodeId: number, value: string) => {
     setState((prev) => ({
       ...prev,
-      nodes: prev.nodes.map((n) => (n.id === id ? { ...n, [field]: value } : n)),
-    }));
-  };
-
-  const setNodeType = (id: number, value: StorylineDataType) => {
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) => (n.id === id ? { ...n, type: value } : n)),
+      nodes: prev.nodes.map((n) => (n.id === nodeId ? { ...n, scenario: value } : n)),
     }));
   };
 
@@ -44,68 +36,51 @@ export default function StorylineTab({ state, setState, toast }: Props) {
     setState((prev) => ({ ...prev, nodes: [...prev.nodes, emptyNode()] }));
   };
 
-  const delNode = (id: number) => {
-    setState((prev) => ({ ...prev, nodes: prev.nodes.filter((n) => n.id !== id) }));
+  const delNode = (nodeId: number) => {
+    setState((prev) => ({ ...prev, nodes: prev.nodes.filter((n) => n.id !== nodeId) }));
   };
 
-  const addChartGroup = (nodeId: number) => {
+  const addTemplateGroup = (nodeId: number) => {
     setState((prev) => ({
       ...prev,
       nodes: prev.nodes.map((n) =>
-        n.id === nodeId ? { ...n, chartGroups: [...n.chartGroups, emptyChartGroup()] } : n
+        n.id === nodeId ? { ...n, templateGroups: [...n.templateGroups, emptyTemplateGroup()] } : n
       ),
     }));
   };
 
-  const delChartGroup = (nodeId: number, groupId: number) => {
+  const delTemplateGroup = (nodeId: number, tgId: number) => {
     setState((prev) => ({
       ...prev,
       nodes: prev.nodes.map((n) =>
-        n.id === nodeId ? { ...n, chartGroups: n.chartGroups.filter((g) => g.id !== groupId) } : n
+        n.id === nodeId ? { ...n, templateGroups: n.templateGroups.filter((tg) => tg.id !== tgId) } : n
       ),
     }));
   };
 
-  const setChartGroupId = (nodeId: number, groupId: number, value: string) => {
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) =>
-        n.id === nodeId
-          ? { ...n, chartGroups: n.chartGroups.map((g) => (g.id === groupId ? { ...g, chartId: value } : g)) }
-          : n
-      ),
-    }));
-  };
-
-  const addGroupQueryLink = (nodeId: number, groupId: number) => {
-    const draftKey = groupId;
-    const val = (linkDrafts[draftKey] || '').trim();
-    if (!val) return;
+  const setTemplateId = (nodeId: number, tgId: number, value: string) => {
     setState((prev) => ({
       ...prev,
       nodes: prev.nodes.map((n) =>
         n.id === nodeId
           ? {
               ...n,
-              chartGroups: n.chartGroups.map((g) =>
-                g.id === groupId ? { ...g, queryLinks: [...g.queryLinks, val] } : g
-              ),
+              templateGroups: n.templateGroups.map((tg) => (tg.id === tgId ? { ...tg, templateId: value } : tg)),
             }
           : n
       ),
     }));
-    setLinkDrafts((prev) => ({ ...prev, [draftKey]: '' }));
   };
 
-  const delGroupQueryLink = (nodeId: number, groupId: number, idx: number) => {
+  const addChartGroup = (nodeId: number, tgId: number) => {
     setState((prev) => ({
       ...prev,
       nodes: prev.nodes.map((n) =>
         n.id === nodeId
           ? {
               ...n,
-              chartGroups: n.chartGroups.map((g) =>
-                g.id === groupId ? { ...g, queryLinks: g.queryLinks.filter((_, i) => i !== idx) } : g
+              templateGroups: n.templateGroups.map((tg) =>
+                tg.id === tgId ? { ...tg, chartGroups: [...tg.chartGroups, emptyChartGroup()] } : tg
               ),
             }
           : n
@@ -113,25 +88,79 @@ export default function StorylineTab({ state, setState, toast }: Props) {
     }));
   };
 
-  const addJoinMethod = (id: number) => {
-    const val = joinMethodDrafts[id];
-    if (!val) return;
+  const delChartGroup = (nodeId: number, tgId: number, groupId: number) => {
     setState((prev) => ({
       ...prev,
       nodes: prev.nodes.map((n) =>
-        n.id === id && !n.joinMethods.includes(val) ? { ...n, joinMethods: [...n.joinMethods, val] } : n
+        n.id === nodeId
+          ? {
+              ...n,
+              templateGroups: n.templateGroups.map((tg) =>
+                tg.id === tgId ? { ...tg, chartGroups: tg.chartGroups.filter((g) => g.id !== groupId) } : tg
+              ),
+            }
+          : n
       ),
     }));
-    setJoinMethodDrafts((prev) => ({ ...prev, [id]: '' }));
   };
 
-  const delJoinMethod = (id: number, idx: number) => {
+  const updateChartGroup = (
+    nodeId: number,
+    tgId: number,
+    groupId: number,
+    updater: (g: ChartGroup) => ChartGroup
+  ) => {
     setState((prev) => ({
       ...prev,
       nodes: prev.nodes.map((n) =>
-        n.id === id ? { ...n, joinMethods: n.joinMethods.filter((_, i) => i !== idx) } : n
+        n.id === nodeId
+          ? {
+              ...n,
+              templateGroups: n.templateGroups.map((tg) =>
+                tg.id === tgId
+                  ? { ...tg, chartGroups: tg.chartGroups.map((g) => (g.id === groupId ? updater(g) : g)) }
+                  : tg
+              ),
+            }
+          : n
       ),
     }));
+  };
+
+  const setChartId = (nodeId: number, tgId: number, groupId: number, value: string) => {
+    updateChartGroup(nodeId, tgId, groupId, (g) => ({ ...g, chartId: value }));
+  };
+
+  const addGroupQueryLink = (nodeId: number, tgId: number, groupId: number) => {
+    const val = (linkDrafts[groupId] || '').trim();
+    if (!val) return;
+    updateChartGroup(nodeId, tgId, groupId, (g) => ({ ...g, queryLinks: [...g.queryLinks, val] }));
+    setLinkDrafts((prev) => ({ ...prev, [groupId]: '' }));
+  };
+
+  const delGroupQueryLink = (nodeId: number, tgId: number, groupId: number, idx: number) => {
+    updateChartGroup(nodeId, tgId, groupId, (g) => ({ ...g, queryLinks: g.queryLinks.filter((_, i) => i !== idx) }));
+  };
+
+  const addJoinMethod = (nodeId: number, tgId: number, groupId: number) => {
+    const val = joinMethodDrafts[groupId];
+    if (!val) return;
+    updateChartGroup(nodeId, tgId, groupId, (g) =>
+      g.joinMethods.includes(val) ? g : { ...g, joinMethods: [...g.joinMethods, val] }
+    );
+    setJoinMethodDrafts((prev) => ({ ...prev, [groupId]: '' }));
+  };
+
+  const delJoinMethod = (nodeId: number, tgId: number, groupId: number, idx: number) => {
+    updateChartGroup(nodeId, tgId, groupId, (g) => ({ ...g, joinMethods: g.joinMethods.filter((_, i) => i !== idx) }));
+  };
+
+  const setDrillDimension = (nodeId: number, tgId: number, groupId: number, value: string) => {
+    updateChartGroup(nodeId, tgId, groupId, (g) => ({ ...g, drillDimension: value }));
+  };
+
+  const setChartType = (nodeId: number, tgId: number, groupId: number, value: StorylineDataType) => {
+    updateChartGroup(nodeId, tgId, groupId, (g) => ({ ...g, type: value }));
   };
 
   const submit = () => {
@@ -243,7 +272,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                     type="text"
                     placeholder="如：Template ID + NAAP Gaming | Daily Revenue & YOY"
                     value={n.scenario}
-                    onChange={(e) => setNodeField(n.id, 'scenario', e.target.value)}
+                    onChange={(e) => setScenario(n.id, e.target.value)}
                   />
                   <button className="node-del" onClick={() => delNode(n.id)}>
                     <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -252,137 +281,186 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                   </button>
                 </div>
                 <div className="node-body" style={{ display: 'block', padding: '16px 18px' }}>
-                  <div className="field" style={{ marginBottom: 14 }}>
+                  <div className="field" style={{ margin: 0 }}>
                     <div className="field-label">
-                      Template ID <span className="hint">一个Template ID下可有多个Chart IDs</span> <span className="req">*</span>
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="motz7cum6ntsj6"
-                      value={n.templateId}
-                      onChange={(e) => setNodeField(n.id, 'templateId', e.target.value)}
-                    />
-                  </div>
-                  <div className="field" style={{ marginBottom: 14 }}>
-                    <div className="field-label">
-                      Chart ID <span className="hint">一个Chart ID下可有多个Query Links</span>{' '}
+                      Template ID <span className="hint">一个图表配置下可有多个 Template ID</span>{' '}
                       <span className="req">*</span>
                     </div>
-                    {n.chartGroups.map((g) => (
+                    {n.templateGroups.map((tg) => (
                       <div
-                        key={g.id}
+                        key={tg.id}
                         style={{
                           border: '1px solid var(--c-border)',
-                          borderRadius: 'var(--r)',
+                          borderRadius: 'var(--r-md)',
                           background: 'var(--c-surface-2)',
-                          padding: 12,
-                          marginBottom: 8,
+                          padding: 14,
+                          marginBottom: 10,
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                           <span className="id-bar-label" style={{ flexShrink: 0 }}>
-                            Chart ID
+                            Template ID
                           </span>
                           <input
                             type="text"
-                            placeholder="GBSrev"
-                            value={g.chartId}
-                            onChange={(e) => setChartGroupId(n.id, g.id, e.target.value)}
+                            placeholder="motz7cum6ntsj6"
+                            value={tg.templateId}
+                            onChange={(e) => setTemplateId(n.id, tg.id, e.target.value)}
                             style={{ flex: 1 }}
                           />
-                          <button className="icon-btn danger" onClick={() => delChartGroup(n.id, g.id)} title="删除">
+                          <button
+                            className="icon-btn danger"
+                            onClick={() => delTemplateGroup(n.id, tg.id)}
+                            title="删除"
+                          >
                             <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                               <path d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
                           </button>
                         </div>
-                        <div className="tags-wrap">
-                          {g.queryLinks.map((l, li) => (
-                            <span className="tag" title={l} key={li}>
-                              <span className="tag-text">{l.length > 40 ? l.slice(0, 38) + '…' : l}</span>
-                              <button className="tag-x" onClick={() => delGroupQueryLink(n.id, g.id, li)}>
-                                ×
-                              </button>
-                            </span>
-                          ))}
+                        <div className="field-label" style={{ marginBottom: 8 }}>
+                          Chart ID{' '}
+                          <span className="hint">
+                            一个Template ID下可有多个Chart ID，拼数方式/下钻Dimension/Type 属于每个 Chart ID
+                          </span>
                         </div>
-                        <div className="tag-input-row">
-                          <input
-                            type="url"
-                            placeholder="粘贴Query Links, 例：By Quarter , Month , Week"
-                            value={linkDrafts[g.id] || ''}
-                            onChange={(e) => setLinkDrafts((prev) => ({ ...prev, [g.id]: e.target.value }))}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                addGroupQueryLink(n.id, g.id);
-                                e.preventDefault();
-                              }
+                        {tg.chartGroups.map((g) => (
+                          <div
+                            key={g.id}
+                            style={{
+                              border: '1px solid var(--c-border)',
+                              borderRadius: 'var(--r)',
+                              background: 'var(--c-surface)',
+                              padding: 12,
+                              marginBottom: 8,
                             }}
-                          />
-                          <button className="btn btn-secondary btn-xs" onClick={() => addGroupQueryLink(n.id, g.id)}>
-                            + 添加
-                          </button>
-                        </div>
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                              <span className="id-bar-label" style={{ flexShrink: 0 }}>
+                                Chart ID
+                              </span>
+                              <input
+                                type="text"
+                                placeholder="GBSrev"
+                                value={g.chartId}
+                                onChange={(e) => setChartId(n.id, tg.id, g.id, e.target.value)}
+                                style={{ flex: 1 }}
+                              />
+                              <button
+                                className="icon-btn danger"
+                                onClick={() => delChartGroup(n.id, tg.id, g.id)}
+                                title="删除"
+                              >
+                                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                  <path d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                              </button>
+                            </div>
+
+                            <div className="field-label" style={{ marginBottom: 6, fontSize: 11.5 }}>
+                              Query Link
+                            </div>
+                            <div className="tags-wrap">
+                              {g.queryLinks.map((l, li) => (
+                                <span className="tag" title={l} key={li}>
+                                  <span className="tag-text">{l.length > 40 ? l.slice(0, 38) + '…' : l}</span>
+                                  <button className="tag-x" onClick={() => delGroupQueryLink(n.id, tg.id, g.id, li)}>
+                                    ×
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                            <div className="tag-input-row">
+                              <input
+                                type="url"
+                                placeholder="粘贴Query Links, 例：By Quarter , Month , Week"
+                                value={linkDrafts[g.id] || ''}
+                                onChange={(e) => setLinkDrafts((prev) => ({ ...prev, [g.id]: e.target.value }))}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    addGroupQueryLink(n.id, tg.id, g.id);
+                                    e.preventDefault();
+                                  }
+                                }}
+                              />
+                              <button
+                                className="btn btn-secondary btn-xs"
+                                onClick={() => addGroupQueryLink(n.id, tg.id, g.id)}
+                              >
+                                + 添加
+                              </button>
+                            </div>
+
+                            <div className="field-label" style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}>
+                              拼数方式
+                            </div>
+                            <div className="tags-wrap">
+                              {g.joinMethods.map((jm, ji) => (
+                                <span className="tag" title={jm} key={ji}>
+                                  <span className="tag-text">{joinMethodLabel(jm)}</span>
+                                  <button className="tag-x" onClick={() => delJoinMethod(n.id, tg.id, g.id, ji)}>
+                                    ×
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                            <div className="tag-input-row">
+                              <select
+                                value={joinMethodDrafts[g.id] || ''}
+                                onChange={(e) => setJoinMethodDrafts((prev) => ({ ...prev, [g.id]: e.target.value }))}
+                              >
+                                <option value="">请选择…</option>
+                                {JOIN_METHOD_OPTIONS.map((o) => (
+                                  <option value={o.value} key={o.value}>
+                                    {o.label}
+                                  </option>
+                                ))}
+                              </select>
+                              <button
+                                className="btn btn-secondary btn-xs"
+                                onClick={() => addJoinMethod(n.id, tg.id, g.id)}
+                              >
+                                + 添加
+                              </button>
+                            </div>
+
+                            <div className="field-label" style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}>
+                              下钻Dimension <span className="opt">可选</span>
+                            </div>
+                            <textarea
+                              rows={2}
+                              style={{ fontSize: 12.5 }}
+                              placeholder="说明该 Chart ID 依据哪些维度下钻，如：NAAP Lever L1、Industry 4.0 Level 1…"
+                              value={g.drillDimension}
+                              onChange={(e) => setDrillDimension(n.id, tg.id, g.id, e.target.value)}
+                            />
+
+                            <div
+                              className="field-label"
+                              style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}
+                            >
+                              Type <span className="hint">支持 Public / Personal</span>
+                            </div>
+                            <select
+                              value={g.type}
+                              onChange={(e) => setChartType(n.id, tg.id, g.id, e.target.value as StorylineDataType)}
+                            >
+                              {STORYLINE_TYPE_OPTIONS.map((o) => (
+                                <option value={o.value} key={o.value}>
+                                  {o.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        ))}
+                        <button className="btn btn-secondary btn-xs" onClick={() => addChartGroup(n.id, tg.id)}>
+                          + 添加 Chart ID
+                        </button>
                       </div>
                     ))}
-                    <button className="btn btn-secondary btn-xs" onClick={() => addChartGroup(n.id)}>
-                      + 添加 Chart ID
+                    <button className="btn btn-secondary btn-xs" onClick={() => addTemplateGroup(n.id)}>
+                      + 添加 Template ID
                     </button>
-                  </div>
-                  <div className="field" style={{ marginBottom: 14 }}>
-                    <div className="field-label">
-                      拼数方式 <span className="hint">可选择多个拼数方式</span> <span className="req">*</span>
-                    </div>
-                    <div className="tags-wrap">
-                      {n.joinMethods.map((jm, ji) => (
-                        <span className="tag" title={jm} key={ji}>
-                          <span className="tag-text">{joinMethodLabel(jm)}</span>
-                          <button className="tag-x" onClick={() => delJoinMethod(n.id, ji)}>
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                    <div className="tag-input-row">
-                      <select
-                        value={joinMethodDrafts[n.id] || ''}
-                        onChange={(e) => setJoinMethodDrafts((prev) => ({ ...prev, [n.id]: e.target.value }))}
-                      >
-                        <option value="">请选择…</option>
-                        {JOIN_METHOD_OPTIONS.map((o) => (
-                          <option value={o.value} key={o.value}>
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
-                      <button className="btn btn-secondary btn-xs" onClick={() => addJoinMethod(n.id)}>
-                        + 添加
-                      </button>
-                    </div>
-                  </div>
-                  <div className="field" style={{ marginBottom: 14 }}>
-                    <div className="field-label">
-                      下钻Dimension <span className="opt">可选</span>
-                    </div>
-                    <textarea
-                      rows={2}
-                      style={{ fontSize: 12.5 }}
-                      placeholder="说明该节点依据哪些维度下钻，如：NAAP Lever L1、Industry 4.0 Level 1…"
-                      value={n.drillDimension}
-                      onChange={(e) => setNodeField(n.id, 'drillDimension', e.target.value)}
-                    />
-                  </div>
-                  <div className="field" style={{ margin: 0 }}>
-                    <div className="field-label">
-                      Type <span className="hint">支持 Public / Personal</span> <span className="req">*</span>
-                    </div>
-                    <select value={n.type} onChange={(e) => setNodeType(n.id, e.target.value as StorylineDataType)}>
-                      {STORYLINE_TYPE_OPTIONS.map((o) => (
-                        <option value={o.value} key={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
                   </div>
                 </div>
               </div>

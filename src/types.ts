@@ -4,16 +4,21 @@ export interface ChartGroup {
   id: number;
   chartId: string;
   queryLinks: string[];
+  joinMethods: string[];
+  drillDimension: string;
+  type: StorylineDataType;
+}
+
+export interface TemplateGroup {
+  id: number;
+  templateId: string;
+  chartGroups: ChartGroup[];
 }
 
 export interface AttributionNode {
   id: number;
   scenario: string;
-  chartGroups: ChartGroup[];
-  joinMethods: string[];
-  templateId: string;
-  drillDimension: string;
-  type: StorylineDataType;
+  templateGroups: TemplateGroup[];
 }
 
 export type ReportCycle = 'W' | '2W' | 'M';
