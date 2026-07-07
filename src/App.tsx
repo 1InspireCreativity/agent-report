@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import StorylineTab from './StorylineTab';
-import StorylineSidebar from './StorylineSidebar';
+import FolderSidebar from './FolderSidebar';
 import ReportTab from './ReportTab';
 import { useToast } from './useToast';
 import { defaultReport, defaultStoryline, normalizeReport, normalizeStoryline } from './utils';
@@ -89,16 +89,45 @@ function App() {
         </div>
       </header>
 
-      <main className={activeTab === 'storyline' ? 'sl-layout' : 'page'}>
+      <main className="sl-layout">
         {activeTab === 'storyline' && (
           <>
-            <StorylineSidebar state={storyline} onLoad={setStoryline} toast={toast} />
+            <FolderSidebar
+              subtitle="图表配置"
+              storageKey="storylineFolders"
+              nameLabel="文件夹名称"
+              state={storyline}
+              onLoad={setStoryline}
+              toast={toast}
+              getName={(s) => s.topic}
+              getOwner={(s) => s.analyst}
+              countItems={(s) => s.nodes.length}
+              normalize={normalizeStoryline}
+            />
             <div className="page" style={{ margin: 0, flex: 1 }}>
               <StorylineTab state={storyline} setState={setStoryline} toast={toast} />
             </div>
           </>
         )}
-        {activeTab === 'report' && <ReportTab state={report} setState={setReport} toast={toast} />}
+        {activeTab === 'report' && (
+          <>
+            <FolderSidebar
+              subtitle="报告取数配置"
+              storageKey="reportFolders"
+              nameLabel="报告名称"
+              state={report}
+              onLoad={setReport}
+              toast={toast}
+              getName={(s) => s.name}
+              getOwner={(s) => s.owner}
+              countItems={(s) => s.templateIds.length}
+              normalize={normalizeReport}
+            />
+            <div className="page" style={{ margin: 0, flex: 1 }}>
+              <ReportTab state={report} setState={setReport} toast={toast} />
+            </div>
+          </>
+        )}
       </main>
 
       <div

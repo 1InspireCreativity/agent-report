@@ -64,10 +64,6 @@ export function folderIconColor(index: number): string {
   return FOLDER_ICON_COLORS[index % FOLDER_ICON_COLORS.length];
 }
 
-export function countStorylineItems(state: StorylineState): number {
-  return state.nodes.length;
-}
-
 export function defaultStoryline(): StorylineState {
   return {
     topic: '',
@@ -86,13 +82,13 @@ export function defaultStoryline(): StorylineState {
           {
             id: 1,
             templateId: 'motz7cum6ntsj6',
+            drillDimension: 'NAAP Lever L1 Industry 4.0 Level 1',
             chartGroups: [
               {
                 id: 1,
                 chartId: 'GBSrev',
                 queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1145582?dataset=1159057&queryId=64894787'],
                 joinMethods: ['other'],
-                drillDimension: 'NAAP Lever L1 Industry 4.0 Level 1',
                 capabilities: ['basic', 'attribution'],
                 threshold: '',
                 type: 'public',
@@ -102,7 +98,6 @@ export function defaultStoryline(): StorylineState {
                 chartId: 'GBSYOY',
                 queryLinks: [],
                 joinMethods: [],
-                drillDimension: '',
                 capabilities: ['basic'],
                 threshold: '',
                 type: 'public',
@@ -118,13 +113,13 @@ export function defaultStoryline(): StorylineState {
           {
             id: 2,
             templateId: 'mp3ue3hglacfiq',
+            drillDimension: 'NAAP Lever L1 Industry 4.0 Level 1',
             chartGroups: [
               {
                 id: 3,
                 chartId: '',
                 queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1147165?dataset=1159057&queryId=648951830'],
                 joinMethods: [],
-                drillDimension: 'NAAP Lever L1 Industry 4.0 Level 1',
                 capabilities: ['basic'],
                 threshold: '',
                 type: 'personal',
@@ -164,11 +159,11 @@ export function buildStorylinePayload(sl: StorylineState) {
       scenario: n.scenario || `节点${i + 1}`,
       template_groups: n.templateGroups.map((tg) => ({
         template_id: tg.templateId || null,
+        drill_dimension: tg.drillDimension || null,
         chart_groups: tg.chartGroups.map((g) => ({
           chart_id: g.chartId || null,
           query_links: g.queryLinks,
           join_methods: g.joinMethods,
-          drill_dimension: g.drillDimension || null,
           capabilities: g.capabilities,
           threshold: g.capabilities.includes('threshold') ? g.threshold || null : null,
           type: g.type,
@@ -239,7 +234,6 @@ export function emptyChartGroup(): ChartGroup {
     chartId: '',
     queryLinks: [],
     joinMethods: [],
-    drillDimension: '',
     capabilities: ['basic'],
     threshold: '',
     type: 'public',
@@ -253,7 +247,7 @@ export function nextTagId() {
 }
 
 export function emptyTemplateGroup(): TemplateGroup {
-  return { id: nextTemplateGroupId(), templateId: '', chartGroups: [] };
+  return { id: nextTemplateGroupId(), templateId: '', drillDimension: '', chartGroups: [] };
 }
 
 export function emptyNode(): AttributionNode {
@@ -279,13 +273,21 @@ function normalizeChartGroup(raw: Record<string, unknown> | undefined, legacy: L
     chartId: typeof r.chartId === 'string' ? r.chartId : '',
     queryLinks: Array.isArray(r.queryLinks) ? (r.queryLinks as string[]) : [],
     joinMethods: Array.isArray(r.joinMethods) ? (r.joinMethods as string[]) : legacy.joinMethods,
-    drillDimension: typeof r.drillDimension === 'string' ? r.drillDimension : legacy.drillDimension,
     capabilities: Array.isArray(r.capabilities)
       ? (r.capabilities as ChartCapability[]).filter((c) => VALID_CAPABILITIES.includes(c))
       : ['basic'],
     threshold: typeof r.threshold === 'string' ? r.threshold : '',
     type: r.type === 'personal' || r.type === 'public' ? r.type : legacy.type,
   };
+}
+
+// drillDimension used to live on each chart group; when reading old data, lift the
+// first non-empty chart-level value up to the template group.
+function chartLevelDrillDimension(chartGroups: Record<string, unknown>[]): string {
+  for (const g of chartGroups) {
+    if (g && typeof g.drillDimension === 'string' && g.drillDimension) return g.drillDimension;
+  }
+  return '';
 }
 
 function normalizeTag(raw: Partial<ReportTag> | undefined): ReportTag | null {
@@ -297,12 +299,15 @@ function normalizeTag(raw: Partial<ReportTag> | undefined): ReportTag | null {
 
 function normalizeTemplateGroup(raw: Record<string, unknown> | undefined, legacy: LegacyChartDefaults): TemplateGroup {
   const r = raw || {};
+  const chartGroupsRaw = Array.isArray(r.chartGroups) ? (r.chartGroups as Record<string, unknown>[]) : [];
   return {
     id: typeof r.id === 'number' ? r.id : nextTemplateGroupId(),
     templateId: typeof r.templateId === 'string' ? r.templateId : '',
-    chartGroups: Array.isArray(r.chartGroups)
-      ? (r.chartGroups as Record<string, unknown>[]).map((g) => normalizeChartGroup(g, legacy))
-      : [],
+    drillDimension:
+      typeof r.drillDimension === 'string'
+        ? r.drillDimension
+        : chartLevelDrillDimension(chartGroupsRaw) || legacy.drillDimension,
+    chartGroups: chartGroupsRaw.map((g) => normalizeChartGroup(g, legacy)),
   };
 }
 
@@ -330,9 +335,12 @@ function normalizeNode(raw: Record<string, unknown> | undefined): AttributionNod
   if (Array.isArray(r.templateGroups)) {
     templateGroups = (r.templateGroups as Record<string, unknown>[]).map((tg) => normalizeTemplateGroup(tg, legacy));
   } else {
+    let liftedDrill = legacy.drillDimension;
     let chartGroups: ChartGroup[];
     if (Array.isArray(r.chartGroups)) {
-      chartGroups = (r.chartGroups as Record<string, unknown>[]).map((g) => normalizeChartGroup(g, legacy));
+      const rawGroups = r.chartGroups as Record<string, unknown>[];
+      liftedDrill = chartLevelDrillDimension(rawGroups) || legacy.drillDimension;
+      chartGroups = rawGroups.map((g) => normalizeChartGroup(g, legacy));
     } else {
       const legacyChartIds = Array.isArray(r.chartIds) ? (r.chartIds as string[]) : [];
       const legacyQueryLinks = Array.isArray(r.queryLinks) ? (r.queryLinks as string[]) : legacyLinks || [];
@@ -348,7 +356,7 @@ function normalizeNode(raw: Record<string, unknown> | undefined): AttributionNod
     }
     templateGroups =
       typeof r.templateId === 'string' && (r.templateId || chartGroups.length)
-        ? [{ id: nextTemplateGroupId(), templateId: r.templateId, chartGroups }]
+        ? [{ id: nextTemplateGroupId(), templateId: r.templateId, drillDimension: liftedDrill, chartGroups }]
         : [];
   }
 

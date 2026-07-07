@@ -178,8 +178,20 @@ export default function StorylineTab({ state, setState, toast }: Props) {
     updateChartGroup(nodeId, tgId, groupId, (g) => ({ ...g, joinMethods: g.joinMethods.filter((_, i) => i !== idx) }));
   };
 
-  const setDrillDimension = (nodeId: number, tgId: number, groupId: number, value: string) => {
-    updateChartGroup(nodeId, tgId, groupId, (g) => ({ ...g, drillDimension: value }));
+  const setTemplateDrillDimension = (nodeId: number, tgId: number, value: string) => {
+    setState((prev) => ({
+      ...prev,
+      nodes: prev.nodes.map((n) =>
+        n.id === nodeId
+          ? {
+              ...n,
+              templateGroups: n.templateGroups.map((tg) =>
+                tg.id === tgId ? { ...tg, drillDimension: value } : tg
+              ),
+            }
+          : n
+      ),
+    }));
   };
 
   const toggleCapability = (nodeId: number, tgId: number, groupId: number, cap: ChartCapability) => {
@@ -424,10 +436,21 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                             </svg>
                           </button>
                         </div>
+                        <div className="field-label" style={{ marginBottom: 6 }}>
+                          下钻Dimension <span className="hint">属于该 Template ID</span>{' '}
+                          <span className="opt">可选</span>
+                        </div>
+                        <textarea
+                          rows={2}
+                          style={{ fontSize: 12.5, marginBottom: 12 }}
+                          placeholder="说明该 Template ID 依据哪些维度下钻，如：NAAP Lever L1、Industry 4.0 Level 1…"
+                          value={tg.drillDimension}
+                          onChange={(e) => setTemplateDrillDimension(n.id, tg.id, e.target.value)}
+                        />
                         <div className="field-label" style={{ marginBottom: 8 }}>
                           Chart ID{' '}
                           <span className="hint">
-                            一个Template ID下可有多个Chart ID，拼数方式/下钻Dimension/Type 属于每个 Chart ID
+                            一个Template ID下可有多个Chart ID，拼数方式/分析能力/Type 属于每个 Chart ID
                           </span>
                         </div>
                         {tg.chartGroups.map((g) => (
@@ -563,17 +586,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                                 />
                               </>
                             )}
-
-                            <div className="field-label" style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}>
-                              下钻Dimension <span className="opt">可选</span>
-                            </div>
-                            <textarea
-                              rows={2}
-                              style={{ fontSize: 12.5 }}
-                              placeholder="说明该 Chart ID 依据哪些维度下钻，如：NAAP Lever L1、Industry 4.0 Level 1…"
-                              value={g.drillDimension}
-                              onChange={(e) => setDrillDimension(n.id, tg.id, g.id, e.target.value)}
-                            />
 
                             <div
                               className="field-label"

@@ -15,7 +15,6 @@ export interface ChartGroup {
   chartId: string;
   queryLinks: string[];
   joinMethods: string[];
-  drillDimension: string;
   capabilities: ChartCapability[];
   threshold: string;
   type: StorylineDataType;
@@ -24,6 +23,7 @@ export interface ChartGroup {
 export interface TemplateGroup {
   id: number;
   templateId: string;
+  drillDimension: string;
   chartGroups: ChartGroup[];
 }
 
@@ -64,12 +64,12 @@ export interface ReportTemplate {
   state: ReportState;
 }
 
-export interface StorylineFolder {
+export interface SavedFolder<T> {
   id: string;
   name: string;
   owner: string;
   visibility: StorylineDataType;
   color: string;
   updated_at: string;
-  state: StorylineState;
+  state: T;
 }
