@@ -459,6 +459,14 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                          <span className="id-bar-icon template">
+                            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                              <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                              <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                              <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+                              <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                            </svg>
+                          </span>
                           <span className="id-bar-label" style={{ flexShrink: 0 }}>
                             Template ID
                           </span>
@@ -546,6 +554,11 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
                             }}
                           >
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                              <span className="id-bar-icon chart">
+                                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                  <path d="M4 20V10M12 20V4M20 20v-7"></path>
+                                </svg>
+                              </span>
                               <span className="id-bar-label" style={{ flexShrink: 0 }}>
                                 Chart ID
                               </span>
@@ -579,14 +592,24 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
                             <div className="field-label" style={{ marginBottom: 6, fontSize: 11.5 }}>
                               Query Link
                             </div>
-                            <div className="tags-wrap">
+                            <div className="tree-list">
+                              {g.queryLinks.length === 0 && <div className="tree-empty">暂无 Query Link</div>}
                               {g.queryLinks.map((l, li) => (
-                                <span className="tag" title={l} key={li}>
-                                  <span className="tag-text">{l.length > 40 ? l.slice(0, 38) + '…' : l}</span>
-                                  <button className="tag-x" onClick={() => delGroupQueryLink(n.id, tg.id, g.id, li)}>
+                                <div className="tree-item" key={li}>
+                                  <svg className="tree-connector" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                    <path d="M6 3v10a2 2 0 002 2h8"></path>
+                                  </svg>
+                                  <svg className="tree-item-icon" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                    <path d="M10 13a5 5 0 007.07 0l1.42-1.42a5 5 0 00-7.07-7.07L10 6"></path>
+                                    <path d="M14 11a5 5 0 00-7.07 0l-1.42 1.42a5 5 0 007.07 7.07L14 18"></path>
+                                  </svg>
+                                  <span className="tree-item-text" title={l}>
+                                    {l}
+                                  </span>
+                                  <button className="tree-item-x" onClick={() => delGroupQueryLink(n.id, tg.id, g.id, li)}>
                                     ×
                                   </button>
-                                </span>
+                                </div>
                               ))}
                             </div>
                             <div className="tag-input-row">
@@ -613,14 +636,22 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
                             <div className="field-label" style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}>
                               拼数方式
                             </div>
-                            <div className="tags-wrap">
+                            <div className="tree-list">
+                              {g.joinMethods.length === 0 && <div className="tree-empty">暂无拼数方式</div>}
                               {g.joinMethods.map((jm, ji) => (
-                                <span className="tag" title={jm} key={ji}>
-                                  <span className="tag-text">{joinMethodLabel(jm)}</span>
-                                  <button className="tag-x" onClick={() => delJoinMethod(n.id, tg.id, g.id, ji)}>
+                                <div className="tree-item" key={ji}>
+                                  <svg className="tree-connector" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                    <path d="M6 3v10a2 2 0 002 2h8"></path>
+                                  </svg>
+                                  <svg className="tree-item-icon" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                    <rect x="3" y="4" width="18" height="17" rx="2"></rect>
+                                    <path d="M3 9h18M8 3v3M16 3v3"></path>
+                                  </svg>
+                                  <span className="tree-item-text">{joinMethodLabel(jm)}</span>
+                                  <button className="tree-item-x" onClick={() => delJoinMethod(n.id, tg.id, g.id, ji)}>
                                     ×
                                   </button>
-                                </span>
+                                </div>
                               ))}
                             </div>
                             <div className="tag-input-row">
