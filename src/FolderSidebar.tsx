@@ -8,6 +8,7 @@ interface Props<T> {
   nameLabel: string;
   state: T;
   onLoad: (state: T) => void;
+  onNew: () => void;
   toast: (msg: string) => void;
   getName: (state: T) => string;
   getOwner: (state: T) => string;
@@ -33,6 +34,7 @@ export default function FolderSidebar<T>({
   nameLabel,
   state,
   onLoad,
+  onNew,
   toast,
   getName,
   getOwner,
@@ -92,6 +94,13 @@ export default function FolderSidebar<T>({
     onLoad(normalize(f.state));
     setActiveId(f.id);
     toast('✅ 已载入文件夹：' + f.name);
+  };
+
+  const startNew = () => {
+    if (!confirm('新建空白配置会清空当前未保存的编辑内容，确认继续？')) return;
+    onNew();
+    setActiveId('');
+    toast('✅ 已新建空白配置，编辑后可保存为文件夹');
   };
 
   const duplicateFolder = (f: SavedFolder<T>, e: React.MouseEvent) => {
@@ -201,6 +210,11 @@ export default function FolderSidebar<T>({
 
         <div className="sl-folders-head">
           <span>FOLDERS</span>
+          <button className="sl-sidebar-toggle" onClick={startNew} title="新建空白配置">
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path d="M12 5v14M5 12h14"></path>
+            </svg>
+          </button>
         </div>
 
         <div className="sl-folder-list">

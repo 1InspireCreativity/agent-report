@@ -3,7 +3,7 @@ import StorylineTab from './StorylineTab';
 import FolderSidebar from './FolderSidebar';
 import ReportTab from './ReportTab';
 import { useToast } from './useToast';
-import { defaultReport, defaultStoryline, normalizeReport, normalizeStoryline } from './utils';
+import { blankStoryline, defaultReport, defaultStoryline, normalizeReport, normalizeStoryline } from './utils';
 import type { ReportState, StorylineState } from './types';
 
 const STORAGE_KEY = 'agentReportAppState';
@@ -104,6 +104,7 @@ function App() {
               getOwner={(s) => s.analyst}
               countItems={(s) => s.nodes.length}
               normalize={normalizeStoryline}
+              onNew={() => setStoryline(blankStoryline())}
             />
             <div className="page" style={{ margin: 0, flex: 1 }}>
               <StorylineTab state={storyline} setState={setStoryline} toast={toast} />
@@ -124,6 +125,7 @@ function App() {
               getOwner={(s) => s.owner}
               countItems={(s) => s.templateIds.length}
               normalize={normalizeReport}
+              onNew={() => setReport(defaultReport())}
             />
             <div className="page" style={{ margin: 0, flex: 1 }}>
               <ReportTab state={report} setState={setReport} toast={toast} />

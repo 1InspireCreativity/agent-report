@@ -172,6 +172,16 @@ export function defaultStoryline(): StorylineState {
   };
 }
 
+export function blankStoryline(): StorylineState {
+  return {
+    topic: '',
+    analyst: '',
+    background: '',
+    region: 'NAAP',
+    nodes: [],
+  };
+}
+
 export function defaultReport(): ReportState {
   return {
     name: '',

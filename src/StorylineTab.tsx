@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { StorylineState, StorylineDataType, ChartGroup, ChartCapability, TemplateGroup } from './types';
 import {
+  blankStoryline,
   buildStorylinePayload,
   emptyNode,
   emptyTemplateGroup,
@@ -310,13 +311,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
 
   const reset = () => {
     if (!confirm('确认重置所有图表配置？')) return;
-    setState({
-      topic: '',
-      analyst: '',
-      background: '',
-      region: 'NAAP',
-      nodes: [],
-    });
+    setState(blankStoryline());
   };
 
   const payload = buildStorylinePayload(state);
