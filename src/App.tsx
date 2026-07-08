@@ -22,6 +22,89 @@ const REPORT_FOLDER_SEED = (['W', '2W', 'M'] as const).map((cycle) => ({
   state: { ...defaultReport(), name: cycle, cycle },
 }));
 
+const STORYLINE_FOLDER_SEED = [
+  {
+    name: 'NAAP Revenue',
+    state: {
+      ...blankStoryline(),
+      topic: 'NAAP Revenue',
+      background: 'NAAP 大盘 Revenue 周环比下滑，需要归因分析驱动因素。',
+      region: 'NAAP',
+      nodes: [
+        {
+          id: 1,
+          scenario: 'NAAP Revenue WoW',
+          templateGroups: [
+            {
+              id: 1,
+              templateId: 'naap_revenue_template',
+              tags: [
+                {
+                  id: 1,
+                  category: '经营结果与效果指标 / Business Outcome & Performance Metrics',
+                  value: '收入与交易结果 / Revenue & Transaction Outcome',
+                },
+              ],
+              chartGroups: [
+                {
+                  id: 1,
+                  chartId: 'NAAPRevWoW',
+                  queryLinks: [],
+                  joinMethods: [],
+                  drillDimension: '',
+                  capabilities: ['basic' as const],
+                  threshold: '',
+                  type: 'public' as const,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    name: 'NA YOY',
+    state: {
+      ...blankStoryline(),
+      topic: 'NA YOY',
+      background: 'NA 大盘 Revenue 同比出现异常波动，需要归因分析。',
+      region: 'NA',
+      nodes: [
+        {
+          id: 1,
+          scenario: 'NA Revenue YOY',
+          templateGroups: [
+            {
+              id: 1,
+              templateId: 'na_yoy_template',
+              tags: [
+                {
+                  id: 1,
+                  category: '经营结果与效果指标 / Business Outcome & Performance Metrics',
+                  value: '收入与交易结果 / Revenue & Transaction Outcome',
+                },
+              ],
+              chartGroups: [
+                {
+                  id: 1,
+                  chartId: 'NARevYOY',
+                  queryLinks: [],
+                  joinMethods: [],
+                  drillDimension: '',
+                  capabilities: ['basic' as const],
+                  threshold: '',
+                  type: 'public' as const,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  },
+];
+
 function App() {
   const [activeTab, setActiveTab] = useState<TabId>('storyline');
   const [storyline, setStoryline] = useState<StorylineState>(defaultStoryline);
@@ -155,6 +238,7 @@ function App() {
               countItems={(s) => s.nodes.length}
               normalize={normalizeStoryline}
               blankState={blankStoryline}
+              seed={STORYLINE_FOLDER_SEED}
               activeId={storylineActiveId}
               onActiveIdChange={setStorylineActiveId}
             />
