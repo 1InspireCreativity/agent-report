@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { StorylineState, StorylineDataType, ChartGroup, ChartCapability, TagCategory } from './types';
+import type { StorylineState, StorylineDataType, ChartGroup, ChartCapability, TemplateGroup } from './types';
 import {
   buildStorylinePayload,
   emptyNode,
@@ -7,17 +7,19 @@ import {
   emptyChartGroup,
   joinMethodLabel,
   nextTagId,
-  tagCategoryLabel,
+  nextTemplateGroupId,
+  nextGroupId,
   CAPABILITY_OPTIONS,
   CATEGORY_L1_OPTIONS,
-  CATEGORY_L2_OPTIONS,
+  CATEGORY_OPTIONS,
   JOIN_METHOD_OPTIONS,
   REGION_OPTIONS,
   STORYLINE_TYPE_OPTIONS,
-  TAG_CATEGORY_OPTIONS,
 } from './utils';
 import { submitChartConfig } from './api';
 import PayloadPanel from './PayloadPanel';
+import SubmitHistoryPanel from './SubmitHistoryPanel';
+import { addSubmissionRecord, clearSubmissionHistory, deleteSubmissionRecord, loadSubmissionHistory } from './submissionHistory';
 
 interface Props {
   state: StorylineState;
@@ -28,14 +30,16 @@ interface Props {
 export default function StorylineTab({ state, setState, toast }: Props) {
   const [linkDrafts, setLinkDrafts] = useState<Record<number, string>>({});
   const [joinMethodDrafts, setJoinMethodDrafts] = useState<Record<number, string>>({});
-  const [tagCategoryDrafts, setTagCategoryDrafts] = useState<Record<number, TagCategory>>({});
-  const [tagValueDrafts, setTagValueDrafts] = useState<Record<number, string>>({});
+  const [tagDrafts, setTagDrafts] = useState<Record<number, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [submitHistory, setSubmitHistory] = useState(loadSubmissionHistory);
 
   const addTemplateTag = (nodeId: number, tgId: number) => {
-    const val = (tagValueDrafts[tgId] || '').trim();
-    if (!val) return;
-    const category = tagCategoryDrafts[tgId] || 'lever';
+    const draft = tagDrafts[tgId] || '';
+    if (!draft) return;
+    const sepIdx = draft.indexOf('::');
+    const category = sepIdx >= 0 ? draft.slice(0, sepIdx) : draft;
+    const val = sepIdx >= 0 ? draft.slice(sepIdx + 2) : '';
     setState((prev) => ({
       ...prev,
       nodes: prev.nodes.map((n) =>
@@ -49,7 +53,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
           : n
       ),
     }));
-    setTagValueDrafts((prev) => ({ ...prev, [tgId]: '' }));
+    setTagDrafts((prev) => ({ ...prev, [tgId]: '' }));
   };
 
   const delTemplateTag = (nodeId: number, tgId: number, tagId: number) => {
@@ -65,13 +69,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
             }
           : n
       ),
-    }));
-  };
-
-  const setNodeCategory = (nodeId: number, level: 'categoryL1' | 'categoryL2', value: string) => {
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) => (n.id === nodeId ? { ...n, [level]: value } : n)),
     }));
   };
 
@@ -109,6 +106,27 @@ export default function StorylineTab({ state, setState, toast }: Props) {
       nodes: prev.nodes.map((n) =>
         n.id === nodeId ? { ...n, templateGroups: n.templateGroups.filter((tg) => tg.id !== tgId) } : n
       ),
+    }));
+  };
+
+  const duplicateTemplateGroup = (nodeId: number, tgId: number) => {
+    setState((prev) => ({
+      ...prev,
+      nodes: prev.nodes.map((n) => {
+        if (n.id !== nodeId) return n;
+        const idx = n.templateGroups.findIndex((tg) => tg.id === tgId);
+        if (idx < 0) return n;
+        const src = n.templateGroups[idx];
+        const copy: TemplateGroup = {
+          ...src,
+          id: nextTemplateGroupId(),
+          tags: src.tags.map((t) => ({ ...t, id: nextTagId() })),
+          chartGroups: src.chartGroups.map((g) => ({ ...g, id: nextGroupId() })),
+        };
+        const templateGroups = [...n.templateGroups];
+        templateGroups.splice(idx + 1, 0, copy);
+        return { ...n, templateGroups };
+      }),
     }));
   };
 
@@ -155,6 +173,27 @@ export default function StorylineTab({ state, setState, toast }: Props) {
             }
           : n
       ),
+    }));
+  };
+
+  const duplicateChartGroup = (nodeId: number, tgId: number, groupId: number) => {
+    setState((prev) => ({
+      ...prev,
+      nodes: prev.nodes.map((n) => {
+        if (n.id !== nodeId) return n;
+        return {
+          ...n,
+          templateGroups: n.templateGroups.map((tg) => {
+            if (tg.id !== tgId) return tg;
+            const idx = tg.chartGroups.findIndex((g) => g.id === groupId);
+            if (idx < 0) return tg;
+            const copy: ChartGroup = { ...tg.chartGroups[idx], id: nextGroupId() };
+            const chartGroups = [...tg.chartGroups];
+            chartGroups.splice(idx + 1, 0, copy);
+            return { ...tg, chartGroups };
+          }),
+        };
+      }),
     }));
   };
 
@@ -240,8 +279,20 @@ export default function StorylineTab({ state, setState, toast }: Props) {
       return;
     }
     setSubmitting(true);
-    const result = await submitChartConfig(buildStorylinePayload(state));
+    const chartPayload = buildStorylinePayload(state);
+    const result = await submitChartConfig(chartPayload);
     setSubmitting(false);
+    const status = result.ok ? 'ok' : result.offline ? 'offline' : 'error';
+    setSubmitHistory(
+      addSubmissionRecord({
+        topic: state.topic,
+        analyst: state.analyst,
+        region: state.region,
+        status,
+        error: result.error,
+        payload: chartPayload,
+      })
+    );
     if (result.ok) {
       toast('✅ 图表配置已提交给后端，Agent 任务启动中…');
     } else if (result.offline) {
@@ -372,34 +423,6 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                   </button>
                 </div>
                 <div className="node-body" style={{ display: 'block', padding: '16px 18px' }}>
-                  <div className="grid-2" style={{ marginBottom: 14 }}>
-                    <div className="field" style={{ margin: 0 }}>
-                      <div className="field-label">
-                        一级分类 <span className="req">*</span>
-                      </div>
-                      <select value={n.categoryL1} onChange={(e) => setNodeCategory(n.id, 'categoryL1', e.target.value)}>
-                        <option value="">请选择…</option>
-                        {CATEGORY_L1_OPTIONS.map((o) => (
-                          <option value={o} key={o}>
-                            {o}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="field" style={{ margin: 0 }}>
-                      <div className="field-label">
-                        二级分类 <span className="req">*</span>
-                      </div>
-                      <select value={n.categoryL2} onChange={(e) => setNodeCategory(n.id, 'categoryL2', e.target.value)}>
-                        <option value="">请选择…</option>
-                        {CATEGORY_L2_OPTIONS.map((o) => (
-                          <option value={o} key={o}>
-                            {o}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
                   <div className="field" style={{ margin: 0 }}>
                     <div className="field-label">
                       Template ID <span className="hint">一个图表配置下可有多个 Template ID</span>{' '}
@@ -428,6 +451,15 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                             style={{ flex: 1 }}
                           />
                           <button
+                            className="icon-btn"
+                            onClick={() => duplicateTemplateGroup(n.id, tg.id)}
+                            title="复制该 Template ID"
+                          >
+                            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                              <path d="M12 5v14M5 12h14"></path>
+                            </svg>
+                          </button>
+                          <button
                             className="icon-btn danger"
                             onClick={() => delTemplateGroup(n.id, tg.id)}
                             title="删除"
@@ -438,14 +470,12 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                           </button>
                         </div>
                         <div className="field-label" style={{ marginBottom: 6 }}>
-                          标签 <span className="hint">Lever / 产品 / Region，属于该 Template ID</span>
+                          标签 <span className="hint">一级分类 / 二级分类，属于该 Template ID</span>
                         </div>
                         <div className="tags-wrap">
                           {tg.tags.map((t) => (
-                            <span className="tag" title={`${tagCategoryLabel(t.category)}: ${t.value}`} key={t.id}>
-                              <span className="tag-text">
-                                {tagCategoryLabel(t.category)} · {t.value}
-                              </span>
+                            <span className="tag" title={t.value ? `${t.category}: ${t.value}` : t.category} key={t.id}>
+                              <span className="tag-text">{t.value ? `${t.category} · ${t.value}` : t.category}</span>
                               <button className="tag-x" onClick={() => delTemplateTag(n.id, tg.id, t.id)}>
                                 ×
                               </button>
@@ -454,30 +484,22 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                         </div>
                         <div className="tag-input-row" style={{ marginBottom: 12 }}>
                           <select
-                            style={{ width: 110, flex: 'none' }}
-                            value={tagCategoryDrafts[tg.id] || 'lever'}
-                            onChange={(e) =>
-                              setTagCategoryDrafts((prev) => ({ ...prev, [tg.id]: e.target.value as TagCategory }))
-                            }
+                            style={{ flex: 1 }}
+                            value={tagDrafts[tg.id] || ''}
+                            onChange={(e) => setTagDrafts((prev) => ({ ...prev, [tg.id]: e.target.value }))}
                           >
-                            {TAG_CATEGORY_OPTIONS.map((o) => (
-                              <option value={o.value} key={o.value}>
-                                {o.label}
-                              </option>
-                            ))}
+                            <option value="">分类…</option>
+                            {CATEGORY_L1_OPTIONS.flatMap((l1) => [
+                              <option value={l1} key={l1} style={{ fontWeight: 700 }}>
+                                {l1}
+                              </option>,
+                              ...(CATEGORY_OPTIONS[l1] || []).map((l2) => (
+                                <option value={`${l1}::${l2}`} key={`${l1}::${l2}`}>
+                                  {'    ' + l2}
+                                </option>
+                              )),
+                            ])}
                           </select>
-                          <input
-                            type="text"
-                            placeholder="标签内容，如：GBS / Gaming / NAAP"
-                            value={tagValueDrafts[tg.id] || ''}
-                            onChange={(e) => setTagValueDrafts((prev) => ({ ...prev, [tg.id]: e.target.value }))}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                addTemplateTag(n.id, tg.id);
-                                e.preventDefault();
-                              }
-                            }}
-                          />
                           <button className="btn btn-secondary btn-xs" onClick={() => addTemplateTag(n.id, tg.id)}>
                             + 添加
                           </button>
@@ -510,6 +532,15 @@ export default function StorylineTab({ state, setState, toast }: Props) {
                                 onChange={(e) => setChartId(n.id, tg.id, g.id, e.target.value)}
                                 style={{ flex: 1 }}
                               />
+                              <button
+                                className="icon-btn"
+                                onClick={() => duplicateChartGroup(n.id, tg.id, g.id)}
+                                title="复制该 Chart ID"
+                              >
+                                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                  <path d="M12 5v14M5 12h14"></path>
+                                </svg>
+                              </button>
                               <button
                                 className="icon-btn danger"
                                 onClick={() => delChartGroup(n.id, tg.id, g.id)}
@@ -682,6 +713,26 @@ export default function StorylineTab({ state, setState, toast }: Props) {
         meta={`${state.nodes.length} 节点`}
         payload={payload}
         onCopy={() => toast('✅ 已复制到剪贴板')}
+      />
+
+      {/* Submission History */}
+      <div className="section-label" style={{ marginTop: 20 }}>
+        提交记录
+      </div>
+      <SubmitHistoryPanel
+        records={submitHistory}
+        onCopy={(json) => {
+          navigator.clipboard.writeText(json).then(() => toast('✅ 已复制到剪贴板'));
+        }}
+        onDelete={(id) => {
+          setSubmitHistory(deleteSubmissionRecord(id));
+          toast('✅ 已删除该提交记录');
+        }}
+        onClear={() => {
+          if (!confirm('确认清空全部提交记录？此操作不可撤销。')) return;
+          setSubmitHistory(clearSubmissionHistory());
+          toast('✅ 已清空提交记录');
+        }}
       />
 
       <div className="footer-bar" style={{ border: 'none', paddingTop: 16 }}>

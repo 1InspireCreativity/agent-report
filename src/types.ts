@@ -1,10 +1,8 @@
 export type StorylineDataType = 'public' | 'personal';
 
-export type TagCategory = 'lever' | 'product' | 'region';
-
 export interface ReportTag {
   id: number;
-  category: TagCategory;
+  category: string;
   value: string;
 }
 
@@ -31,8 +29,6 @@ export interface TemplateGroup {
 export interface AttributionNode {
   id: number;
   scenario: string;
-  categoryL1: string;
-  categoryL2: string;
   templateGroups: TemplateGroup[];
 }
 
@@ -74,4 +70,15 @@ export interface SavedFolder<T> {
   color: string;
   updated_at: string;
   state: T;
+}
+
+export interface SubmissionRecord {
+  id: string;
+  submitted_at: string;
+  topic: string;
+  analyst: string;
+  region: string;
+  status: 'ok' | 'offline' | 'error';
+  error?: string;
+  payload: unknown;
 }

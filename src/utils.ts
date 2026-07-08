@@ -6,7 +6,6 @@ import type {
   ReportTag,
   StorylineDataType,
   StorylineState,
-  TagCategory,
   TemplateGroup,
 } from './types';
 
@@ -40,17 +39,20 @@ export function joinMethodLabel(value: string): string {
   return JOIN_METHOD_OPTIONS.find((o) => o.value === value)?.label || value;
 }
 
-export const REGION_OPTIONS = ['CNOB', 'SEA', 'APAC', 'NAAP'];
-
-export const TAG_CATEGORY_OPTIONS: { value: TagCategory; label: string }[] = [
-  { value: 'lever', label: 'Lever' },
-  { value: 'product', label: '产品' },
-  { value: 'region', label: 'Region' },
+export const REGION_OPTIONS = [
+  'NAAP',
+  'NA',
+  'SMB',
+  'Others',
+  'CNOB',
+  'SEA',
+  'METAP & LATAM',
+  'KR',
+  'JP',
+  'EUI',
+  'AUNZ',
+  'ENT',
 ];
-
-export function tagCategoryLabel(value: TagCategory): string {
-  return TAG_CATEGORY_OPTIONS.find((o) => o.value === value)?.label || value;
-}
 
 export const CAPABILITY_OPTIONS: { value: ChartCapability; label: string }[] = [
   { value: 'basic', label: '基础画图' },
@@ -58,9 +60,41 @@ export const CAPABILITY_OPTIONS: { value: ChartCapability; label: string }[] = [
   { value: 'threshold', label: '阈值状态' },
 ];
 
-// 分类 taxonomy — placeholder options until the real business taxonomy is confirmed.
-export const CATEGORY_L1_OPTIONS = ['闭环电商', '非闭环电商', '游戏', '其他'];
-export const CATEGORY_L2_OPTIONS = ['直播', '短视频', '商城', '搜索', '其他'];
+// 分类 taxonomy — 一级分类 -> 二级分类 options.
+export const CATEGORY_OPTIONS: Record<string, string[]> = {
+  '闭环电商 / TTS': ['标签 / Label', '扩展属性 / Extended Attribute'],
+  '程序软体 / Apps': ['标签 / Label', '扩展属性 / Extended Attribute'],
+  '达人 / TTO': ['标签 / Label', '扩展属性 / Extended Attribute'],
+  '短剧 / Mini Series': ['标签 / Label', '扩展属性 / Extended Attribute'],
+  '广告对象与创意 / Ad Object & Creative': [
+    '创意属性 / Creative Attribute',
+    '广告对象属性 / Ad Object Attribute',
+    '聚合指标 / Aggregated Measure',
+  ],
+  '行业 / Industry': ['行业4.0 / Industry 4.0', '其它行业 / Other Industry'],
+  '经营结果与效果指标 / Business Outcome & Performance Metrics': [
+    '成本与消耗 / Cost & Spend',
+    '收入与交易结果 / Revenue & Transaction Outcome',
+  ],
+  '开环电商 / Open Loop C': ['标签 / Label', '扩展属性 / Extended Attribute'],
+  '平台电商 / Marketplace': ['标签 / Label', '扩展属性 / Extended Attribute'],
+  '品牌 / Branding': ['标签 / Label', '扩展属性 / Extended Attribute'],
+  '审核 / Moderation': ['核查 / Audit'],
+  '时间与周期 / Time & Calendar': ['时间 / Time', '业务事件时间 / Business Event Time'],
+  '投放与产品 / Advertising & Product': ['产品 / Product', '投放 / Advertising'],
+  '推广 / Promote': ['标签 / Label', '扩展属性 / Extended Attribute'],
+  '线索 / Leads': ['标签 / Label', '扩展属性 / Extended Attribute'],
+  '业务主体与组织 / Business Entity & Organization': ['标签 / Label', '客户信息 / Customer Info', '团队 / Team'],
+  '游戏 / Gaming': ['标签 / Label', '扩展属性 / Extended Attribute'],
+  '重要分析字段 / Important Analysis Fields': [
+    '首销 / First Revenue',
+    '新开 / New Existing',
+    '战略杠杆 / Strategic Lever',
+    '重要客户 / Important Customer',
+  ],
+};
+
+export const CATEGORY_L1_OPTIONS = Object.keys(CATEGORY_OPTIONS);
 
 export const FOLDER_ICON_COLORS = ['#111827', '#059669', '#9CA3AF', '#D97706', '#2563EB', '#DC2626', '#7C3AED'];
 
@@ -78,15 +112,13 @@ export function defaultStoryline(): StorylineState {
       {
         id: 1,
         scenario: 'GBS-1Team revenue和yoy',
-        categoryL1: '闭环电商',
-        categoryL2: '',
         templateGroups: [
           {
             id: 1,
             templateId: 'motz7cum6ntsj6',
             tags: [
-              { id: 1, category: 'lever', value: 'GBS' },
-              { id: 2, category: 'region', value: 'NAAP' },
+              { id: 1, category: '重要分析字段 / Important Analysis Fields', value: '战略杠杆 / Strategic Lever' },
+              { id: 2, category: '行业 / Industry', value: '行业4.0 / Industry 4.0' },
             ],
             chartGroups: [
               {
@@ -116,8 +148,6 @@ export function defaultStoryline(): StorylineState {
       {
         id: 2,
         scenario: 'NAAP-1Team revenue和yoy',
-        categoryL1: '',
-        categoryL2: '',
         templateGroups: [
           {
             id: 2,
@@ -166,8 +196,6 @@ export function buildStorylinePayload(sl: StorylineState) {
     attribution_nodes: sl.nodes.map((n, i) => ({
       index: i + 1,
       scenario: n.scenario || `节点${i + 1}`,
-      category_l1: n.categoryL1 || null,
-      category_l2: n.categoryL2 || null,
       template_groups: n.templateGroups.map((tg) => ({
         template_id: tg.templateId || null,
         tags: tg.tags.map((t) => ({ category: t.category, value: t.value })),
@@ -267,8 +295,6 @@ export function emptyNode(): AttributionNode {
   return {
     id: nextNodeId(),
     scenario: '',
-    categoryL1: '',
-    categoryL2: '',
     templateGroups: [],
   };
 }
@@ -299,9 +325,11 @@ function normalizeChartGroup(raw: Record<string, unknown> | undefined, legacy: L
 
 function normalizeTag(raw: Partial<ReportTag> | undefined): ReportTag | null {
   if (!raw || typeof raw.value !== 'string' || !raw.value) return null;
-  const category: TagCategory =
-    raw.category === 'lever' || raw.category === 'product' || raw.category === 'region' ? raw.category : 'lever';
-  return { id: typeof raw.id === 'number' ? raw.id : nextTagId(), category, value: raw.value };
+  return {
+    id: typeof raw.id === 'number' ? raw.id : nextTagId(),
+    category: typeof raw.category === 'string' ? raw.category : '',
+    value: raw.value,
+  };
 }
 
 function normalizeTags(raw: unknown): ReportTag[] {
@@ -374,8 +402,6 @@ function normalizeNode(raw: Record<string, unknown> | undefined): AttributionNod
   return {
     id: typeof r.id === 'number' ? r.id : nextNodeId(),
     scenario: typeof r.scenario === 'string' ? r.scenario : typeof r.name === 'string' ? r.name : '',
-    categoryL1: typeof r.categoryL1 === 'string' ? r.categoryL1 : '',
-    categoryL2: typeof r.categoryL2 === 'string' ? r.categoryL2 : '',
     templateGroups,
   };
 }
