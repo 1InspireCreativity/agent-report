@@ -12,8 +12,6 @@ import {
   nextTemplateGroupId,
   nextGroupId,
   CAPABILITY_OPTIONS,
-  CATEGORY_L1_OPTIONS,
-  CATEGORY_OPTIONS,
   JOIN_METHOD_OPTIONS,
   REGION_OPTIONS,
   STORYLINE_TYPE_OPTIONS,
@@ -21,6 +19,7 @@ import {
 import { submitChartConfig } from './api';
 import PayloadPanel from './PayloadPanel';
 import SubmitHistoryPanel from './SubmitHistoryPanel';
+import CategoryPicker from './CategoryPicker';
 import {
   addSubmissionRecord,
   clearSubmissionHistory,
@@ -520,23 +519,11 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
                           ))}
                         </div>
                         <div className="tag-input-row" style={{ marginBottom: 12 }}>
-                          <select
+                          <CategoryPicker
                             style={{ flex: 1 }}
                             value={tagDrafts[tg.id] || ''}
-                            onChange={(e) => setTagDrafts((prev) => ({ ...prev, [tg.id]: e.target.value }))}
-                          >
-                            <option value="">分类…</option>
-                            {CATEGORY_L1_OPTIONS.flatMap((l1) => [
-                              <option value={l1} key={l1} style={{ fontWeight: 700 }}>
-                                {l1}
-                              </option>,
-                              ...(CATEGORY_OPTIONS[l1] || []).map((l2) => (
-                                <option value={`${l1}::${l2}`} key={`${l1}::${l2}`}>
-                                  {'    ' + l2}
-                                </option>
-                              )),
-                            ])}
-                          </select>
+                            onChange={(v) => setTagDrafts((prev) => ({ ...prev, [tg.id]: v }))}
+                          />
                           <button className="btn btn-secondary btn-xs" onClick={() => addTemplateTag(n.id, tg.id)}>
                             + 添加
                           </button>
