@@ -56,6 +56,7 @@ export interface ReportState {
 
 export interface SavedFolder<T> {
   id: string;
+  parentId: string | null;
   name: string;
   owner: string;
   visibility: StorylineDataType;

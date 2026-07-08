@@ -105,7 +105,9 @@ export function folderIconColor(index: number): string {
 
 export function loadFolders<T>(storageKey: string): SavedFolder<T>[] {
   try {
-    return JSON.parse(localStorage.getItem(storageKey) || '[]');
+    const raw = JSON.parse(localStorage.getItem(storageKey) || '[]') as SavedFolder<T>[];
+    // Back-compat: folders saved before nested folders existed have no parentId.
+    return raw.map((f) => ({ ...f, parentId: f.parentId ?? null }));
   } catch {
     return [];
   }
@@ -115,10 +117,11 @@ export function saveFolders<T>(storageKey: string, arr: SavedFolder<T>[]) {
   localStorage.setItem(storageKey, JSON.stringify(arr));
 }
 
-/** Create-or-update a saved folder for the given state, matching by activeId first, else by name. */
+/** Create-or-update a saved folder for the given state, matching by activeId first, else by name+parent. */
 export function upsertFolder<T>(params: {
   storageKey: string;
   activeId: string;
+  parentId: string | null;
   name: string;
   owner: string;
   visibility: StorylineDataType;
@@ -127,9 +130,10 @@ export function upsertFolder<T>(params: {
   const arr = loadFolders<T>(params.storageKey);
   const existingIdx = params.activeId
     ? arr.findIndex((f) => f.id === params.activeId)
-    : arr.findIndex((f) => f.name === params.name);
+    : arr.findIndex((f) => f.name === params.name && f.parentId === params.parentId);
   const item: SavedFolder<T> = {
     id: existingIdx >= 0 ? arr[existingIdx].id : String(Date.now()),
+    parentId: existingIdx >= 0 ? arr[existingIdx].parentId : params.parentId,
     name: params.name,
     owner: params.owner,
     visibility: params.visibility,
@@ -141,6 +145,22 @@ export function upsertFolder<T>(params: {
   else arr.unshift(item);
   saveFolders(params.storageKey, arr);
   return item;
+}
+
+/** All descendant ids of a folder (children, grandchildren, ...), for cascade delete. */
+export function descendantIds<T>(arr: SavedFolder<T>[], rootId: string): string[] {
+  const out: string[] = [];
+  const stack = [rootId];
+  while (stack.length) {
+    const id = stack.pop()!;
+    for (const f of arr) {
+      if (f.parentId === id) {
+        out.push(f.id);
+        stack.push(f.id);
+      }
+    }
+  }
+  return out;
 }
 
 export function defaultStoryline(): StorylineState {

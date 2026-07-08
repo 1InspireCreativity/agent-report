@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import type { SavedFolder, StorylineDataType } from './types';
-import { folderIconColor, loadFolders, saveFolders, upsertFolder } from './utils';
+import { descendantIds, folderIconColor, loadFolders, saveFolders, upsertFolder } from './utils';
 
 interface SeedFolder<T> {
   name: string;
   owner?: string;
   visibility?: StorylineDataType;
   state: T;
+  children?: SeedFolder<T>[];
 }
 
 interface Props<T> {
@@ -24,6 +25,33 @@ interface Props<T> {
   normalize: (raw: T) => T;
   activeId: string;
   onActiveIdChange: (id: string) => void;
+  parentId: string | null;
+  onParentIdChange: (id: string | null) => void;
+}
+
+function flattenSeed<T>(
+  nodes: SeedFolder<T>[],
+  parentId: string | null,
+  counter: { n: number }
+): SavedFolder<T>[] {
+  const out: SavedFolder<T>[] = [];
+  for (const node of nodes) {
+    const id = `seed-${counter.n++}`;
+    out.push({
+      id,
+      parentId,
+      name: node.name,
+      owner: node.owner || '',
+      visibility: node.visibility || 'public',
+      color: folderIconColor(counter.n),
+      updated_at: new Date().toLocaleString(),
+      state: node.state,
+    });
+    if (node.children?.length) {
+      out.push(...flattenSeed(node.children, id, counter));
+    }
+  }
+  return out;
 }
 
 export default function FolderSidebar<T>({
@@ -41,6 +69,8 @@ export default function FolderSidebar<T>({
   normalize,
   activeId,
   onActiveIdChange: setActiveId,
+  parentId,
+  onParentIdChange: setParentId,
 }: Props<T>) {
   const [collapsed, setCollapsed] = useState(false);
   const [folders, setFolders] = useState<SavedFolder<T>[]>([]);
@@ -57,15 +87,7 @@ export default function FolderSidebar<T>({
     let arr = loadFolders<T>(storageKey);
     const seededKey = `${storageKey}__seeded`;
     if (arr.length === 0 && seed?.length && !localStorage.getItem(seededKey)) {
-      arr = seed.map((s, i) => ({
-        id: `seed-${i}`,
-        name: s.name,
-        owner: s.owner || '',
-        visibility: s.visibility || 'public',
-        color: folderIconColor(i),
-        updated_at: new Date().toLocaleString(),
-        state: s.state,
-      }));
+      arr = flattenSeed(seed, null, { n: 0 });
       saveFolders(storageKey, arr);
       localStorage.setItem(seededKey, '1');
     }
@@ -80,10 +102,22 @@ export default function FolderSidebar<T>({
   }, [storageKey, activeId]);
 
   const visible = folders.filter((f) => {
+    if (f.parentId !== parentId) return false;
     if (tab === 'mine' && f.visibility !== 'personal') return false;
     if (search.trim() && !f.name.toLowerCase().includes(search.trim().toLowerCase())) return false;
     return true;
   });
+
+  const breadcrumb: SavedFolder<T>[] = [];
+  {
+    let cur = parentId;
+    while (cur) {
+      const f = folders.find((x) => x.id === cur);
+      if (!f) break;
+      breadcrumb.unshift(f);
+      cur = f.parentId;
+    }
+  }
 
   const save = (visibility: StorylineDataType) => {
     const name = getName(state).trim();
@@ -91,7 +125,7 @@ export default function FolderSidebar<T>({
       toast(`⚠️ 请先填写${nameLabel}`);
       return;
     }
-    const item = upsertFolder({ storageKey, activeId, name, owner: getOwner(state), visibility, state });
+    const item = upsertFolder({ storageKey, activeId, parentId, name, owner: getOwner(state), visibility, state });
     setFolders(loadFolders<T>(storageKey));
     setActiveId(item.id);
     toast(`✅ 已保存为${visibility === 'public' ? ' Public' : ' Personal'} 文件夹：` + name);
@@ -100,14 +134,21 @@ export default function FolderSidebar<T>({
   const openFolder = (f: SavedFolder<T>) => {
     onLoad(normalize(f.state));
     setActiveId(f.id);
+    setParentId(f.id);
     toast('✅ 已载入文件夹：' + f.name);
+  };
+
+  const goToBreadcrumb = (id: string | null) => {
+    setParentId(id);
   };
 
   const startNew = () => {
     const arr = loadFolders<T>(storageKey);
-    const name = `新文件夹 ${arr.length + 1}`;
+    const siblings = arr.filter((f) => f.parentId === parentId);
+    const name = `新文件夹 ${siblings.length + 1}`;
     const item: SavedFolder<T> = {
       id: String(Date.now()),
+      parentId,
       name,
       owner: getOwner(state),
       visibility: 'public',
@@ -140,11 +181,14 @@ export default function FolderSidebar<T>({
 
   const deleteFolder = (f: SavedFolder<T>, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm(`确认删除文件夹「${f.name}」？此操作不可撤销。`)) return;
-    const arr = loadFolders<T>(storageKey).filter((x) => x.id !== f.id);
-    saveFolders(storageKey, arr);
-    setFolders(arr);
-    if (activeId === f.id) setActiveId('');
+    if (!confirm(`确认删除文件夹「${f.name}」及其所有子文件夹？此操作不可撤销。`)) return;
+    const arr = loadFolders<T>(storageKey);
+    const toRemove = new Set([f.id, ...descendantIds(arr, f.id)]);
+    const next = arr.filter((x) => !toRemove.has(x.id));
+    saveFolders(storageKey, next);
+    setFolders(next);
+    if (toRemove.has(activeId)) setActiveId('');
+    if (parentId && toRemove.has(parentId)) setParentId(f.parentId);
     toast('✅ 已删除文件夹：' + f.name);
   };
 
@@ -236,6 +280,25 @@ export default function FolderSidebar<T>({
             </svg>
           </button>
         </div>
+
+        {parentId && (
+          <div className="sl-breadcrumb">
+            <span className="sl-breadcrumb-item" onClick={() => goToBreadcrumb(null)}>
+              全部
+            </span>
+            {breadcrumb.map((f, i) => (
+              <span key={f.id} style={{ display: 'contents' }}>
+                <span className="sl-breadcrumb-sep">/</span>
+                <span
+                  className={`sl-breadcrumb-item ${i === breadcrumb.length - 1 ? 'current' : ''}`}
+                  onClick={() => goToBreadcrumb(f.id)}
+                >
+                  {f.name}
+                </span>
+              </span>
+            ))}
+          </div>
+        )}
 
         <div className="sl-folder-list">
           {visible.length === 0 && <div className="sl-folder-empty">暂无文件夹</div>}

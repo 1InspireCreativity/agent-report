@@ -22,6 +22,46 @@ const REPORT_FOLDER_SEED = (['W', '2W', 'M'] as const).map((cycle) => ({
   state: { ...defaultReport(), name: cycle, cycle },
 }));
 
+function naapRevenueVariant(name: string, chartId: string) {
+  return {
+    ...blankStoryline(),
+    topic: name,
+    background: `NAAP 大盘 Revenue（${name}）归因分析。`,
+    region: 'NAAP',
+    nodes: [
+      {
+        id: 1,
+        scenario: `${name} Revenue`,
+        templateGroups: [
+          {
+            id: 1,
+            templateId: 'naap_revenue_template',
+            tags: [
+              {
+                id: 1,
+                category: '经营结果与效果指标 / Business Outcome & Performance Metrics',
+                value: '收入与交易结果 / Revenue & Transaction Outcome',
+              },
+            ],
+            chartGroups: [
+              {
+                id: 1,
+                chartId,
+                queryLinks: [],
+                joinMethods: [],
+                drillDimension: '',
+                capabilities: ['basic' as const],
+                threshold: '',
+                type: 'public' as const,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+}
+
 const STORYLINE_FOLDER_SEED = [
   {
     name: 'NAAP Revenue',
@@ -62,6 +102,17 @@ const STORYLINE_FOLDER_SEED = [
         },
       ],
     },
+    children: [
+      {
+        name: '202606',
+        state: naapRevenueVariant('202606', 'NAAPRev202606'),
+        children: [
+          { name: '2026WK1_20251229-20260104', state: naapRevenueVariant('2026WK1_20251229-20260104', 'NAAPRevWK1') },
+          { name: '2026WK2_20260105-20260111', state: naapRevenueVariant('2026WK2_20260105-20260111', 'NAAPRevWK2') },
+        ],
+      },
+      { name: '202607', state: naapRevenueVariant('202607', 'NAAPRev202607') },
+    ],
   },
   {
     name: 'NA YOY',
@@ -111,6 +162,8 @@ function App() {
   const [report, setReport] = useState<ReportState>(defaultReport);
   const [storylineActiveId, setStorylineActiveId] = useState('');
   const [reportActiveId, setReportActiveId] = useState('');
+  const [storylineParentId, setStorylineParentId] = useState<string | null>(null);
+  const [reportParentId, setReportParentId] = useState<string | null>(null);
   const { msg, visible, toast } = useToast();
 
   const saveStorylineFolder = (visibility: StorylineDataType) => {
@@ -122,6 +175,7 @@ function App() {
     const item = upsertFolder({
       storageKey: 'storylineFolders',
       activeId: storylineActiveId,
+      parentId: storylineParentId,
       name,
       owner: storyline.analyst,
       visibility,
@@ -140,6 +194,7 @@ function App() {
     const item = upsertFolder({
       storageKey: 'reportFolders',
       activeId: reportActiveId,
+      parentId: reportParentId,
       name,
       owner: report.owner,
       visibility,
@@ -241,6 +296,8 @@ function App() {
               seed={STORYLINE_FOLDER_SEED}
               activeId={storylineActiveId}
               onActiveIdChange={setStorylineActiveId}
+              parentId={storylineParentId}
+              onParentIdChange={setStorylineParentId}
             />
             <div className="page" style={{ margin: 0, flex: 1 }}>
               <StorylineTab state={storyline} setState={setStoryline} toast={toast} onSave={saveStorylineFolder} />
@@ -265,6 +322,8 @@ function App() {
               seed={REPORT_FOLDER_SEED}
               activeId={reportActiveId}
               onActiveIdChange={setReportActiveId}
+              parentId={reportParentId}
+              onParentIdChange={setReportParentId}
             />
             <div className="page" style={{ margin: 0, flex: 1 }}>
               <ReportTab state={report} setState={setReport} toast={toast} onSave={saveReportFolder} />
