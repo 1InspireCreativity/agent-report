@@ -340,38 +340,40 @@ export default function FolderSidebar<T>({
           </div>
         </div>
 
-        <div className="sl-folders-head">
-          <span>FOLDERS</span>
-          <button className="sl-sidebar-toggle" onClick={startNew} title="新建文件夹">
-            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-              <path d="M12 5v14M5 12h14"></path>
-            </svg>
-          </button>
-        </div>
+        {tab === 'all' && (
+          <>
+            <div className="sl-folders-head">
+              <span>FOLDERS</span>
+              <button className="sl-sidebar-toggle" onClick={startNew} title="新建文件夹">
+                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M12 5v14M5 12h14"></path>
+                </svg>
+              </button>
+            </div>
 
-        {parentId && (
-          <div className="sl-breadcrumb">
-            <span className="sl-breadcrumb-item" onClick={() => goToBreadcrumb(null)}>
-              全部
-            </span>
-            {breadcrumb.map((f, i) => (
-              <span key={f.id} style={{ display: 'contents' }}>
-                <span className="sl-breadcrumb-sep">/</span>
-                <span
-                  className={`sl-breadcrumb-item ${i === breadcrumb.length - 1 ? 'current' : ''}`}
-                  onClick={() => goToBreadcrumb(f.id)}
-                >
-                  {f.name}
+            {parentId && (
+              <div className="sl-breadcrumb">
+                <span className="sl-breadcrumb-item" onClick={() => goToBreadcrumb(null)}>
+                  全部
                 </span>
-              </span>
-            ))}
-          </div>
-        )}
+                {breadcrumb.map((f, i) => (
+                  <span key={f.id} style={{ display: 'contents' }}>
+                    <span className="sl-breadcrumb-sep">/</span>
+                    <span
+                      className={`sl-breadcrumb-item ${i === breadcrumb.length - 1 ? 'current' : ''}`}
+                      onClick={() => goToBreadcrumb(f.id)}
+                    >
+                      {f.name}
+                    </span>
+                  </span>
+                ))}
+              </div>
+            )}
 
-        <div className="sl-folder-list">
-          {visible.length === 0 && <div className="sl-folder-empty">暂无文件夹</div>}
-          {visible.map((f) =>
-            editingId === f.id ? (
+            <div className="sl-folder-list">
+              {visible.length === 0 && <div className="sl-folder-empty">暂无文件夹</div>}
+              {visible.map((f) =>
+                editingId === f.id ? (
               <div className="sl-folder-row sl-folder-row-edit" key={f.id} onClick={(e) => e.stopPropagation()}>
                 <span className="sl-folder-icon" style={{ background: f.color }}>
                   <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -467,8 +469,10 @@ export default function FolderSidebar<T>({
                 </button>
               </div>
             )
-          )}
-        </div>
+              )}
+            </div>
+          </>
+        )}
 
         <div className="sl-folders-head" style={{ marginTop: 16 }}>
           <span>TEMPLATES</span>
