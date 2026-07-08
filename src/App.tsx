@@ -290,7 +290,7 @@ function App() {
               key="storyline"
               subtitle="图表配置"
               storageKey="storylineFolders"
-              nameLabel="文件夹名称"
+              nameLabel="报告名称"
               state={storyline}
               onLoad={setStoryline}
               toast={toast}

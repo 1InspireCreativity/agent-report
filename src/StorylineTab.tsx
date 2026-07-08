@@ -280,7 +280,7 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
 
   const submit = async () => {
     if (!state.topic) {
-      toast('⚠️ 请填写文件夹名称');
+      toast('⚠️ 请填写报告名称');
       return;
     }
     if (!state.nodes.length) {
@@ -336,13 +336,13 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
             📁
           </div>
           <div className="card-head-text">
-            <div className="card-head-title">文件夹</div>
+            <div className="card-head-title">报告</div>
           </div>
         </div>
         <div className="card-body">
           <div className="field">
             <div className="field-label">
-              文件夹名称 <span className="req">*</span>
+              报告名称 <span className="req">*</span>
             </div>
             <input
               type="text"
