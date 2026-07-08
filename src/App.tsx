@@ -162,8 +162,6 @@ function App() {
   const [report, setReport] = useState<ReportState>(defaultReport);
   const [storylineActiveId, setStorylineActiveId] = useState('');
   const [reportActiveId, setReportActiveId] = useState('');
-  const [storylineParentId, setStorylineParentId] = useState<string | null>(null);
-  const [reportParentId, setReportParentId] = useState<string | null>(null);
   const { msg, visible, toast } = useToast();
 
   const saveStorylineFolder = (visibility: StorylineDataType) => {
@@ -176,7 +174,7 @@ function App() {
       const item = upsertFolder({
         storageKey: 'storylineFolders',
         activeId: storylineActiveId,
-        parentId: storylineParentId,
+        parentId: null,
         name,
         owner: storyline.analyst,
         visibility,
@@ -199,7 +197,7 @@ function App() {
       const item = upsertFolder({
         storageKey: 'reportFolders',
         activeId: reportActiveId,
-        parentId: reportParentId,
+        parentId: null,
         name,
         owner: report.owner,
         visibility,
@@ -304,8 +302,6 @@ function App() {
               seed={STORYLINE_FOLDER_SEED}
               activeId={storylineActiveId}
               onActiveIdChange={setStorylineActiveId}
-              parentId={storylineParentId}
-              onParentIdChange={setStorylineParentId}
             />
             <div className="page" style={{ margin: 0, flex: 1 }}>
               <StorylineTab state={storyline} setState={setStoryline} toast={toast} onSave={saveStorylineFolder} />
@@ -330,8 +326,6 @@ function App() {
               seed={REPORT_FOLDER_SEED}
               activeId={reportActiveId}
               onActiveIdChange={setReportActiveId}
-              parentId={reportParentId}
-              onParentIdChange={setReportParentId}
             />
             <div className="page" style={{ margin: 0, flex: 1 }}>
               <ReportTab state={report} setState={setReport} toast={toast} onSave={saveReportFolder} />

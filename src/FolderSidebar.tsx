@@ -35,8 +35,6 @@ interface Props<T> {
   normalize: (raw: T) => T;
   activeId: string;
   onActiveIdChange: (id: string) => void;
-  parentId: string | null;
-  onParentIdChange: (id: string | null) => void;
 }
 
 function flattenSeed<T>(
@@ -79,13 +77,12 @@ export default function FolderSidebar<T>({
   normalize,
   activeId,
   onActiveIdChange: setActiveId,
-  parentId,
-  onParentIdChange: setParentId,
 }: Props<T>) {
   const [collapsed, setCollapsed] = useState(false);
   const [folders, setFolders] = useState<SavedFolder<T>[]>([]);
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState<'all' | 'mine'>('all');
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState('');
   const [editDraft, setEditDraft] = useState<{ name: string; owner: string; visibility: StorylineDataType }>({
     name: '',
@@ -122,23 +119,20 @@ export default function FolderSidebar<T>({
     setFolders(loadFolders<T>(storageKey));
   }, [storageKey, activeId]);
 
-  const visible = folders.filter((f) => {
-    if (f.parentId !== parentId) return false;
+  const matchesFilter = (f: SavedFolder<T>) => {
     if (tab === 'mine' && f.visibility !== 'personal') return false;
     if (search.trim() && !f.name.toLowerCase().includes(search.trim().toLowerCase())) return false;
     return true;
-  });
+  };
 
-  const breadcrumb: SavedFolder<T>[] = [];
-  {
-    let cur = parentId;
-    while (cur) {
-      const f = folders.find((x) => x.id === cur);
-      if (!f) break;
-      breadcrumb.unshift(f);
-      cur = f.parentId;
-    }
-  }
+  const toggleExpand = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const save = (visibility: StorylineDataType) => {
     const name = getName(state).trim();
@@ -147,7 +141,15 @@ export default function FolderSidebar<T>({
       return;
     }
     try {
-      const item = upsertFolder({ storageKey, activeId, parentId, name, owner: getOwner(state), visibility, state });
+      const item = upsertFolder({
+        storageKey,
+        activeId,
+        parentId: null,
+        name,
+        owner: getOwner(state),
+        visibility,
+        state,
+      });
       setFolders(loadFolders<T>(storageKey));
       setActiveId(item.id);
       toast(`✅ 已保存为${visibility === 'public' ? ' Public' : ' Personal'} 文件夹：` + name);
@@ -159,15 +161,10 @@ export default function FolderSidebar<T>({
   const openFolder = (f: SavedFolder<T>) => {
     onLoad(normalize(f.state));
     setActiveId(f.id);
-    setParentId(f.id);
     toast('✅ 已载入文件夹：' + f.name);
   };
 
-  const goToBreadcrumb = (id: string | null) => {
-    setParentId(id);
-  };
-
-  const startNew = () => {
+  const startNew = (parentId: string | null) => {
     const arr = loadFolders<T>(storageKey);
     const siblings = arr.filter((f) => f.parentId === parentId);
     const name = `新文件夹 ${siblings.length + 1}`;
@@ -186,6 +183,7 @@ export default function FolderSidebar<T>({
     setFolders(arr);
     onLoad(item.state);
     setActiveId(item.id);
+    if (parentId) setExpandedIds((prev) => new Set(prev).add(parentId));
     toast('✅ 已新建文件夹：' + name);
   };
 
@@ -213,7 +211,6 @@ export default function FolderSidebar<T>({
     saveFolders(storageKey, next);
     setFolders(next);
     if (toRemove.has(activeId)) setActiveId('');
-    if (parentId && toRemove.has(parentId)) setParentId(f.parentId);
     toast('✅ 已删除文件夹：' + f.name);
   };
 
@@ -253,10 +250,10 @@ export default function FolderSidebar<T>({
   };
 
   const startNewTemplate = () => {
-    const item = upsertTemplate({ name: `新模板 ${templates.length + 1}`, templateId: '', folderId: parentId });
+    const item = upsertTemplate({ name: `新模板 ${templates.length + 1}`, templateId: '', folderId: null });
     setTemplates(loadTemplateCatalog());
     setEditingTemplateId(item.id);
-    setTemplateDraft({ name: item.name, templateId: '', folderId: parentId });
+    setTemplateDraft({ name: item.name, templateId: '', folderId: null });
   };
 
   const startEditTemplate = (t: SavedTemplate) => {
@@ -295,6 +292,140 @@ export default function FolderSidebar<T>({
     toast('✅ 已删除模板：' + t.name);
   };
 
+  const renderFolderNode = (f: SavedFolder<T>, depth: number): React.ReactNode => {
+    const children = folders.filter((c) => c.parentId === f.id && matchesFilter(c));
+    const isExpanded = expandedIds.has(f.id);
+    const indent = 8 + depth * 16;
+
+    if (editingId === f.id) {
+      return (
+        <div
+          className="sl-folder-row sl-folder-row-edit"
+          key={f.id}
+          style={{ paddingLeft: indent }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <span className="sl-folder-icon" style={{ background: f.color }}>
+            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"></path>
+            </svg>
+          </span>
+          <div className="sl-folder-edit-fields">
+            <input
+              type="text"
+              placeholder={nameLabel}
+              value={editDraft.name}
+              onChange={(e) => setEditDraft((prev) => ({ ...prev, name: e.target.value }))}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <input
+              type="text"
+              placeholder="Owner"
+              value={editDraft.owner}
+              onChange={(e) => setEditDraft((prev) => ({ ...prev, owner: e.target.value }))}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <select
+              value={editDraft.visibility}
+              onChange={(e) => setEditDraft((prev) => ({ ...prev, visibility: e.target.value as StorylineDataType }))}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <option value="public">Public</option>
+              <option value="personal">Personal</option>
+            </select>
+          </div>
+          <button className="sl-folder-add" onClick={(e) => saveEdit(f, e)} title="保存">
+            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path d="M5 13l4 4L19 7"></path>
+            </svg>
+          </button>
+          <button className="sl-folder-add" onClick={cancelEdit} title="取消">
+            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div key={f.id}>
+        <div
+          className={`sl-folder-row ${f.id === activeId ? 'active' : ''}`}
+          style={{ paddingLeft: indent }}
+          onClick={() => openFolder(f)}
+        >
+          <button
+            className="sl-folder-chevron-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleExpand(f.id);
+            }}
+            title={isExpanded ? '收起子文件夹' : '展开子文件夹'}
+          >
+            <svg
+              className="sl-folder-chevron"
+              width="12"
+              height="12"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              style={{ transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform .15s' }}
+            >
+              <path d="M9 6l6 6-6 6"></path>
+            </svg>
+          </button>
+          <span className="sl-folder-icon" style={{ background: f.color }}>
+            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"></path>
+            </svg>
+          </span>
+          <span className="sl-folder-name" title={f.name}>
+            {f.name}
+          </span>
+          <span className="sl-folder-meta">
+            {f.visibility === 'personal' && (
+              <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <rect x="5" y="11" width="14" height="9" rx="2"></rect>
+                <path d="M8 11V7a4 4 0 018 0v4"></path>
+              </svg>
+            )}
+            {countItems(f.state)}
+          </span>
+          <button className="sl-folder-add" onClick={(e) => startEdit(f, e)} title="编辑文件夹信息">
+            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path d="M11 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5"></path>
+              <path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+          </button>
+          <button className="sl-folder-add" onClick={(e) => duplicateFolder(f, e)} title="复制文件夹">
+            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path d="M12 5v14M5 12h14"></path>
+            </svg>
+          </button>
+          <button className="sl-folder-add danger" onClick={(e) => deleteFolder(f, e)} title="删除文件夹">
+            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        {isExpanded && (
+          <div className="sl-folder-children">
+            {children.map((c) => renderFolderNode(c, depth + 1))}
+            <div
+              className="sl-folder-add-child"
+              style={{ paddingLeft: indent + 16 }}
+              onClick={() => startNew(f.id)}
+            >
+              + 新建子文件夹
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   if (collapsed) {
     return (
       <div className="sl-sidebar collapsed">
@@ -306,6 +437,8 @@ export default function FolderSidebar<T>({
       </div>
     );
   }
+
+  const topLevel = folders.filter((f) => f.parentId === null && matchesFilter(f));
 
   return (
     <div className="sl-sidebar">
@@ -344,132 +477,16 @@ export default function FolderSidebar<T>({
           <>
             <div className="sl-folders-head">
               <span>FOLDERS</span>
-              <button className="sl-sidebar-toggle" onClick={startNew} title="新建文件夹">
+              <button className="sl-sidebar-toggle" onClick={() => startNew(null)} title="新建文件夹">
                 <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                   <path d="M12 5v14M5 12h14"></path>
                 </svg>
               </button>
             </div>
 
-            {parentId && (
-              <div className="sl-breadcrumb">
-                <span className="sl-breadcrumb-item" onClick={() => goToBreadcrumb(null)}>
-                  全部
-                </span>
-                {breadcrumb.map((f, i) => (
-                  <span key={f.id} style={{ display: 'contents' }}>
-                    <span className="sl-breadcrumb-sep">/</span>
-                    <span
-                      className={`sl-breadcrumb-item ${i === breadcrumb.length - 1 ? 'current' : ''}`}
-                      onClick={() => goToBreadcrumb(f.id)}
-                    >
-                      {f.name}
-                    </span>
-                  </span>
-                ))}
-              </div>
-            )}
-
             <div className="sl-folder-list">
-              {visible.length === 0 && <div className="sl-folder-empty">暂无文件夹</div>}
-              {visible.map((f) =>
-                editingId === f.id ? (
-              <div className="sl-folder-row sl-folder-row-edit" key={f.id} onClick={(e) => e.stopPropagation()}>
-                <span className="sl-folder-icon" style={{ background: f.color }}>
-                  <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"></path>
-                  </svg>
-                </span>
-                <div className="sl-folder-edit-fields">
-                  <input
-                    type="text"
-                    placeholder={nameLabel}
-                    value={editDraft.name}
-                    onChange={(e) => setEditDraft((prev) => ({ ...prev, name: e.target.value }))}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Owner"
-                    value={editDraft.owner}
-                    onChange={(e) => setEditDraft((prev) => ({ ...prev, owner: e.target.value }))}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <select
-                    value={editDraft.visibility}
-                    onChange={(e) =>
-                      setEditDraft((prev) => ({ ...prev, visibility: e.target.value as StorylineDataType }))
-                    }
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <option value="public">Public</option>
-                    <option value="personal">Personal</option>
-                  </select>
-                </div>
-                <button className="sl-folder-add" onClick={(e) => saveEdit(f, e)} title="保存">
-                  <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M5 13l4 4L19 7"></path>
-                  </svg>
-                </button>
-                <button className="sl-folder-add" onClick={cancelEdit} title="取消">
-                  <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
-                </button>
-              </div>
-            ) : (
-              <div
-                key={f.id}
-                className={`sl-folder-row ${f.id === activeId ? 'active' : ''}`}
-                onClick={() => openFolder(f)}
-              >
-                <svg
-                  className="sl-folder-chevron"
-                  width="12"
-                  height="12"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                >
-                  <path d="M9 6l6 6-6 6"></path>
-                </svg>
-                <span className="sl-folder-icon" style={{ background: f.color }}>
-                  <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"></path>
-                  </svg>
-                </span>
-                <span className="sl-folder-name" title={f.name}>
-                  {f.name}
-                </span>
-                <span className="sl-folder-meta">
-                  {f.visibility === 'personal' && (
-                    <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <rect x="5" y="11" width="14" height="9" rx="2"></rect>
-                      <path d="M8 11V7a4 4 0 018 0v4"></path>
-                    </svg>
-                  )}
-                  {countItems(f.state)}
-                </span>
-                <button className="sl-folder-add" onClick={(e) => startEdit(f, e)} title="编辑文件夹信息">
-                  <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path d="M11 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5"></path>
-                    <path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                  </svg>
-                </button>
-                <button className="sl-folder-add" onClick={(e) => duplicateFolder(f, e)} title="复制文件夹">
-                  <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M12 5v14M5 12h14"></path>
-                  </svg>
-                </button>
-                <button className="sl-folder-add danger" onClick={(e) => deleteFolder(f, e)} title="删除文件夹">
-                  <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
-                </button>
-              </div>
-            )
-              )}
+              {topLevel.length === 0 && <div className="sl-folder-empty">暂无文件夹</div>}
+              {topLevel.map((f) => renderFolderNode(f, 0))}
             </div>
           </>
         )}
