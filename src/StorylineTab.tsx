@@ -7,6 +7,7 @@ import {
   emptyTemplateGroup,
   emptyChartGroup,
   joinMethodLabel,
+  loadTemplateCatalog,
   nextTagId,
   nextTemplateGroupId,
   nextGroupId,
@@ -36,6 +37,7 @@ interface Props {
 }
 
 export default function StorylineTab({ state, setState, toast, onSave }: Props) {
+  const templateCatalog = loadTemplateCatalog();
   const [linkDrafts, setLinkDrafts] = useState<Record<number, string>>({});
   const [joinMethodDrafts, setJoinMethodDrafts] = useState<Record<number, string>>({});
   const [tagDrafts, setTagDrafts] = useState<Record<number, string>>({});
@@ -468,6 +470,23 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
                             onChange={(e) => setTemplateId(n.id, tg.id, e.target.value)}
                             style={{ flex: 1 }}
                           />
+                          {templateCatalog.length > 0 && (
+                            <select
+                              value=""
+                              style={{ width: 130, flexShrink: 0 }}
+                              title="从模板选择"
+                              onChange={(e) => {
+                                if (e.target.value) setTemplateId(n.id, tg.id, e.target.value);
+                              }}
+                            >
+                              <option value="">从模板选择…</option>
+                              {templateCatalog.map((t) => (
+                                <option value={t.templateId} key={t.id}>
+                                  {t.name}
+                                </option>
+                              ))}
+                            </select>
+                          )}
                           <button
                             className="icon-btn"
                             onClick={() => duplicateTemplateGroup(n.id, tg.id)}

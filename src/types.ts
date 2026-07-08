@@ -65,6 +65,14 @@ export interface SavedFolder<T> {
   state: T;
 }
 
+export interface SavedTemplate {
+  id: string;
+  name: string;
+  templateId: string;
+  folderId: string | null;
+  updated_at: string;
+}
+
 export interface SubmissionRecord {
   id: string;
   submitted_at: string;

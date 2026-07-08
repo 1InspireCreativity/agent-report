@@ -1,6 +1,16 @@
 import { useEffect, useState } from 'react';
-import type { SavedFolder, StorylineDataType } from './types';
-import { descendantIds, folderIconColor, loadFolders, saveFolders, upsertFolder } from './utils';
+import type { SavedFolder, SavedTemplate, StorylineDataType } from './types';
+import {
+  deleteTemplate,
+  descendantIds,
+  folderIconColor,
+  folderPath,
+  loadFolders,
+  loadTemplateCatalog,
+  saveFolders,
+  upsertFolder,
+  upsertTemplate,
+} from './utils';
 
 interface SeedFolder<T> {
   name: string;
@@ -82,6 +92,17 @@ export default function FolderSidebar<T>({
     owner: '',
     visibility: 'public',
   });
+  const [templates, setTemplates] = useState<SavedTemplate[]>([]);
+  const [editingTemplateId, setEditingTemplateId] = useState('');
+  const [templateDraft, setTemplateDraft] = useState<{ name: string; templateId: string; folderId: string | null }>({
+    name: '',
+    templateId: '',
+    folderId: null,
+  });
+
+  useEffect(() => {
+    setTemplates(loadTemplateCatalog());
+  }, []);
 
   useEffect(() => {
     let arr = loadFolders<T>(storageKey);
@@ -229,6 +250,49 @@ export default function FolderSidebar<T>({
     }
     setEditingId('');
     toast('✅ 已更新文件夹信息：' + name);
+  };
+
+  const startNewTemplate = () => {
+    const item = upsertTemplate({ name: `新模板 ${templates.length + 1}`, templateId: '', folderId: parentId });
+    setTemplates(loadTemplateCatalog());
+    setEditingTemplateId(item.id);
+    setTemplateDraft({ name: item.name, templateId: '', folderId: parentId });
+  };
+
+  const startEditTemplate = (t: SavedTemplate) => {
+    setEditingTemplateId(t.id);
+    setTemplateDraft({ name: t.name, templateId: t.templateId, folderId: t.folderId });
+  };
+
+  const cancelEditTemplate = () => {
+    setEditingTemplateId('');
+  };
+
+  const saveEditTemplate = (t: SavedTemplate) => {
+    const templateId = templateDraft.templateId.trim();
+    if (!templateId) {
+      toast('⚠️ 请先填写 Template ID');
+      return;
+    }
+    try {
+      upsertTemplate({
+        id: t.id,
+        name: templateDraft.name.trim() || templateId,
+        templateId,
+        folderId: templateDraft.folderId,
+      });
+      setTemplates(loadTemplateCatalog());
+      setEditingTemplateId('');
+      toast('✅ 已保存模板：' + (templateDraft.name.trim() || templateId));
+    } catch (e) {
+      toast('⚠️ 保存失败：' + (e instanceof Error ? e.message : String(e)));
+    }
+  };
+
+  const deleteTemplateRow = (t: SavedTemplate) => {
+    if (!confirm(`确认删除模板「${t.name}」？此操作不可撤销。`)) return;
+    setTemplates(deleteTemplate(t.id));
+    toast('✅ 已删除模板：' + t.name);
   };
 
   if (collapsed) {
@@ -397,6 +461,79 @@ export default function FolderSidebar<T>({
                   </svg>
                 </button>
                 <button className="sl-folder-add danger" onClick={(e) => deleteFolder(f, e)} title="删除文件夹">
+                  <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+            )
+          )}
+        </div>
+
+        <div className="sl-folders-head" style={{ marginTop: 16 }}>
+          <span>TEMPLATES</span>
+          <button className="sl-sidebar-toggle" onClick={startNewTemplate} title="新建模板">
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path d="M12 5v14M5 12h14"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div className="sl-folder-list">
+          {templates.length === 0 && <div className="sl-folder-empty">暂无模板</div>}
+          {templates.map((t) =>
+            editingTemplateId === t.id ? (
+              <div className="sl-folder-row sl-folder-row-edit" key={t.id}>
+                <div className="sl-folder-edit-fields">
+                  <input
+                    type="text"
+                    placeholder="模板名称"
+                    value={templateDraft.name}
+                    onChange={(e) => setTemplateDraft((prev) => ({ ...prev, name: e.target.value }))}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Template ID，如 motz7cum6ntsj6"
+                    value={templateDraft.templateId}
+                    onChange={(e) => setTemplateDraft((prev) => ({ ...prev, templateId: e.target.value }))}
+                  />
+                  <select
+                    value={templateDraft.folderId || ''}
+                    onChange={(e) => setTemplateDraft((prev) => ({ ...prev, folderId: e.target.value || null }))}
+                  >
+                    <option value="">不属于任何文件夹</option>
+                    {folders.map((f) => (
+                      <option value={f.id} key={f.id}>
+                        {folderPath(folders, f.id)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button className="sl-folder-add" onClick={() => saveEditTemplate(t)} title="保存">
+                  <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M5 13l4 4L19 7"></path>
+                  </svg>
+                </button>
+                <button className="sl-folder-add" onClick={cancelEditTemplate} title="取消">
+                  <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+            ) : (
+              <div className="sl-folder-row" key={t.id} onClick={() => startEditTemplate(t)}>
+                <span className="sl-folder-name" title={t.templateId}>
+                  {t.name}
+                </span>
+                <span className="sl-folder-meta">{t.folderId ? folderPath(folders, t.folderId) : '未归类'}</span>
+                <button
+                  className="sl-folder-add danger"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteTemplateRow(t);
+                  }}
+                  title="删除模板"
+                >
                   <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path d="M6 18L18 6M6 6l12 12"></path>
                   </svg>

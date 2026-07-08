@@ -5,6 +5,7 @@ import type {
   ReportState,
   ReportTag,
   SavedFolder,
+  SavedTemplate,
   StorylineDataType,
   StorylineState,
   TemplateGroup,
@@ -161,6 +162,61 @@ export function descendantIds<T>(arr: SavedFolder<T>[], rootId: string): string[
     }
   }
   return out;
+}
+
+/** Build a readable "A / B / C" path label for a folder, walking up its parent chain. */
+export function folderPath<T>(arr: SavedFolder<T>[], folderId: string | null): string {
+  const parts: string[] = [];
+  let cur = folderId;
+  while (cur) {
+    const f = arr.find((x) => x.id === cur);
+    if (!f) break;
+    parts.unshift(f.name);
+    cur = f.parentId;
+  }
+  return parts.join(' / ');
+}
+
+const TEMPLATE_CATALOG_KEY = 'templateCatalog';
+
+/** Global, cross-tab catalog of reusable Template IDs — shared by 图表配置 and 报告取数配置. */
+export function loadTemplateCatalog(): SavedTemplate[] {
+  try {
+    return JSON.parse(localStorage.getItem(TEMPLATE_CATALOG_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+export function saveTemplateCatalog(arr: SavedTemplate[]) {
+  localStorage.setItem(TEMPLATE_CATALOG_KEY, JSON.stringify(arr));
+}
+
+export function upsertTemplate(params: {
+  id?: string;
+  name: string;
+  templateId: string;
+  folderId: string | null;
+}): SavedTemplate {
+  const arr = loadTemplateCatalog();
+  const idx = params.id ? arr.findIndex((t) => t.id === params.id) : -1;
+  const item: SavedTemplate = {
+    id: idx >= 0 ? arr[idx].id : String(Date.now()),
+    name: params.name,
+    templateId: params.templateId,
+    folderId: params.folderId,
+    updated_at: new Date().toLocaleString(),
+  };
+  if (idx >= 0) arr[idx] = item;
+  else arr.unshift(item);
+  saveTemplateCatalog(arr);
+  return item;
+}
+
+export function deleteTemplate(id: string): SavedTemplate[] {
+  const arr = loadTemplateCatalog().filter((t) => t.id !== id);
+  saveTemplateCatalog(arr);
+  return arr;
 }
 
 export function defaultStoryline(): StorylineState {
