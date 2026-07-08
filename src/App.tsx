@@ -10,6 +10,11 @@ const STORAGE_KEY = 'agentReportAppState';
 
 type TabId = 'storyline' | 'report';
 
+const REPORT_FOLDER_SEED = (['W', '2W', 'M'] as const).map((cycle) => ({
+  name: cycle,
+  state: { ...defaultReport(), name: cycle, cycle },
+}));
+
 function App() {
   const [activeTab, setActiveTab] = useState<TabId>('storyline');
   const [storyline, setStoryline] = useState<StorylineState>(defaultStoryline);
@@ -104,7 +109,7 @@ function App() {
               getOwner={(s) => s.analyst}
               countItems={(s) => s.nodes.length}
               normalize={normalizeStoryline}
-              onNew={() => setStoryline(blankStoryline())}
+              blankState={blankStoryline}
             />
             <div className="page" style={{ margin: 0, flex: 1 }}>
               <StorylineTab state={storyline} setState={setStoryline} toast={toast} />
@@ -125,7 +130,8 @@ function App() {
               getOwner={(s) => s.owner}
               countItems={(s) => s.templateIds.length}
               normalize={normalizeReport}
-              onNew={() => setReport(defaultReport())}
+              blankState={defaultReport}
+              seed={REPORT_FOLDER_SEED}
             />
             <div className="page" style={{ margin: 0, flex: 1 }}>
               <ReportTab state={report} setState={setReport} toast={toast} />
