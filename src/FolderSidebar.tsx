@@ -125,10 +125,14 @@ export default function FolderSidebar<T>({
       toast(`⚠️ 请先填写${nameLabel}`);
       return;
     }
-    const item = upsertFolder({ storageKey, activeId, parentId, name, owner: getOwner(state), visibility, state });
-    setFolders(loadFolders<T>(storageKey));
-    setActiveId(item.id);
-    toast(`✅ 已保存为${visibility === 'public' ? ' Public' : ' Personal'} 文件夹：` + name);
+    try {
+      const item = upsertFolder({ storageKey, activeId, parentId, name, owner: getOwner(state), visibility, state });
+      setFolders(loadFolders<T>(storageKey));
+      setActiveId(item.id);
+      toast(`✅ 已保存为${visibility === 'public' ? ' Public' : ' Personal'} 文件夹：` + name);
+    } catch (e) {
+      toast('⚠️ 保存失败：' + (e instanceof Error ? e.message : String(e)));
+    }
   };
 
   const openFolder = (f: SavedFolder<T>) => {

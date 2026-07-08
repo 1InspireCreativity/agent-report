@@ -172,17 +172,21 @@ function App() {
       toast('⚠️ 请先填写文件夹名称');
       return;
     }
-    const item = upsertFolder({
-      storageKey: 'storylineFolders',
-      activeId: storylineActiveId,
-      parentId: storylineParentId,
-      name,
-      owner: storyline.analyst,
-      visibility,
-      state: storyline,
-    });
-    setStorylineActiveId(item.id);
-    toast(`✅ 已保存为${visibility === 'public' ? ' Public' : ' Personal'} 文件夹：` + name);
+    try {
+      const item = upsertFolder({
+        storageKey: 'storylineFolders',
+        activeId: storylineActiveId,
+        parentId: storylineParentId,
+        name,
+        owner: storyline.analyst,
+        visibility,
+        state: storyline,
+      });
+      setStorylineActiveId(item.id);
+      toast(`✅ 已保存为${visibility === 'public' ? ' Public' : ' Personal'} 文件夹：` + name);
+    } catch (e) {
+      toast('⚠️ 保存失败：' + (e instanceof Error ? e.message : String(e)));
+    }
   };
 
   const saveReportFolder = (visibility: StorylineDataType) => {
@@ -191,17 +195,21 @@ function App() {
       toast('⚠️ 请先填写报告名称');
       return;
     }
-    const item = upsertFolder({
-      storageKey: 'reportFolders',
-      activeId: reportActiveId,
-      parentId: reportParentId,
-      name,
-      owner: report.owner,
-      visibility,
-      state: report,
-    });
-    setReportActiveId(item.id);
-    toast(`✅ 已保存为${visibility === 'public' ? ' Public' : ' Personal'} 文件夹：` + name);
+    try {
+      const item = upsertFolder({
+        storageKey: 'reportFolders',
+        activeId: reportActiveId,
+        parentId: reportParentId,
+        name,
+        owner: report.owner,
+        visibility,
+        state: report,
+      });
+      setReportActiveId(item.id);
+      toast(`✅ 已保存为${visibility === 'public' ? ' Public' : ' Personal'} 文件夹：` + name);
+    } catch (e) {
+      toast('⚠️ 保存失败：' + (e instanceof Error ? e.message : String(e)));
+    }
   };
 
   // Load persisted state once on mount
