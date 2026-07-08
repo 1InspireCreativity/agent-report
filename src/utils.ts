@@ -182,7 +182,6 @@ export function defaultReport(): ReportState {
     owner: '',
     ownerEmail: '',
     ownerDept: '',
-    templateName: '',
   };
 }
 
@@ -448,6 +447,5 @@ export function normalizeReport(
     owner: typeof raw.owner === 'string' ? raw.owner : base.owner,
     ownerEmail: typeof raw.ownerEmail === 'string' ? raw.ownerEmail : base.ownerEmail,
     ownerDept: typeof raw.ownerDept === 'string' ? raw.ownerDept : base.ownerDept,
-    templateName: typeof raw.templateName === 'string' ? raw.templateName : base.templateName,
   };
 }

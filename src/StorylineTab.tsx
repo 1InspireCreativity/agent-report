@@ -19,7 +19,13 @@ import {
 import { submitChartConfig } from './api';
 import PayloadPanel from './PayloadPanel';
 import SubmitHistoryPanel from './SubmitHistoryPanel';
-import { addSubmissionRecord, clearSubmissionHistory, deleteSubmissionRecord, loadSubmissionHistory } from './submissionHistory';
+import {
+  addSubmissionRecord,
+  clearSubmissionHistory,
+  deleteSubmissionRecord,
+  loadSubmissionHistory,
+  STORYLINE_SUBMIT_HISTORY_KEY,
+} from './submissionHistory';
 
 interface Props {
   state: StorylineState;
@@ -32,7 +38,7 @@ export default function StorylineTab({ state, setState, toast }: Props) {
   const [joinMethodDrafts, setJoinMethodDrafts] = useState<Record<number, string>>({});
   const [tagDrafts, setTagDrafts] = useState<Record<number, string>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [submitHistory, setSubmitHistory] = useState(loadSubmissionHistory);
+  const [submitHistory, setSubmitHistory] = useState(() => loadSubmissionHistory(STORYLINE_SUBMIT_HISTORY_KEY));
 
   const addTemplateTag = (nodeId: number, tgId: number) => {
     const draft = tagDrafts[tgId] || '';
@@ -284,10 +290,10 @@ export default function StorylineTab({ state, setState, toast }: Props) {
     setSubmitting(false);
     const status = result.ok ? 'ok' : result.offline ? 'offline' : 'error';
     setSubmitHistory(
-      addSubmissionRecord({
-        topic: state.topic,
-        analyst: state.analyst,
-        region: state.region,
+      addSubmissionRecord(STORYLINE_SUBMIT_HISTORY_KEY, {
+        label: state.topic,
+        owner: state.analyst,
+        meta: state.region,
         status,
         error: result.error,
         payload: chartPayload,
@@ -725,12 +731,12 @@ export default function StorylineTab({ state, setState, toast }: Props) {
           navigator.clipboard.writeText(json).then(() => toast('✅ 已复制到剪贴板'));
         }}
         onDelete={(id) => {
-          setSubmitHistory(deleteSubmissionRecord(id));
+          setSubmitHistory(deleteSubmissionRecord(STORYLINE_SUBMIT_HISTORY_KEY, id));
           toast('✅ 已删除该提交记录');
         }}
         onClear={() => {
           if (!confirm('确认清空全部提交记录？此操作不可撤销。')) return;
-          setSubmitHistory(clearSubmissionHistory());
+          setSubmitHistory(clearSubmissionHistory(STORYLINE_SUBMIT_HISTORY_KEY));
           toast('✅ 已清空提交记录');
         }}
       />

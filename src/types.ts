@@ -52,14 +52,6 @@ export interface ReportState {
   owner: string;
   ownerEmail: string;
   ownerDept: string;
-  templateName: string;
-}
-
-export interface ReportTemplate {
-  id: string;
-  name: string;
-  updated_at: string;
-  state: ReportState;
 }
 
 export interface SavedFolder<T> {
@@ -75,9 +67,9 @@ export interface SavedFolder<T> {
 export interface SubmissionRecord {
   id: string;
   submitted_at: string;
-  topic: string;
-  analyst: string;
-  region: string;
+  label: string;
+  owner: string;
+  meta: string;
   status: 'ok' | 'offline' | 'error';
   error?: string;
   payload: unknown;

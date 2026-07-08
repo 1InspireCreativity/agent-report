@@ -1,18 +1,23 @@
 import type { SubmissionRecord } from './types';
 
-const STORAGE_KEY = 'storylineSubmissionHistory';
+export const STORYLINE_SUBMIT_HISTORY_KEY = 'storylineSubmissionHistory';
+export const REPORT_SUBMIT_HISTORY_KEY = 'reportSubmissionHistory';
+
 const MAX_RECORDS = 50;
 
-export function loadSubmissionHistory(): SubmissionRecord[] {
+export function loadSubmissionHistory(storageKey: string): SubmissionRecord[] {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    return JSON.parse(localStorage.getItem(storageKey) || '[]');
   } catch {
     return [];
   }
 }
 
-export function addSubmissionRecord(record: Omit<SubmissionRecord, 'id' | 'submitted_at'>): SubmissionRecord[] {
-  const arr = loadSubmissionHistory();
+export function addSubmissionRecord(
+  storageKey: string,
+  record: Omit<SubmissionRecord, 'id' | 'submitted_at'>
+): SubmissionRecord[] {
+  const arr = loadSubmissionHistory(storageKey);
   const full: SubmissionRecord = {
     ...record,
     id: String(Date.now()),
@@ -20,17 +25,17 @@ export function addSubmissionRecord(record: Omit<SubmissionRecord, 'id' | 'submi
   };
   arr.unshift(full);
   if (arr.length > MAX_RECORDS) arr.length = MAX_RECORDS;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+  localStorage.setItem(storageKey, JSON.stringify(arr));
   return arr;
 }
 
-export function deleteSubmissionRecord(id: string): SubmissionRecord[] {
-  const arr = loadSubmissionHistory().filter((r) => r.id !== id);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+export function deleteSubmissionRecord(storageKey: string, id: string): SubmissionRecord[] {
+  const arr = loadSubmissionHistory(storageKey).filter((r) => r.id !== id);
+  localStorage.setItem(storageKey, JSON.stringify(arr));
   return arr;
 }
 
-export function clearSubmissionHistory(): SubmissionRecord[] {
-  localStorage.removeItem(STORAGE_KEY);
+export function clearSubmissionHistory(storageKey: string): SubmissionRecord[] {
+  localStorage.removeItem(storageKey);
   return [];
 }

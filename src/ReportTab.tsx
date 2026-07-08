@@ -1,8 +1,16 @@
-import { useEffect, useState } from 'react';
-import type { ReportState, ReportTemplate } from './types';
-import { buildReportPayload, normalizeReport, CYCLE_OPTIONS, CHART_TYPE_OPTIONS } from './utils';
+import { useState } from 'react';
+import type { ReportState } from './types';
+import { buildReportPayload, CYCLE_OPTIONS, CHART_TYPE_OPTIONS } from './utils';
 import { submitReportConfig } from './api';
 import PayloadPanel from './PayloadPanel';
+import SubmitHistoryPanel from './SubmitHistoryPanel';
+import {
+  addSubmissionRecord,
+  clearSubmissionHistory,
+  deleteSubmissionRecord,
+  loadSubmissionHistory,
+  REPORT_SUBMIT_HISTORY_KEY,
+} from './submissionHistory';
 
 interface Props {
   state: ReportState;
@@ -10,29 +18,10 @@ interface Props {
   toast: (msg: string) => void;
 }
 
-const TEMPLATES_KEY = 'reportTemplates';
-
-function loadTemplates(): ReportTemplate[] {
-  try {
-    return JSON.parse(localStorage.getItem(TEMPLATES_KEY) || '[]');
-  } catch {
-    return [];
-  }
-}
-
-function saveTemplates(arr: ReportTemplate[]) {
-  localStorage.setItem(TEMPLATES_KEY, JSON.stringify(arr));
-}
-
 export default function ReportTab({ state, setState, toast }: Props) {
-  const [templates, setTemplates] = useState<ReportTemplate[]>([]);
-  const [selectedTplId, setSelectedTplId] = useState('');
   const [templateIdDraft, setTemplateIdDraft] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    setTemplates(loadTemplates());
-  }, []);
+  const [submitHistory, setSubmitHistory] = useState(() => loadSubmissionHistory(REPORT_SUBMIT_HISTORY_KEY));
 
   const update = <K extends keyof ReportState>(key: K, value: ReportState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }));
@@ -55,8 +44,20 @@ export default function ReportTab({ state, setState, toast }: Props) {
       return;
     }
     setSubmitting(true);
-    const result = await submitReportConfig(buildReportPayload(state));
+    const reportPayload = buildReportPayload(state);
+    const result = await submitReportConfig(reportPayload);
     setSubmitting(false);
+    const status = result.ok ? 'ok' : result.offline ? 'offline' : 'error';
+    setSubmitHistory(
+      addSubmissionRecord(REPORT_SUBMIT_HISTORY_KEY, {
+        label: state.name,
+        owner: state.owner,
+        meta: `${state.cycle} · ${state.chartType}`,
+        status,
+        error: result.error,
+        payload: reportPayload,
+      })
+    );
     if (result.ok) {
       toast('✅ 报告取数配置已提交给后端，报告生成中…');
     } else if (result.offline) {
@@ -79,68 +80,6 @@ export default function ReportTab({ state, setState, toast }: Props) {
       ownerEmail: '',
       ownerDept: '',
     }));
-  };
-
-  const saveTemplate = () => {
-    const name = state.templateName.trim();
-    if (!name) {
-      toast('⚠️ 请填写当前配置名称');
-      return;
-    }
-    const arr = loadTemplates();
-    let idx = selectedTplId ? arr.findIndex((t) => t.id === selectedTplId) : -1;
-    if (idx < 0) idx = arr.findIndex((t) => t.name === name);
-    const item: ReportTemplate = {
-      id: idx >= 0 ? arr[idx].id : String(Date.now()),
-      name,
-      updated_at: new Date().toLocaleString(),
-      state,
-    };
-    if (idx >= 0) arr[idx] = item;
-    else arr.unshift(item);
-    saveTemplates(arr);
-    setTemplates(arr);
-    setSelectedTplId(item.id);
-    toast('✅ 已保存配置：' + name);
-  };
-
-  const newTemplate = () => {
-    const ok = !state.name || confirm('新增配置会清空当前页面，确认继续？');
-    if (!ok) return;
-    setState((prev) => ({
-      ...prev,
-      templateName: '',
-      name: '',
-      cycle: 'W',
-      description: '',
-      templateIds: [],
-      owner: '',
-      ownerEmail: '',
-      ownerDept: '',
-    }));
-    setSelectedTplId('');
-    toast('✅ 已新增空白报表配置');
-  };
-
-  const loadTemplate = (id: string) => {
-    if (!id) return;
-    const item = templates.find((t) => t.id === id);
-    if (!item) {
-      toast('⚠️ 未找到历史配置');
-      return;
-    }
-    setState(normalizeReport(item.state));
-    setSelectedTplId(id);
-    toast('✅ 已载入历史配置：' + item.name);
-  };
-
-  const editTemplate = () => {
-    if (!selectedTplId) {
-      toast('⚠️ 请先选择一个历史配置');
-      return;
-    }
-    saveTemplate();
-    toast('✅ 历史配置已更新');
   };
 
   const payload = buildReportPayload(state);
@@ -289,69 +228,6 @@ export default function ReportTab({ state, setState, toast }: Props) {
         </div>
       </div>
 
-      {/* 模版流程 */}
-      <div className="section-label" style={{ marginTop: 20 }}>
-        模版流程
-      </div>
-      <div className="card">
-        <div className="card-head">
-          <div className="card-icon-wrap" style={{ background: '#EFF6FF' }}>
-            🏵️
-          </div>
-          <div className="card-head-text">
-            <div className="card-head-title">报表模版配置管理</div>
-          </div>
-        </div>
-        <div className="card-body">
-          <div className="grid-2" style={{ margin: 0 }}>
-            <div className="field" style={{ margin: 0 }}>
-              <div className="field-label">历史配置 / 报表模版</div>
-              <select value={selectedTplId} onChange={(e) => loadTemplate(e.target.value)}>
-                <option value="">{templates.length ? '选择历史配置…' : '暂无历史配置'}</option>
-                {templates.map((t) => (
-                  <option value={t.id} key={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="field" style={{ margin: 0 }}>
-              <div className="field-label">当前配置名称</div>
-              <input
-                type="text"
-                placeholder="例：NAAP Weekly Report"
-                value={state.templateName}
-                onChange={(e) => update('templateName', e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="footer-bar" style={{ padding: '14px 0 0', marginTop: 14 }}>
-            <button className="btn btn-primary btn-sm" onClick={saveTemplate}>
-              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path d="M5 13l4 4L19 7"></path>
-              </svg>
-              保存配置
-            </button>
-            <button className="btn btn-secondary btn-sm" onClick={newTemplate}>
-              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path d="M12 5v14M5 12h14"></path>
-              </svg>
-              新增其他报表配置
-            </button>
-            <button className="btn btn-warning btn-sm" onClick={editTemplate}>
-              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-              </svg>
-              更改历史配置
-            </button>
-            <div className="autosave">
-              <div className="autosave-dot"></div>
-              {templates.length} 个历史配置
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Payload */}
       <div className="section-label" style={{ marginTop: 20 }}>
         Agent Payload
@@ -361,6 +237,26 @@ export default function ReportTab({ state, setState, toast }: Props) {
         meta={state.name || '未命名报告'}
         payload={payload}
         onCopy={() => toast('✅ 已复制到剪贴板')}
+      />
+
+      {/* Submission History */}
+      <div className="section-label" style={{ marginTop: 20 }}>
+        提交记录
+      </div>
+      <SubmitHistoryPanel
+        records={submitHistory}
+        onCopy={(json) => {
+          navigator.clipboard.writeText(json).then(() => toast('✅ 已复制到剪贴板'));
+        }}
+        onDelete={(id) => {
+          setSubmitHistory(deleteSubmissionRecord(REPORT_SUBMIT_HISTORY_KEY, id));
+          toast('✅ 已删除该提交记录');
+        }}
+        onClear={() => {
+          if (!confirm('确认清空全部提交记录？此操作不可撤销。')) return;
+          setSubmitHistory(clearSubmissionHistory(REPORT_SUBMIT_HISTORY_KEY));
+          toast('✅ 已清空提交记录');
+        }}
       />
 
       <div className="footer-bar" style={{ border: 'none', paddingTop: 16 }}>

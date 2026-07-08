@@ -39,11 +39,11 @@ export default function SubmitHistoryPanel({ records, onCopy, onDelete, onClear 
             <div className="submit-history-item" key={r.id}>
               <div className="submit-history-row" onClick={() => setExpandedId(expanded ? '' : r.id)}>
                 <span className="submit-history-status">{STATUS_LABEL[r.status]}</span>
-                <span className="submit-history-topic" title={r.topic}>
-                  {r.topic || '（未填写）'}
+                <span className="submit-history-topic" title={r.label}>
+                  {r.label || '（未填写）'}
                 </span>
                 <span className="submit-history-meta">
-                  {r.region} · {r.analyst || '未填写'}
+                  {r.meta} · {r.owner || '未填写'}
                 </span>
                 <span className="submit-history-time">{r.submitted_at}</span>
                 <button
