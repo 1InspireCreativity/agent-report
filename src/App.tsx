@@ -3,8 +3,15 @@ import StorylineTab from './StorylineTab';
 import FolderSidebar from './FolderSidebar';
 import ReportTab from './ReportTab';
 import { useToast } from './useToast';
-import { blankStoryline, defaultReport, defaultStoryline, normalizeReport, normalizeStoryline } from './utils';
-import type { ReportState, StorylineState } from './types';
+import {
+  blankStoryline,
+  defaultReport,
+  defaultStoryline,
+  normalizeReport,
+  normalizeStoryline,
+  upsertFolder,
+} from './utils';
+import type { ReportState, StorylineDataType, StorylineState } from './types';
 
 const STORAGE_KEY = 'agentReportAppState';
 
@@ -19,7 +26,45 @@ function App() {
   const [activeTab, setActiveTab] = useState<TabId>('storyline');
   const [storyline, setStoryline] = useState<StorylineState>(defaultStoryline);
   const [report, setReport] = useState<ReportState>(defaultReport);
+  const [storylineActiveId, setStorylineActiveId] = useState('');
+  const [reportActiveId, setReportActiveId] = useState('');
   const { msg, visible, toast } = useToast();
+
+  const saveStorylineFolder = (visibility: StorylineDataType) => {
+    const name = storyline.topic.trim();
+    if (!name) {
+      toast('⚠️ 请先填写文件夹名称');
+      return;
+    }
+    const item = upsertFolder({
+      storageKey: 'storylineFolders',
+      activeId: storylineActiveId,
+      name,
+      owner: storyline.analyst,
+      visibility,
+      state: storyline,
+    });
+    setStorylineActiveId(item.id);
+    toast(`✅ 已保存为${visibility === 'public' ? ' Public' : ' Personal'} 文件夹：` + name);
+  };
+
+  const saveReportFolder = (visibility: StorylineDataType) => {
+    const name = report.name.trim();
+    if (!name) {
+      toast('⚠️ 请先填写报告名称');
+      return;
+    }
+    const item = upsertFolder({
+      storageKey: 'reportFolders',
+      activeId: reportActiveId,
+      name,
+      owner: report.owner,
+      visibility,
+      state: report,
+    });
+    setReportActiveId(item.id);
+    toast(`✅ 已保存为${visibility === 'public' ? ' Public' : ' Personal'} 文件夹：` + name);
+  };
 
   // Load persisted state once on mount
   useEffect(() => {
@@ -110,9 +155,11 @@ function App() {
               countItems={(s) => s.nodes.length}
               normalize={normalizeStoryline}
               blankState={blankStoryline}
+              activeId={storylineActiveId}
+              onActiveIdChange={setStorylineActiveId}
             />
             <div className="page" style={{ margin: 0, flex: 1 }}>
-              <StorylineTab state={storyline} setState={setStoryline} toast={toast} />
+              <StorylineTab state={storyline} setState={setStoryline} toast={toast} onSave={saveStorylineFolder} />
             </div>
           </>
         )}
@@ -132,9 +179,11 @@ function App() {
               normalize={normalizeReport}
               blankState={defaultReport}
               seed={REPORT_FOLDER_SEED}
+              activeId={reportActiveId}
+              onActiveIdChange={setReportActiveId}
             />
             <div className="page" style={{ margin: 0, flex: 1 }}>
-              <ReportTab state={report} setState={setReport} toast={toast} />
+              <ReportTab state={report} setState={setReport} toast={toast} onSave={saveReportFolder} />
             </div>
           </>
         )}

@@ -4,6 +4,7 @@ import type {
   ChartGroup,
   ReportState,
   ReportTag,
+  SavedFolder,
   StorylineDataType,
   StorylineState,
   TemplateGroup,
@@ -100,6 +101,46 @@ export const FOLDER_ICON_COLORS = ['#111827', '#059669', '#9CA3AF', '#D97706', '
 
 export function folderIconColor(index: number): string {
   return FOLDER_ICON_COLORS[index % FOLDER_ICON_COLORS.length];
+}
+
+export function loadFolders<T>(storageKey: string): SavedFolder<T>[] {
+  try {
+    return JSON.parse(localStorage.getItem(storageKey) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+export function saveFolders<T>(storageKey: string, arr: SavedFolder<T>[]) {
+  localStorage.setItem(storageKey, JSON.stringify(arr));
+}
+
+/** Create-or-update a saved folder for the given state, matching by activeId first, else by name. */
+export function upsertFolder<T>(params: {
+  storageKey: string;
+  activeId: string;
+  name: string;
+  owner: string;
+  visibility: StorylineDataType;
+  state: T;
+}): SavedFolder<T> {
+  const arr = loadFolders<T>(params.storageKey);
+  const existingIdx = params.activeId
+    ? arr.findIndex((f) => f.id === params.activeId)
+    : arr.findIndex((f) => f.name === params.name);
+  const item: SavedFolder<T> = {
+    id: existingIdx >= 0 ? arr[existingIdx].id : String(Date.now()),
+    name: params.name,
+    owner: params.owner,
+    visibility: params.visibility,
+    color: existingIdx >= 0 ? arr[existingIdx].color : folderIconColor(arr.length),
+    updated_at: new Date().toLocaleString(),
+    state: params.state,
+  };
+  if (existingIdx >= 0) arr[existingIdx] = item;
+  else arr.unshift(item);
+  saveFolders(params.storageKey, arr);
+  return item;
 }
 
 export function defaultStoryline(): StorylineState {

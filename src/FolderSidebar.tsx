@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { SavedFolder, StorylineDataType } from './types';
-import { folderIconColor } from './utils';
+import { folderIconColor, loadFolders, saveFolders, upsertFolder } from './utils';
 
 interface SeedFolder<T> {
   name: string;
@@ -22,18 +22,8 @@ interface Props<T> {
   getOwner: (state: T) => string;
   countItems: (state: T) => number;
   normalize: (raw: T) => T;
-}
-
-function loadFolders<T>(storageKey: string): SavedFolder<T>[] {
-  try {
-    return JSON.parse(localStorage.getItem(storageKey) || '[]');
-  } catch {
-    return [];
-  }
-}
-
-function saveFolders<T>(storageKey: string, arr: SavedFolder<T>[]) {
-  localStorage.setItem(storageKey, JSON.stringify(arr));
+  activeId: string;
+  onActiveIdChange: (id: string) => void;
 }
 
 export default function FolderSidebar<T>({
@@ -49,12 +39,13 @@ export default function FolderSidebar<T>({
   getOwner,
   countItems,
   normalize,
+  activeId,
+  onActiveIdChange: setActiveId,
 }: Props<T>) {
   const [collapsed, setCollapsed] = useState(false);
   const [folders, setFolders] = useState<SavedFolder<T>[]>([]);
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState<'all' | 'mine'>('all');
-  const [activeId, setActiveId] = useState('');
   const [editingId, setEditingId] = useState('');
   const [editDraft, setEditDraft] = useState<{ name: string; owner: string; visibility: StorylineDataType }>({
     name: '',
@@ -82,6 +73,12 @@ export default function FolderSidebar<T>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageKey]);
 
+  // Re-sync from storage whenever the active folder changes (covers saves triggered
+  // from outside this component, e.g. the inline save buttons in the main form).
+  useEffect(() => {
+    setFolders(loadFolders<T>(storageKey));
+  }, [storageKey, activeId]);
+
   const visible = folders.filter((f) => {
     if (tab === 'mine' && f.visibility !== 'personal') return false;
     if (search.trim() && !f.name.toLowerCase().includes(search.trim().toLowerCase())) return false;
@@ -94,23 +91,8 @@ export default function FolderSidebar<T>({
       toast(`⚠️ 请先填写${nameLabel}`);
       return;
     }
-    const arr = loadFolders<T>(storageKey);
-    const existingIdx = activeId
-      ? arr.findIndex((f) => f.id === activeId)
-      : arr.findIndex((f) => f.name === name);
-    const item: SavedFolder<T> = {
-      id: existingIdx >= 0 ? arr[existingIdx].id : String(Date.now()),
-      name,
-      owner: getOwner(state),
-      visibility,
-      color: existingIdx >= 0 ? arr[existingIdx].color : folderIconColor(arr.length),
-      updated_at: new Date().toLocaleString(),
-      state,
-    };
-    if (existingIdx >= 0) arr[existingIdx] = item;
-    else arr.unshift(item);
-    saveFolders(storageKey, arr);
-    setFolders(arr);
+    const item = upsertFolder({ storageKey, activeId, name, owner: getOwner(state), visibility, state });
+    setFolders(loadFolders<T>(storageKey));
     setActiveId(item.id);
     toast(`✅ 已保存为${visibility === 'public' ? ' Public' : ' Personal'} 文件夹：` + name);
   };

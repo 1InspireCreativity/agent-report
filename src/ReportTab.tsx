@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { ReportState } from './types';
+import type { ReportState, StorylineDataType } from './types';
 import { buildReportPayload, CYCLE_OPTIONS, CHART_TYPE_OPTIONS } from './utils';
 import { submitReportConfig } from './api';
 import PayloadPanel from './PayloadPanel';
@@ -16,9 +16,10 @@ interface Props {
   state: ReportState;
   setState: React.Dispatch<React.SetStateAction<ReportState>>;
   toast: (msg: string) => void;
+  onSave: (visibility: StorylineDataType) => void;
 }
 
-export default function ReportTab({ state, setState, toast }: Props) {
+export default function ReportTab({ state, setState, toast, onSave }: Props) {
   const [templateIdDraft, setTemplateIdDraft] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitHistory, setSubmitHistory] = useState(() => loadSubmissionHistory(REPORT_SUBMIT_HISTORY_KEY));
@@ -224,6 +225,22 @@ export default function ReportTab({ state, setState, toast }: Props) {
                 onChange={(e) => update('ownerDept', e.target.value)}
               />
             </div>
+          </div>
+          <div className="footer-bar" style={{ padding: '14px 0 0', marginTop: 14 }}>
+            <button className="btn btn-secondary btn-sm" onClick={() => onSave('public')}>
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"></path>
+              </svg>
+              存为 Public
+            </button>
+            <button className="btn btn-secondary btn-sm" onClick={() => onSave('personal')}>
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <rect x="5" y="11" width="14" height="9" rx="2"></rect>
+                <path d="M8 11V7a4 4 0 018 0v4"></path>
+              </svg>
+              存为 Personal
+            </button>
           </div>
         </div>
       </div>
