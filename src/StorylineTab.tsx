@@ -443,14 +443,17 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
                           ))}
                         </select>
                       )}
-                      <button className="icon-btn" onClick={() => duplicateTemplateGroup(tg.id)} title="复制该 Template ID">
-                        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                          <path d="M12 5v14M5 12h14"></path>
-                        </svg>
+                      <button
+                        className="btn btn-secondary btn-xs"
+                        style={{ flexShrink: 0 }}
+                        onClick={() => duplicateTemplateGroup(tg.id)}
+                        title="复制该 Template ID"
+                      >
+                        + Add Chart
                       </button>
                       <button className="icon-btn danger" onClick={() => delTemplateGroup(tg.id)} title="删除">
                         <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                          <path d="M6 18L18 6M6 6l12 12"></path>
+                          <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V4h8v3"></path>
                         </svg>
                       </button>
                     </div>
@@ -485,14 +488,17 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
                             onChange={(e) => setChartId(tg.id, g.id, e.target.value)}
                             style={{ flex: 1 }}
                           />
-                          <button className="icon-btn" onClick={() => duplicateChartGroup(tg.id, g.id)} title="复制该 Chart ID">
-                            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                              <path d="M12 5v14M5 12h14"></path>
-                            </svg>
+                          <button
+                            className="btn btn-secondary btn-xs"
+                            style={{ flexShrink: 0 }}
+                            onClick={() => duplicateChartGroup(tg.id, g.id)}
+                            title="复制该 Chart ID"
+                          >
+                            + Add URL
                           </button>
                           <button className="icon-btn danger" onClick={() => delChartGroup(tg.id, g.id)} title="删除">
                             <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                              <path d="M6 18L18 6M6 6l12 12"></path>
+                              <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V4h8v3"></path>
                             </svg>
                           </button>
                         </div>
