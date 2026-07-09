@@ -1,11 +1,5 @@
 export type StorylineDataType = 'public' | 'personal';
 
-export interface ReportTag {
-  id: number;
-  category: string;
-  value: string;
-}
-
 export type ChartCapability = 'basic' | 'attribution' | 'threshold';
 
 export interface ChartGroup {
@@ -25,7 +19,7 @@ export interface TemplateGroup {
   businessScene: string;
   drillDimensions: string[];
   type: StorylineDataType;
-  tags: ReportTag[];
+  tags: string[];
   chartGroups: ChartGroup[];
 }
 

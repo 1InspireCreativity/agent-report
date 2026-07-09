@@ -7,16 +7,15 @@ import {
   emptyTemplateGroup,
   emptyChartGroup,
   loadTemplateCatalog,
-  nextTagId,
   CAPABILITY_OPTIONS,
   AGGREGATION_OPTIONS,
   REGION_OPTIONS,
   STORYLINE_TYPE_OPTIONS,
+  TAG_OPTIONS,
 } from './utils';
 import { submitChartConfig } from './api';
 import PayloadPanel from './PayloadPanel';
 import SubmitHistoryPanel from './SubmitHistoryPanel';
-import CategoryPicker from './CategoryPicker';
 import MultiSelect from './MultiSelect';
 import {
   addSubmissionRecord,
@@ -41,7 +40,6 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
   const templateCatalog = loadTemplateCatalog();
   const [fieldDrafts, setFieldDrafts] = useState<Record<number, string>>({});
   const [drillDrafts, setDrillDrafts] = useState<Record<number, string>>({});
-  const [tagDrafts, setTagDrafts] = useState<Record<number, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitHistory, setSubmitHistory] = useState(() => loadSubmissionHistory(STORYLINE_SUBMIT_HISTORY_KEY));
 
@@ -78,17 +76,8 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
     updateTemplateGroup(tgId, (tg) => ({ ...tg, drillDimensions: tg.drillDimensions.filter((_, i) => i !== idx) }));
   };
 
-  const addTemplateTag = (tgId: number) => {
-    const draft = tagDrafts[tgId] || '';
-    if (!draft) return;
-    const sepIdx = draft.indexOf('::');
-    const category = sepIdx >= 0 ? draft.slice(0, sepIdx) : draft;
-    const val = sepIdx >= 0 ? draft.slice(sepIdx + 2) : '';
-    updateTemplateGroup(tgId, (tg) => ({ ...tg, tags: [...tg.tags, { id: nextTagId(), category, value: val }] }));
-    setTagDrafts((prev) => ({ ...prev, [tgId]: '' }));
-  };
-  const delTemplateTag = (tgId: number, tagId: number) => {
-    updateTemplateGroup(tgId, (tg) => ({ ...tg, tags: tg.tags.filter((t) => t.id !== tagId) }));
+  const setTemplateTags = (tgId: number, values: string[]) => {
+    updateTemplateGroup(tgId, (tg) => ({ ...tg, tags: values }));
   };
 
   const addChartGroup = (tgId: number) => {
@@ -407,33 +396,12 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                       </div>
                       <div className="sm:col-span-2">
                         <label className="block text-xs font-medium text-slate-500 mb-1">标签 (Tags)</label>
-                        <div className="flex flex-wrap gap-1.5 mb-1.5">
-                          {tg.tags.map((t) => (
-                            <span
-                              key={t.id}
-                              title={t.value ? `${t.category}: ${t.value}` : t.category}
-                              className="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-xs flex items-center gap-1"
-                            >
-                              {t.value ? `${t.category} · ${t.value}` : t.category}
-                              <button onClick={() => delTemplateTag(tg.id, t.id)} className="hover:text-red-600">
-                                ×
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                        <div className="flex gap-2">
-                          <CategoryPicker
-                            style={{ flex: 1 }}
-                            value={tagDrafts[tg.id] || ''}
-                            onChange={(v) => setTagDrafts((prev) => ({ ...prev, [tg.id]: v }))}
-                          />
-                          <button
-                            onClick={() => addTemplateTag(tg.id)}
-                            className="text-slate-600 hover:text-purple-600 bg-white border border-slate-200 hover:border-purple-200 px-3 py-1 rounded-md text-xs font-medium transition-colors shadow-sm"
-                          >
-                            + 添加
-                          </button>
-                        </div>
+                        <MultiSelect
+                          options={TAG_OPTIONS}
+                          selected={tg.tags}
+                          onChange={(v) => setTemplateTags(tg.id, v)}
+                          placeholder="Select tags..."
+                        />
                       </div>
                     </div>
 

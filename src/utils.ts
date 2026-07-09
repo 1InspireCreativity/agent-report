@@ -2,7 +2,6 @@ import type {
   ChartCapability,
   ChartGroup,
   ReportState,
-  ReportTag,
   SavedFolder,
   SavedTemplate,
   StorylineDataType,
@@ -61,41 +60,18 @@ export const CAPABILITY_OPTIONS: { value: ChartCapability; label: string }[] = [
   { value: 'threshold', label: '阈值状态' },
 ];
 
-// 分类 taxonomy — 一级分类 -> 二级分类 options.
-export const CATEGORY_OPTIONS: Record<string, string[]> = {
-  '闭环电商 / TTS': ['标签 / Label', '扩展属性 / Extended Attribute'],
-  '程序软体 / Apps': ['标签 / Label', '扩展属性 / Extended Attribute'],
-  '达人 / TTO': ['标签 / Label', '扩展属性 / Extended Attribute'],
-  '短剧 / Mini Series': ['标签 / Label', '扩展属性 / Extended Attribute'],
-  '广告对象与创意 / Ad Object & Creative': [
-    '创意属性 / Creative Attribute',
-    '广告对象属性 / Ad Object Attribute',
-    '聚合指标 / Aggregated Measure',
-  ],
-  '行业 / Industry': ['行业4.0 / Industry 4.0', '其它行业 / Other Industry'],
-  '经营结果与效果指标 / Business Outcome & Performance Metrics': [
-    '成本与消耗 / Cost & Spend',
-    '收入与交易结果 / Revenue & Transaction Outcome',
-  ],
-  '开环电商 / Open Loop C': ['标签 / Label', '扩展属性 / Extended Attribute'],
-  '平台电商 / Marketplace': ['标签 / Label', '扩展属性 / Extended Attribute'],
-  '品牌 / Branding': ['标签 / Label', '扩展属性 / Extended Attribute'],
-  '审核 / Moderation': ['核查 / Audit'],
-  '时间与周期 / Time & Calendar': ['时间 / Time', '业务事件时间 / Business Event Time'],
-  '投放与产品 / Advertising & Product': ['产品 / Product', '投放 / Advertising'],
-  '推广 / Promote': ['标签 / Label', '扩展属性 / Extended Attribute'],
-  '线索 / Leads': ['标签 / Label', '扩展属性 / Extended Attribute'],
-  '业务主体与组织 / Business Entity & Organization': ['标签 / Label', '客户信息 / Customer Info', '团队 / Team'],
-  '游戏 / Gaming': ['标签 / Label', '扩展属性 / Extended Attribute'],
-  '重要分析字段 / Important Analysis Fields': [
-    '首销 / First Revenue',
-    '新开 / New Existing',
-    '战略杠杆 / Strategic Lever',
-    '重要客户 / Important Customer',
-  ],
-};
-
-export const CATEGORY_L1_OPTIONS = Object.keys(CATEGORY_OPTIONS);
+export const TAG_OPTIONS = [
+  'Performance',
+  'Advertising',
+  'open loop c',
+  'moderation',
+  'material',
+  'short drama',
+  'creator',
+  'No cash',
+  'TTS',
+  'third party',
+];
 
 export const FOLDER_ICON_COLORS = ['#111827', '#059669', '#9CA3AF', '#D97706', '#2563EB', '#DC2626', '#7C3AED'];
 
@@ -230,10 +206,7 @@ export function defaultStoryline(): StorylineState {
         businessScene: 'GBS-1Team revenue和yoy',
         drillDimensions: ['NAAP Lever L1', 'Industry 4.0 Level 1'],
         type: 'public',
-        tags: [
-          { id: 1, category: '重要分析字段 / Important Analysis Fields', value: '战略杠杆 / Strategic Lever' },
-          { id: 2, category: '行业 / Industry', value: '行业4.0 / Industry 4.0' },
-        ],
+        tags: ['Performance', 'Advertising'],
         chartGroups: [
           {
             id: 1,
@@ -401,12 +374,6 @@ export function nextGroupId() {
   return groupIdCounter;
 }
 
-let tagIdCounter = 100;
-export function nextTagId() {
-  tagIdCounter += 1;
-  return tagIdCounter;
-}
-
 export function emptyChartGroup(): ChartGroup {
   return {
     id: nextGroupId(),
@@ -463,19 +430,16 @@ function normalizeChartGroup(raw: Record<string, unknown> | undefined): ChartGro
   };
 }
 
-function normalizeTag(raw: Partial<ReportTag> | undefined): ReportTag | null {
-  if (!raw || typeof raw.value !== 'string' || !raw.value) return null;
-  return {
-    id: typeof raw.id === 'number' ? raw.id : nextTagId(),
-    category: typeof raw.category === 'string' ? raw.category : '',
-    value: raw.value,
-  };
-}
-
-function normalizeTags(raw: unknown): ReportTag[] {
-  return Array.isArray(raw)
-    ? (raw as Partial<ReportTag>[]).map(normalizeTag).filter((t): t is ReportTag => t !== null)
-    : [];
+function normalizeTags(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  // Back-compat: tags used to be { id, category, value } objects.
+  return (raw as unknown[])
+    .map((t) => {
+      if (typeof t === 'string') return t;
+      const value = (t as { value?: unknown })?.value;
+      return typeof value === 'string' ? value : '';
+    })
+    .filter(Boolean);
 }
 
 function normalizeTemplateGroup(raw: Record<string, unknown> | undefined, legacyScenario: string): TemplateGroup {
