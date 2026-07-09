@@ -343,54 +343,6 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
                       marginBottom: 10,
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                      <span className="id-bar-icon template">
-                        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                          <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
-                          <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
-                          <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
-                          <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
-                        </svg>
-                      </span>
-                      <span className="id-bar-label" style={{ flexShrink: 0 }}>
-                        Template ID
-                      </span>
-                      <input
-                        type="text"
-                        placeholder="motz7cum6ntsj6"
-                        value={tg.templateId}
-                        onChange={(e) => setTemplateId(tg.id, e.target.value)}
-                        style={{ flex: 1 }}
-                      />
-                      {templateCatalog.length > 0 && (
-                        <select
-                          value=""
-                          style={{ width: 130, flexShrink: 0 }}
-                          title="从模板选择"
-                          onChange={(e) => {
-                            if (e.target.value) setTemplateId(tg.id, e.target.value);
-                          }}
-                        >
-                          <option value="">从模板选择…</option>
-                          {templateCatalog.map((t) => (
-                            <option value={t.templateId} key={t.id}>
-                              {t.name}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                      <button className="icon-btn" onClick={() => duplicateTemplateGroup(tg.id)} title="复制该 Template ID">
-                        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                          <path d="M12 5v14M5 12h14"></path>
-                        </svg>
-                      </button>
-                      <button className="icon-btn danger" onClick={() => delTemplateGroup(tg.id)} title="删除">
-                        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                          <path d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                      </button>
-                    </div>
-
                     <div className="field" style={{ margin: '0 0 12px' }}>
                       <div className="field-label" style={{ marginBottom: 6 }}>
                         Type <span className="hint">Public / Personal</span>
@@ -456,6 +408,57 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
                       />
                       <button className="btn btn-secondary btn-xs" onClick={() => addTemplateTag(tg.id)}>
                         + 添加
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                      <span className="id-bar-icon template">
+                        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                          <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                          <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+                          <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                        </svg>
+                      </span>
+                      <span className="id-bar-label" style={{ flexShrink: 0 }}>
+                        Template ID
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="motz7cum6ntsj6"
+                        value={tg.templateId}
+                        onChange={(e) => setTemplateId(tg.id, e.target.value)}
+                        style={{ flex: 1 }}
+                      />
+                      {templateCatalog.length > 0 && (
+                        <select
+                          value=""
+                          style={{ width: 130, flexShrink: 0 }}
+                          title="从模板选择"
+                          onChange={(e) => {
+                            if (e.target.value) setTemplateId(tg.id, e.target.value);
+                          }}
+                        >
+                          <option value="">从模板选择…</option>
+                          {templateCatalog.map((t) => (
+                            <option value={t.templateId} key={t.id}>
+                              {t.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      <button className="btn btn-secondary btn-xs" style={{ flexShrink: 0 }} onClick={() => addChartGroup(tg.id)}>
+                        + 添加 Chart ID
+                      </button>
+                      <button className="icon-btn" onClick={() => duplicateTemplateGroup(tg.id)} title="复制该 Template ID">
+                        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path d="M12 5v14M5 12h14"></path>
+                        </svg>
+                      </button>
+                      <button className="icon-btn danger" onClick={() => delTemplateGroup(tg.id)} title="删除">
+                        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
                       </button>
                     </div>
 
@@ -622,9 +625,6 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
                         )}
                       </div>
                     ))}
-                    <button className="btn btn-secondary btn-xs" onClick={() => addChartGroup(tg.id)}>
-                      + 添加 Chart ID
-                    </button>
                   </div>
                 </div>
               </div>
