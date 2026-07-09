@@ -31,8 +31,6 @@ export interface TemplateGroup {
   templateId: string; // chart_template_id
   businessScene: string;
   drillDimensions: string[];
-  creator: string;
-  owner: string[];
   type: StorylineDataType;
   tags: ReportTag[];
   chartGroups: ChartGroup[];
@@ -43,7 +41,6 @@ export type ChartType = 'wuhuaro' | 'fensi' | 'maomaochong' | 'bar';
 
 export interface StorylineState {
   topic: string;
-  analyst: string;
   background: string;
   region: string;
   templateGroups: TemplateGroup[];
@@ -55,9 +52,6 @@ export interface ReportState {
   chartType: ChartType;
   description: string;
   templateIds: string[];
-  owner: string;
-  ownerEmail: string;
-  ownerDept: string;
 }
 
 export interface SavedFolder<T> {

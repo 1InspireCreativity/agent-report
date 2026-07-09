@@ -41,7 +41,6 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
   const [linkGroupDrafts, setLinkGroupDrafts] = useState<Record<number, string>>({});
   const [fieldDrafts, setFieldDrafts] = useState<Record<number, string>>({});
   const [drillDrafts, setDrillDrafts] = useState<Record<number, string>>({});
-  const [ownerDrafts, setOwnerDrafts] = useState<Record<number, string>>({});
   const [tagDrafts, setTagDrafts] = useState<Record<number, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitHistory, setSubmitHistory] = useState(() => loadSubmissionHistory(STORYLINE_SUBMIT_HISTORY_KEY));
@@ -73,7 +72,6 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
       const copy: TemplateGroup = {
         ...src,
         id: nextTemplateGroupId(),
-        owner: [...src.owner],
         drillDimensions: [...src.drillDimensions],
         tags: src.tags.map((t) => ({ ...t, id: nextTagId() })),
         chartGroups: src.chartGroups.map((g) => ({
@@ -91,18 +89,7 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
 
   const setTemplateId = (tgId: number, value: string) => updateTemplateGroup(tgId, (tg) => ({ ...tg, templateId: value }));
   const setBusinessScene = (tgId: number, value: string) => updateTemplateGroup(tgId, (tg) => ({ ...tg, businessScene: value }));
-  const setCreator = (tgId: number, value: string) => updateTemplateGroup(tgId, (tg) => ({ ...tg, creator: value }));
   const setTemplateType = (tgId: number, value: StorylineDataType) => updateTemplateGroup(tgId, (tg) => ({ ...tg, type: value }));
-
-  const addOwner = (tgId: number) => {
-    const val = (ownerDrafts[tgId] || '').trim();
-    if (!val) return;
-    updateTemplateGroup(tgId, (tg) => (tg.owner.includes(val) ? tg : { ...tg, owner: [...tg.owner, val] }));
-    setOwnerDrafts((prev) => ({ ...prev, [tgId]: '' }));
-  };
-  const delOwner = (tgId: number, idx: number) => {
-    updateTemplateGroup(tgId, (tg) => ({ ...tg, owner: tg.owner.filter((_, i) => i !== idx) }));
-  };
 
   const addDrillDimension = (tgId: number) => {
     const val = (drillDrafts[tgId] || '').trim();
@@ -213,7 +200,7 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
     setSubmitHistory(
       addSubmissionRecord(STORYLINE_SUBMIT_HISTORY_KEY, {
         label: state.topic,
-        owner: state.analyst,
+        owner: '',
         meta: state.region,
         status,
         error: result.error,
@@ -269,30 +256,17 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
               onChange={(e) => update('topic', e.target.value)}
             />
           </div>
-          <div className="grid-2">
-            <div className="field" style={{ margin: 0 }}>
-              <div className="field-label">
-                Owner <span className="req">*</span>
-              </div>
-              <input
-                type="text"
-                placeholder="姓名"
-                value={state.analyst}
-                onChange={(e) => update('analyst', e.target.value)}
-              />
+          <div className="field" style={{ margin: 0 }}>
+            <div className="field-label">
+              数据范围 Region <span className="req">*</span>
             </div>
-            <div className="field" style={{ margin: 0 }}>
-              <div className="field-label">
-                数据范围 Region <span className="req">*</span>
-              </div>
-              <select value={state.region} onChange={(e) => update('region', e.target.value)}>
-                {REGION_OPTIONS.map((r) => (
-                  <option value={r} key={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <select value={state.region} onChange={(e) => update('region', e.target.value)}>
+              {REGION_OPTIONS.map((r) => (
+                <option value={r} key={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="field" style={{ marginTop: 14, marginBottom: 0 }}>
             <div className="field-label">
@@ -417,61 +391,17 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
                       </button>
                     </div>
 
-                    <div className="grid-2" style={{ margin: '0 0 12px' }}>
-                      <div className="field" style={{ margin: 0 }}>
-                        <div className="field-label" style={{ marginBottom: 6 }}>
-                          Creator <span className="hint">邮箱</span>
-                        </div>
-                        <input
-                          type="text"
-                          placeholder="name@bytedance.com"
-                          value={tg.creator}
-                          onChange={(e) => setCreator(tg.id, e.target.value)}
-                        />
+                    <div className="field" style={{ margin: '0 0 12px' }}>
+                      <div className="field-label" style={{ marginBottom: 6 }}>
+                        Type <span className="hint">Public / Personal</span>
                       </div>
-                      <div className="field" style={{ margin: 0 }}>
-                        <div className="field-label" style={{ marginBottom: 6 }}>
-                          Type <span className="hint">Public / Personal</span>
-                        </div>
-                        <select value={tg.type} onChange={(e) => setTemplateType(tg.id, e.target.value as StorylineDataType)}>
-                          {STORYLINE_TYPE_OPTIONS.map((o) => (
-                            <option value={o.value} key={o.value}>
-                              {o.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="field-label" style={{ marginBottom: 6 }}>
-                      Owner <span className="hint">可添加多个用户名</span>
-                    </div>
-                    <div className="tags-wrap">
-                      {tg.owner.map((o, oi) => (
-                        <span className="tag" title={o} key={oi}>
-                          <span className="tag-text">{o}</span>
-                          <button className="tag-x" onClick={() => delOwner(tg.id, oi)}>
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                    <div className="tag-input-row" style={{ marginBottom: 12 }}>
-                      <input
-                        type="text"
-                        placeholder="用户名，如 wangqi"
-                        value={ownerDrafts[tg.id] || ''}
-                        onChange={(e) => setOwnerDrafts((prev) => ({ ...prev, [tg.id]: e.target.value }))}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            addOwner(tg.id);
-                            e.preventDefault();
-                          }
-                        }}
-                      />
-                      <button className="btn btn-secondary btn-xs" onClick={() => addOwner(tg.id)}>
-                        + 添加
-                      </button>
+                      <select value={tg.type} onChange={(e) => setTemplateType(tg.id, e.target.value as StorylineDataType)}>
+                        {STORYLINE_TYPE_OPTIONS.map((o) => (
+                          <option value={o.value} key={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
                     <div className="field-label" style={{ marginBottom: 6 }}>

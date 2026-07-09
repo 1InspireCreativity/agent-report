@@ -235,7 +235,6 @@ export function deleteTemplate(id: string): SavedTemplate[] {
 export function defaultStoryline(): StorylineState {
   return {
     topic: 'GBS-1Team revenue和yoy',
-    analyst: '',
     background: '',
     region: 'NAAP',
     templateGroups: [
@@ -244,8 +243,6 @@ export function defaultStoryline(): StorylineState {
         templateId: 'motz7cum6ntsj6',
         businessScene: 'GBS-1Team revenue和yoy',
         drillDimensions: ['NAAP Lever L1', 'Industry 4.0 Level 1'],
-        creator: '',
-        owner: [],
         type: 'public',
         tags: [
           { id: 1, category: '重要分析字段 / Important Analysis Fields', value: '战略杠杆 / Strategic Lever' },
@@ -284,8 +281,6 @@ export function defaultStoryline(): StorylineState {
         templateId: 'mp3ue3hglacfiq',
         businessScene: 'NAAP-1Team revenue和yoy',
         drillDimensions: ['NAAP Lever L1', 'Industry 4.0 Level 1'],
-        creator: '',
-        owner: [],
         type: 'personal',
         tags: [],
         chartGroups: [
@@ -315,7 +310,6 @@ export function defaultStoryline(): StorylineState {
 export function blankStoryline(): StorylineState {
   return {
     topic: '',
-    analyst: '',
     background: '',
     region: 'NAAP',
     templateGroups: [],
@@ -329,9 +323,6 @@ export function defaultReport(): ReportState {
     chartType: 'wuhuaro',
     description: '',
     templateIds: [],
-    owner: '',
-    ownerEmail: '',
-    ownerDept: '',
   };
 }
 
@@ -346,7 +337,10 @@ function buildMetricChartConfig(tg: TemplateGroup): Record<string, unknown> {
   return out;
 }
 
-/** Maps one Template ID card to the exact POST /api/auto_report/data_templates request body. */
+/**
+ * Maps one Template ID card to the exact POST /api/auto_report/data_templates request body.
+ * creator/owner are placeholders until SSO supplies real user identity.
+ */
 export function buildDataTemplatePayload(tg: TemplateGroup) {
   return {
     business_scene: tg.businessScene || '',
@@ -365,8 +359,8 @@ export function buildDataTemplatePayload(tg: TemplateGroup) {
         link: d.link,
       })),
     })),
-    creator: tg.creator || '',
-    owner: tg.owner,
+    creator: '',
+    owner: [] as string[],
     type: tg.type === 'public' ? 'Public' : 'Personal',
   };
 }
@@ -379,14 +373,13 @@ export function buildStorylinePayload(sl: StorylineState) {
 
 /**
  * Maps report state to the exact POST/PUT /api/auto_report/report_data_templates request body.
- * owner/allow_users are placeholders derived from the plain Owner field until SSO supplies
- * real usernames — swap this out once that lands.
+ * owner/allow_users are placeholders until SSO supplies real usernames.
  */
 export function buildReportPayload(rpt: ReportState) {
   return {
     report_name: rpt.name || '',
     chart_template_ids: rpt.templateIds,
-    owner: rpt.owner ? [rpt.owner] : [],
+    owner: [] as string[],
     allow_users: [] as string[],
   };
 }
@@ -455,8 +448,6 @@ export function emptyTemplateGroup(): TemplateGroup {
     templateId: '',
     businessScene: '',
     drillDimensions: [],
-    creator: '',
-    owner: [],
     type: 'public',
     tags: [],
     chartGroups: [],
@@ -530,8 +521,6 @@ function normalizeTemplateGroup(raw: Record<string, unknown> | undefined, legacy
       : typeof r.drillDimension === 'string' && r.drillDimension
         ? [r.drillDimension]
         : legacyDrillDims,
-    creator: typeof r.creator === 'string' ? r.creator : '',
-    owner: Array.isArray(r.owner) ? (r.owner as string[]) : [],
     type: r.type === 'personal' || r.type === 'public' ? r.type : 'public',
     tags: normalizeTags(r.tags),
     chartGroups: chartGroupsRaw.map(normalizeChartGroup),
@@ -565,7 +554,6 @@ export function normalizeStoryline(
 
   return {
     topic: typeof raw.topic === 'string' ? raw.topic : base.topic,
-    analyst: typeof raw.analyst === 'string' ? raw.analyst : base.analyst,
     background: typeof raw.background === 'string' ? raw.background : base.background,
     region: typeof raw.region === 'string' && raw.region ? raw.region : 'NAAP',
     templateGroups,
@@ -591,8 +579,5 @@ export function normalizeReport(
         : base.chartType,
     description: typeof raw.description === 'string' ? raw.description : base.description,
     templateIds: Array.isArray(raw.templateIds) ? raw.templateIds : legacyChartIds.length ? legacyChartIds : base.templateIds,
-    owner: typeof raw.owner === 'string' ? raw.owner : base.owner,
-    ownerEmail: typeof raw.ownerEmail === 'string' ? raw.ownerEmail : base.ownerEmail,
-    ownerDept: typeof raw.ownerDept === 'string' ? raw.ownerDept : base.ownerDept,
   };
 }

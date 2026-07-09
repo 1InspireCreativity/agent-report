@@ -57,7 +57,7 @@ export default function ReportTab({ state, setState, toast, onSave }: Props) {
     setSubmitHistory(
       addSubmissionRecord(REPORT_SUBMIT_HISTORY_KEY, {
         label: state.name,
-        owner: state.owner,
+        owner: '',
         meta: `${state.cycle} · ${state.chartType}`,
         status,
         error: result.error,
@@ -82,9 +82,6 @@ export default function ReportTab({ state, setState, toast, onSave }: Props) {
       chartType: 'wuhuaro',
       description: '',
       templateIds: [],
-      owner: '',
-      ownerEmail: '',
-      ownerDept: '',
     }));
   };
 
@@ -162,91 +159,54 @@ export default function ReportTab({ state, setState, toast, onSave }: Props) {
               </select>
             </div>
           </div>
-          <div className="grid-2" style={{ margin: '16px 0 0' }}>
-            <div className="field" style={{ margin: 0 }}>
-              <div className="field-label">
-                Template ID <span className="req">*</span> <span className="hint">支持添加多个 Template ID</span>
-              </div>
-              <div className="tags-wrap">
-                {state.templateIds.map((t, i) => (
-                  <span className="tag" title={t} key={i}>
-                    <span className="tag-text">{t}</span>
-                    <button className="tag-x" onClick={() => delTemplateId(i)}>
-                      ×
-                    </button>
-                  </span>
+          <div className="field" style={{ margin: '16px 0 0' }}>
+            <div className="field-label">
+              Template ID <span className="req">*</span> <span className="hint">支持添加多个 Template ID</span>
+            </div>
+            <div className="tags-wrap">
+              {state.templateIds.map((t, i) => (
+                <span className="tag" title={t} key={i}>
+                  <span className="tag-text">{t}</span>
+                  <button className="tag-x" onClick={() => delTemplateId(i)}>
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div className="tag-input-row">
+              <input
+                type="text"
+                placeholder="motz7cum6ntsj6"
+                value={templateIdDraft}
+                onChange={(e) => setTemplateIdDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    addTemplateId();
+                    e.preventDefault();
+                  }
+                }}
+              />
+              <button className="btn btn-secondary btn-xs" onClick={addTemplateId}>
+                + 添加
+              </button>
+            </div>
+            {templateCatalog.length > 0 && (
+              <select
+                value=""
+                style={{ marginTop: 8, width: '100%' }}
+                title="从模板选择"
+                onChange={(e) => {
+                  if (e.target.value) addTemplateIdValue(e.target.value);
+                }}
+              >
+                <option value="">从模板选择…</option>
+                {templateCatalog.map((t) => (
+                  <option value={t.templateId} key={t.id}>
+                    {t.name}
+                  </option>
                 ))}
-              </div>
-              <div className="tag-input-row">
-                <input
-                  type="text"
-                  placeholder="motz7cum6ntsj6"
-                  value={templateIdDraft}
-                  onChange={(e) => setTemplateIdDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      addTemplateId();
-                      e.preventDefault();
-                    }
-                  }}
-                />
-                <button className="btn btn-secondary btn-xs" onClick={addTemplateId}>
-                  + 添加
-                </button>
-              </div>
-              {templateCatalog.length > 0 && (
-                <select
-                  value=""
-                  style={{ marginTop: 8, width: '100%' }}
-                  title="从模板选择"
-                  onChange={(e) => {
-                    if (e.target.value) addTemplateIdValue(e.target.value);
-                  }}
-                >
-                  <option value="">从模板选择…</option>
-                  {templateCatalog.map((t) => (
-                    <option value={t.templateId} key={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-            <div className="field" style={{ margin: 0 }}>
-              <div className="field-label">
-                Owner <span className="req">*</span>
-              </div>
-              <input
-                type="text"
-                placeholder="负责人姓名"
-                value={state.owner}
-                onChange={(e) => update('owner', e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="grid-2" style={{ margin: '16px 0 0' }}>
-            <div className="field" style={{ margin: 0 }}>
-              <div className="field-label">
-                Owner Email <span className="opt">可选</span>
-              </div>
-              <input
-                type="text"
-                placeholder="owner@example.com"
-                value={state.ownerEmail}
-                onChange={(e) => update('ownerEmail', e.target.value)}
-              />
-            </div>
-            <div className="field" style={{ margin: 0 }}>
-              <div className="field-label">
-                Owner Department <span className="opt">可选</span>
-              </div>
-              <input
-                type="text"
-                placeholder="例：商业规划组"
-                value={state.ownerDept}
-                onChange={(e) => update('ownerDept', e.target.value)}
-              />
-            </div>
+              </select>
+            )}
           </div>
           <div className="footer-bar" style={{ padding: '14px 0 0', marginTop: 14 }}>
             <button className="btn btn-secondary btn-sm" onClick={() => onSave('public')}>

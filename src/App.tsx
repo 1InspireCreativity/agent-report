@@ -34,8 +34,6 @@ function naapRevenueVariant(name: string, chartId: string) {
         templateId: 'naap_revenue_template',
         businessScene: `${name} Revenue`,
         drillDimensions: [],
-        creator: '',
-        owner: [],
         type: 'public' as const,
         tags: [
           {
@@ -73,8 +71,6 @@ const STORYLINE_FOLDER_SEED = [
           templateId: 'naap_revenue_template',
           businessScene: 'NAAP Revenue WoW',
           drillDimensions: [],
-          creator: '',
-          owner: [],
           type: 'public' as const,
           tags: [
             {
@@ -121,8 +117,6 @@ const STORYLINE_FOLDER_SEED = [
           templateId: 'na_yoy_template',
           businessScene: 'NA Revenue YOY',
           drillDimensions: [],
-          creator: '',
-          owner: [],
           type: 'public' as const,
           tags: [
             {
@@ -167,7 +161,7 @@ function App() {
         activeId: storylineActiveId,
         parentId: null,
         name,
-        owner: storyline.analyst,
+        owner: '',
         visibility,
         state: storyline,
       });
@@ -190,7 +184,7 @@ function App() {
         activeId: reportActiveId,
         parentId: null,
         name,
-        owner: report.owner,
+        owner: '',
         visibility,
         state: report,
       });
@@ -286,7 +280,7 @@ function App() {
               onLoad={setStoryline}
               toast={toast}
               getName={(s) => s.topic}
-              getOwner={(s) => s.analyst}
+              getOwner={() => ''}
               countItems={(s) => s.templateGroups.length}
               normalize={normalizeStoryline}
               blankState={blankStoryline}
@@ -310,7 +304,7 @@ function App() {
               onLoad={setReport}
               toast={toast}
               getName={(s) => s.name}
-              getOwner={(s) => s.owner}
+              getOwner={() => ''}
               countItems={(s) => s.templateIds.length}
               normalize={normalizeReport}
               blankState={defaultReport}
