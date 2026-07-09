@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import StorylineTab from './StorylineTab';
 import FolderSidebar from './FolderSidebar';
 import ReportTab from './ReportTab';
+import LiveJsonPanel from './LiveJsonPanel';
 import { useToast } from './useToast';
 import {
   blankStoryline,
+  buildStorylinePayload,
   defaultReport,
   defaultStoryline,
   normalizeReport,
@@ -17,6 +19,53 @@ const STORAGE_KEY = 'agentReportAppState';
 
 type TabId = 'storyline' | 'report';
 
+interface HistoryState<T> {
+  past: T[];
+  present: T;
+  future: T[];
+}
+
+/** Undo/redo history wrapper — drop-in for useState's [value, setValue] pair. */
+function useHistory<T>(initial: T | (() => T)) {
+  const [state, setState] = useState<HistoryState<T>>(() => ({
+    past: [],
+    present: typeof initial === 'function' ? (initial as () => T)() : initial,
+    future: [],
+  }));
+
+  const setPresent: React.Dispatch<React.SetStateAction<T>> = (value) => {
+    setState((curr) => {
+      const nextPresent = typeof value === 'function' ? (value as (prev: T) => T)(curr.present) : value;
+      return { past: [...curr.past, curr.present], present: nextPresent, future: [] };
+    });
+  };
+
+  const undo = () => {
+    setState((curr) => {
+      if (!curr.past.length) return curr;
+      const previous = curr.past[curr.past.length - 1];
+      return { past: curr.past.slice(0, -1), present: previous, future: [curr.present, ...curr.future] };
+    });
+  };
+
+  const redo = () => {
+    setState((curr) => {
+      if (!curr.future.length) return curr;
+      const next = curr.future[0];
+      return { past: [...curr.past, curr.present], present: next, future: curr.future.slice(1) };
+    });
+  };
+
+  return {
+    value: state.present,
+    setValue: setPresent,
+    undo,
+    redo,
+    canUndo: state.past.length > 0,
+    canRedo: state.future.length > 0,
+  };
+}
+
 const REPORT_FOLDER_SEED = (['W', '2W', 'M'] as const).map((cycle) => ({
   name: cycle,
   state: { ...defaultReport(), name: cycle, cycle },
@@ -27,7 +76,7 @@ function naapRevenueVariant(name: string, chartId: string) {
     ...blankStoryline(),
     topic: name,
     background: `NAAP 大盘 Revenue（${name}）归因分析。`,
-    region: 'NAAP',
+    regions: ['NAAP'],
     templateGroups: [
       {
         id: 1,
@@ -47,7 +96,9 @@ function naapRevenueVariant(name: string, chartId: string) {
             id: 1,
             chartId,
             fieldList: [],
-            dataReports: [],
+            queryLinks: [],
+            aggregationMethods: [],
+            aggregationOtherText: '',
             capabilities: ['basic' as const],
             threshold: '',
           },
@@ -64,7 +115,7 @@ const STORYLINE_FOLDER_SEED = [
       ...blankStoryline(),
       topic: 'NAAP Revenue',
       background: 'NAAP 大盘 Revenue 周环比下滑，需要归因分析驱动因素。',
-      region: 'NAAP',
+      regions: ['NAAP'],
       templateGroups: [
         {
           id: 1,
@@ -84,7 +135,9 @@ const STORYLINE_FOLDER_SEED = [
               id: 1,
               chartId: 'NAAPRevWoW',
               fieldList: [],
-              dataReports: [],
+              queryLinks: [],
+              aggregationMethods: [],
+              aggregationOtherText: '',
               capabilities: ['basic' as const],
               threshold: '',
             },
@@ -110,7 +163,7 @@ const STORYLINE_FOLDER_SEED = [
       ...blankStoryline(),
       topic: 'NA YOY',
       background: 'NA 大盘 Revenue 同比出现异常波动，需要归因分析。',
-      region: 'NA',
+      regions: ['NA'],
       templateGroups: [
         {
           id: 1,
@@ -130,7 +183,9 @@ const STORYLINE_FOLDER_SEED = [
               id: 1,
               chartId: 'NARevYOY',
               fieldList: [],
-              dataReports: [],
+              queryLinks: [],
+              aggregationMethods: [],
+              aggregationOtherText: '',
               capabilities: ['basic' as const],
               threshold: '',
             },
@@ -143,7 +198,14 @@ const STORYLINE_FOLDER_SEED = [
 
 function App() {
   const [activeTab, setActiveTab] = useState<TabId>('storyline');
-  const [storyline, setStoryline] = useState<StorylineState>(defaultStoryline);
+  const {
+    value: storyline,
+    setValue: setStoryline,
+    undo: undoStoryline,
+    redo: redoStoryline,
+    canUndo: canUndoStoryline,
+    canRedo: canRedoStoryline,
+  } = useHistory<StorylineState>(defaultStoryline);
   const [report, setReport] = useState<ReportState>(defaultReport);
   const [storylineActiveId, setStorylineActiveId] = useState('');
   const [reportActiveId, setReportActiveId] = useState('');
@@ -268,7 +330,7 @@ function App() {
         </div>
       </header>
 
-      <main className="sl-layout">
+      <main className="sl-layout" style={activeTab === 'storyline' ? { maxWidth: 1680 } : undefined}>
         {activeTab === 'storyline' && (
           <>
             <FolderSidebar
@@ -289,8 +351,18 @@ function App() {
               onActiveIdChange={setStorylineActiveId}
             />
             <div className="page" style={{ margin: 0, flex: 1 }}>
-              <StorylineTab state={storyline} setState={setStoryline} toast={toast} onSave={saveStorylineFolder} />
+              <StorylineTab
+                state={storyline}
+                setState={setStoryline}
+                toast={toast}
+                onSave={saveStorylineFolder}
+                onUndo={undoStoryline}
+                onRedo={redoStoryline}
+                canUndo={canUndoStoryline}
+                canRedo={canRedoStoryline}
+              />
             </div>
+            <LiveJsonPanel payload={buildStorylinePayload(storyline)} />
           </>
         )}
         {activeTab === 'report' && (

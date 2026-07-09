@@ -7,10 +7,8 @@ import {
   emptyChartGroup,
   loadTemplateCatalog,
   nextTagId,
-  nextLinkId,
-  parseQueryLink,
   CAPABILITY_OPTIONS,
-  GROUP_OPTIONS,
+  AGGREGATION_OPTIONS,
   REGION_OPTIONS,
   STORYLINE_TYPE_OPTIONS,
 } from './utils';
@@ -18,6 +16,7 @@ import { submitChartConfig } from './api';
 import PayloadPanel from './PayloadPanel';
 import SubmitHistoryPanel from './SubmitHistoryPanel';
 import CategoryPicker from './CategoryPicker';
+import MultiSelect from './MultiSelect';
 import {
   addSubmissionRecord,
   clearSubmissionHistory,
@@ -31,12 +30,14 @@ interface Props {
   setState: React.Dispatch<React.SetStateAction<StorylineState>>;
   toast: (msg: string) => void;
   onSave: (visibility: StorylineDataType) => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
 }
 
-export default function StorylineTab({ state, setState, toast, onSave }: Props) {
+export default function StorylineTab({ state, setState, toast, onSave, onUndo, onRedo, canUndo, canRedo }: Props) {
   const templateCatalog = loadTemplateCatalog();
-  const [linkDrafts, setLinkDrafts] = useState<Record<number, string>>({});
-  const [linkGroupDrafts, setLinkGroupDrafts] = useState<Record<number, string>>({});
   const [fieldDrafts, setFieldDrafts] = useState<Record<number, string>>({});
   const [drillDrafts, setDrillDrafts] = useState<Record<number, string>>({});
   const [tagDrafts, setTagDrafts] = useState<Record<number, string>>({});
@@ -116,19 +117,23 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
     updateChartGroup(tgId, groupId, (g) => ({ ...g, fieldList: g.fieldList.filter((_, i) => i !== idx) }));
   };
 
-  const addDataReport = (tgId: number, groupId: number) => {
-    const link = (linkDrafts[groupId] || '').trim();
-    if (!link) return;
-    const group = linkGroupDrafts[groupId] || 'Q';
-    const parsed = parseQueryLink(link);
+  const addQueryLink = (tgId: number, groupId: number) => {
+    updateChartGroup(tgId, groupId, (g) => ({ ...g, queryLinks: [...g.queryLinks, ''] }));
+  };
+  const delQueryLink = (tgId: number, groupId: number, idx: number) => {
+    updateChartGroup(tgId, groupId, (g) => ({ ...g, queryLinks: g.queryLinks.filter((_, i) => i !== idx) }));
+  };
+  const setQueryLink = (tgId: number, groupId: number, idx: number, value: string) => {
     updateChartGroup(tgId, groupId, (g) => ({
       ...g,
-      dataReports: [...g.dataReports, { id: nextLinkId(), group, link, ...parsed }],
+      queryLinks: g.queryLinks.map((l, i) => (i === idx ? value : l)),
     }));
-    setLinkDrafts((prev) => ({ ...prev, [groupId]: '' }));
   };
-  const delDataReport = (tgId: number, groupId: number, idx: number) => {
-    updateChartGroup(tgId, groupId, (g) => ({ ...g, dataReports: g.dataReports.filter((_, i) => i !== idx) }));
+  const setAggregationMethods = (tgId: number, groupId: number, values: string[]) => {
+    updateChartGroup(tgId, groupId, (g) => ({ ...g, aggregationMethods: values }));
+  };
+  const setAggregationOtherText = (tgId: number, groupId: number, value: string) => {
+    updateChartGroup(tgId, groupId, (g) => ({ ...g, aggregationOtherText: value }));
   };
 
   const toggleCapability = (tgId: number, groupId: number, cap: ChartCapability) => {
@@ -160,7 +165,7 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
       addSubmissionRecord(STORYLINE_SUBMIT_HISTORY_KEY, {
         label: state.topic,
         owner: '',
-        meta: state.region,
+        meta: state.regions.join(', '),
         status,
         error: result.error,
         payload: chartPayload,
@@ -189,6 +194,20 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
           <div>
             <div className="page-head-title">图表配置</div>
           </div>
+          {(onUndo || onRedo) && (
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button className="icon-btn" onClick={onUndo} disabled={!canUndo} title="撤销">
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 12a9 9 0 109-9M3 3v5h5"></path>
+                </svg>
+              </button>
+              <button className="icon-btn" onClick={onRedo} disabled={!canRedo} title="重做">
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 12a9 9 0 10-9 9M21 3v5h-5"></path>
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -219,13 +238,12 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
             <div className="field-label">
               数据范围 Region <span className="req">*</span>
             </div>
-            <select value={state.region} onChange={(e) => update('region', e.target.value)}>
-              {REGION_OPTIONS.map((r) => (
-                <option value={r} key={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
+            <MultiSelect
+              options={REGION_OPTIONS}
+              selected={state.regions}
+              onChange={(v) => update('regions', v)}
+              placeholder="Select data ranges..."
+            />
           </div>
           <div className="field" style={{ marginTop: 14, marginBottom: 0 }}>
             <div className="field-label">
@@ -454,7 +472,7 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
                           <button
                             className="btn btn-secondary btn-xs"
                             style={{ flexShrink: 0 }}
-                            onClick={() => addDataReport(tg.id, g.id)}
+                            onClick={() => addQueryLink(tg.id, g.id)}
                             title="添加 Query Link"
                           >
                             + Add URL
@@ -498,60 +516,43 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
                         </div>
 
                         <div className="field-label" style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}>
-                          拼数方式 <span className="hint">选择下一条 Query Link 所属的分组</span>
+                          Query Link
                         </div>
-                        <div className="radio-pills">
-                          {GROUP_OPTIONS.map((o) => (
-                            <div className="radio-pill" key={o.value}>
-                              <input
-                                type="radio"
-                                id={`group-${g.id}-${o.value}`}
-                                name={`group-${g.id}`}
-                                checked={(linkGroupDrafts[g.id] || 'Q') === o.value}
-                                onChange={() => setLinkGroupDrafts((prev) => ({ ...prev, [g.id]: o.value }))}
-                              />
-                              <label htmlFor={`group-${g.id}-${o.value}`}>{o.value}</label>
-                            </div>
-                          ))}
-                        </div>
+                        {g.queryLinks.length === 0 && <div className="tree-empty">暂无 Query Link</div>}
+                        {g.queryLinks.map((link, li) => (
+                          <div className="tag-input-row" key={li} style={{ marginBottom: 6 }}>
+                            <input
+                              type="url"
+                              placeholder="https://... (Query Link)"
+                              value={link}
+                              onChange={(e) => setQueryLink(tg.id, g.id, li, e.target.value)}
+                            />
+                            <button className="icon-btn danger" onClick={() => delQueryLink(tg.id, g.id, li)} title="删除">
+                              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V4h8v3"></path>
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
 
-                        <div className="tree-list">
-                          {g.dataReports.length === 0 && <div className="tree-empty">暂无 Query Link</div>}
-                          {g.dataReports.map((d, di) => (
-                            <div className="tree-item" key={di}>
-                              <svg className="tree-connector" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                <path d="M6 3v10a2 2 0 002 2h8"></path>
-                              </svg>
-                              <svg className="tree-item-icon" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                <path d="M10 13a5 5 0 007.07 0l1.42-1.42a5 5 0 00-7.07-7.07L10 6"></path>
-                                <path d="M14 11a5 5 0 00-7.07 0l-1.42 1.42a5 5 0 007.07 7.07L14 18"></path>
-                              </svg>
-                              <span className="tree-item-text" title={d.link}>
-                                [{d.group}] {d.link}
-                              </span>
-                              <button className="tree-item-x" onClick={() => delDataReport(tg.id, g.id, di)}>
-                                ×
-                              </button>
-                            </div>
-                          ))}
+                        <div className="field-label" style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}>
+                          拼数方式 <span className="hint">与上方 Query Link 按顺序对应 Q/M/W</span>
                         </div>
-                        <div className="tag-input-row">
+                        <MultiSelect
+                          options={AGGREGATION_OPTIONS}
+                          selected={g.aggregationMethods}
+                          onChange={(v) => setAggregationMethods(tg.id, g.id, v)}
+                          placeholder="Select aggregation methods..."
+                        />
+                        {g.aggregationMethods.includes('其他') && (
                           <input
-                            type="url"
-                            placeholder="粘贴 Query Link"
-                            value={linkDrafts[g.id] || ''}
-                            onChange={(e) => setLinkDrafts((prev) => ({ ...prev, [g.id]: e.target.value }))}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                addDataReport(tg.id, g.id);
-                                e.preventDefault();
-                              }
-                            }}
+                            type="text"
+                            placeholder="请填写具体其他方式…"
+                            value={g.aggregationOtherText}
+                            onChange={(e) => setAggregationOtherText(tg.id, g.id, e.target.value)}
+                            style={{ marginTop: 8 }}
                           />
-                          <button className="btn btn-secondary btn-xs" onClick={() => addDataReport(tg.id, g.id)}>
-                            + 添加
-                          </button>
-                        </div>
+                        )}
 
                         <div className="field-label" style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}>
                           分析能力 <span className="hint">该 Chart ID 需要 Agent 执行的分析</span> <span className="req">*</span>

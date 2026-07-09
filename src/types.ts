@@ -8,20 +8,13 @@ export interface ReportTag {
 
 export type ChartCapability = 'basic' | 'attribution' | 'threshold';
 
-export interface DataReportLink {
-  id: number;
-  group: string; // 'Q' | 'M' | 'W' | custom label, matches backend "group"
-  link: string;
-  reportId: string;
-  datasetId: string;
-  queryId: string;
-}
-
 export interface ChartGroup {
   id: number;
   chartId: string;
   fieldList: string[];
-  dataReports: DataReportLink[];
+  queryLinks: string[];
+  aggregationMethods: string[]; // Q/M/W/无需拼数处理/其他, chart-level
+  aggregationOtherText: string;
   capabilities: ChartCapability[];
   threshold: string;
 }
@@ -42,7 +35,7 @@ export type ChartType = 'wuhuaro' | 'fensi' | 'maomaochong' | 'bar';
 export interface StorylineState {
   topic: string;
   background: string;
-  region: string;
+  regions: string[];
   templateGroups: TemplateGroup[];
 }
 

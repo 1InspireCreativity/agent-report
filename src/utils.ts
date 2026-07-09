@@ -1,7 +1,6 @@
 import type {
   ChartCapability,
   ChartGroup,
-  DataReportLink,
   ReportState,
   ReportTag,
   SavedFolder,
@@ -29,15 +28,9 @@ export const STORYLINE_TYPE_OPTIONS: { value: StorylineDataType; label: string }
   { value: 'personal', label: 'Personal' },
 ];
 
-// Matches backend "group" values on data_reports entries (Q/M/W are the recognized
-// composable groups; 其他 marks a link that stands alone / needs no composing).
-export const GROUP_OPTIONS: { value: string; label: string }[] = [
-  { value: 'Q', label: 'Quarter (Q)' },
-  { value: 'M', label: 'Month (M)' },
-  { value: 'W', label: 'Week (W)' },
-  { value: '其他', label: '其他' },
-  { value: '无需拼数处理', label: '无需拼数处理' },
-];
+// Matches backend "group" values (Q/M/W are the recognized composable groups;
+// 其他/无需拼数处理 mark a chart that stands alone / needs no composing).
+export const AGGREGATION_OPTIONS = ['Q', 'M', 'W', '无需拼数处理', '其他'];
 
 /** Parses report_id / dataset_id / query_id out of a pasted BI Portal report link. */
 export function parseQueryLink(link: string): { reportId: string; datasetId: string; queryId: string } {
@@ -45,14 +38,6 @@ export function parseQueryLink(link: string): { reportId: string; datasetId: str
   const datasetId = /[?&]dataset=(\d+)/.exec(link)?.[1] || '';
   const queryId = /[?&]queryId=(\d+)/.exec(link)?.[1] || '';
   return { reportId, datasetId, queryId };
-}
-
-/** compose_type = concatenation of distinct Q/M/W groups present, in that order, followed by any custom groups. */
-export function deriveComposeType(dataReports: DataReportLink[]): string {
-  const present = new Set(dataReports.map((d) => d.group).filter(Boolean));
-  const ordered = ['Q', 'M', 'W'].filter((g) => present.has(g));
-  const rest = [...present].filter((g) => !['Q', 'M', 'W'].includes(g));
-  return [...ordered, ...rest].join('');
 }
 
 export const REGION_OPTIONS = [
@@ -237,7 +222,7 @@ export function defaultStoryline(): StorylineState {
   return {
     topic: 'GBS-1Team revenue和yoy',
     background: '',
-    region: 'NAAP',
+    regions: ['NAAP'],
     templateGroups: [
       {
         id: 1,
@@ -254,16 +239,9 @@ export function defaultStoryline(): StorylineState {
             id: 1,
             chartId: 'GBSrev',
             fieldList: ['Stat Date', 'Dollar Revenue Real - Rev Attain (HQ)'],
-            dataReports: [
-              {
-                id: 1,
-                group: 'Q',
-                link: 'https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1145582?dataset=1159057&queryId=648947878',
-                reportId: '1145582',
-                datasetId: '1159057',
-                queryId: '648947878',
-              },
-            ],
+            queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1145582?dataset=1159057&queryId=648947878'],
+            aggregationMethods: ['Q'],
+            aggregationOtherText: '',
             capabilities: ['basic', 'attribution'],
             threshold: '',
           },
@@ -271,7 +249,9 @@ export function defaultStoryline(): StorylineState {
             id: 2,
             chartId: 'GBSYOY',
             fieldList: [],
-            dataReports: [],
+            queryLinks: [],
+            aggregationMethods: [],
+            aggregationOtherText: '',
             capabilities: ['basic'],
             threshold: '',
           },
@@ -289,16 +269,9 @@ export function defaultStoryline(): StorylineState {
             id: 3,
             chartId: '',
             fieldList: [],
-            dataReports: [
-              {
-                id: 2,
-                group: 'Q',
-                link: 'https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1147165?dataset=1159057&queryId=648951830',
-                reportId: '1147165',
-                datasetId: '1159057',
-                queryId: '648951830',
-              },
-            ],
+            queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1147165?dataset=1159057&queryId=648951830'],
+            aggregationMethods: ['Q'],
+            aggregationOtherText: '',
             capabilities: ['basic'],
             threshold: '',
           },
@@ -312,7 +285,7 @@ export function blankStoryline(): StorylineState {
   return {
     topic: '',
     background: '',
-    region: 'NAAP',
+    regions: ['NAAP'],
     templateGroups: [],
   };
 }
@@ -348,18 +321,26 @@ export function buildDataTemplatePayload(tg: TemplateGroup) {
     chart_template_id: tg.templateId || '',
     metric_chart_config: buildMetricChartConfig(tg),
     drill_dimensions: tg.drillDimensions,
-    data_report_config: tg.chartGroups.map((g) => ({
-      chart_id: g.chartId || '',
-      compose_type: deriveComposeType(g.dataReports),
-      field_list: g.fieldList,
-      data_reports: g.dataReports.map((d) => ({
-        group: d.group,
-        report_id: Number(d.reportId) || 0,
-        dataset_id: Number(d.datasetId) || 0,
-        query_id: Number(d.queryId) || 0,
-        link: d.link,
-      })),
-    })),
+    data_report_config: tg.chartGroups.map((g) => {
+      // 拼数方式 is picked per-chart; only Q/M/W are composable groups with their own
+      // report link, so pair them positionally with the pasted Query Links in order.
+      const groups = g.aggregationMethods.filter((m) => m === 'Q' || m === 'M' || m === 'W');
+      return {
+        chart_id: g.chartId || '',
+        compose_type: groups.join(''),
+        field_list: g.fieldList,
+        data_reports: g.queryLinks.map((link, i) => {
+          const parsed = parseQueryLink(link);
+          return {
+            group: groups[i] || '',
+            report_id: Number(parsed.reportId) || 0,
+            dataset_id: Number(parsed.datasetId) || 0,
+            query_id: Number(parsed.queryId) || 0,
+            link,
+          };
+        }),
+      };
+    }),
     creator: '',
     owner: [] as string[],
     type: tg.type === 'public' ? 'Public' : 'Personal',
@@ -420,12 +401,6 @@ export function nextGroupId() {
   return groupIdCounter;
 }
 
-let linkIdCounter = 100;
-export function nextLinkId() {
-  linkIdCounter += 1;
-  return linkIdCounter;
-}
-
 let tagIdCounter = 100;
 export function nextTagId() {
   tagIdCounter += 1;
@@ -437,7 +412,9 @@ export function emptyChartGroup(): ChartGroup {
     id: nextGroupId(),
     chartId: '',
     fieldList: [],
-    dataReports: [],
+    queryLinks: [],
+    aggregationMethods: [],
+    aggregationOtherText: '',
     capabilities: ['basic'],
     threshold: '',
   };
@@ -457,33 +434,28 @@ export function emptyTemplateGroup(): TemplateGroup {
 
 const VALID_CAPABILITIES: ChartCapability[] = ['basic', 'attribution', 'threshold'];
 
-function normalizeDataReportLink(raw: Record<string, unknown> | undefined): DataReportLink {
-  const r = raw || {};
-  const link = typeof r.link === 'string' ? r.link : '';
-  const parsed = parseQueryLink(link);
-  return {
-    id: typeof r.id === 'number' ? r.id : nextLinkId(),
-    group: typeof r.group === 'string' ? r.group : '',
-    link,
-    reportId: typeof r.reportId === 'string' ? r.reportId : parsed.reportId,
-    datasetId: typeof r.datasetId === 'string' ? r.datasetId : parsed.datasetId,
-    queryId: typeof r.queryId === 'string' ? r.queryId : parsed.queryId,
-  };
-}
-
 function normalizeChartGroup(raw: Record<string, unknown> | undefined): ChartGroup {
   const r = raw || {};
-  // Back-compat: old shape stored a flat `queryLinks: string[]` with no group tagging.
-  const legacyLinks = Array.isArray(r.queryLinks)
-    ? (r.queryLinks as string[]).map((l) => normalizeDataReportLink({ link: l }))
-    : [];
+  // Back-compat: older shape stored `dataReports: [{ link, group }]` instead of a flat
+  // `queryLinks: string[]` + chart-level `aggregationMethods`.
+  const legacyDataReports = Array.isArray(r.dataReports) ? (r.dataReports as Record<string, unknown>[]) : null;
+  const queryLinks = Array.isArray(r.queryLinks)
+    ? (r.queryLinks as string[])
+    : legacyDataReports
+      ? legacyDataReports.map((d) => (typeof d.link === 'string' ? d.link : '')).filter(Boolean)
+      : [];
+  const aggregationMethods = Array.isArray(r.aggregationMethods)
+    ? (r.aggregationMethods as string[])
+    : legacyDataReports
+      ? [...new Set(legacyDataReports.map((d) => (typeof d.group === 'string' ? d.group : '')).filter(Boolean))]
+      : [];
   return {
     id: typeof r.id === 'number' ? r.id : nextGroupId(),
     chartId: typeof r.chartId === 'string' ? r.chartId : '',
     fieldList: Array.isArray(r.fieldList) ? (r.fieldList as string[]) : [],
-    dataReports: Array.isArray(r.dataReports)
-      ? (r.dataReports as Record<string, unknown>[]).map(normalizeDataReportLink)
-      : legacyLinks,
+    queryLinks,
+    aggregationMethods,
+    aggregationOtherText: typeof r.aggregationOtherText === 'string' ? r.aggregationOtherText : '',
     capabilities: Array.isArray(r.capabilities)
       ? (r.capabilities as ChartCapability[]).filter((c) => VALID_CAPABILITIES.includes(c))
       : ['basic'],
@@ -533,7 +505,7 @@ function normalizeTemplateGroup(raw: Record<string, unknown> | undefined, legacy
 // { templateGroups } shape. Node-level `scenario` becomes each template's
 // businessScene when migrating older data.
 export function normalizeStoryline(
-  raw: (Partial<StorylineState> & { tags?: unknown; nodes?: unknown }) | null | undefined
+  raw: (Partial<StorylineState> & { tags?: unknown; nodes?: unknown; region?: unknown }) | null | undefined
 ): StorylineState {
   const base = defaultStoryline();
   if (!raw) return base;
@@ -553,10 +525,17 @@ export function normalizeStoryline(
     templateGroups = base.templateGroups;
   }
 
+  // Back-compat: region used to be a single string before it became a multi-select.
+  const regions = Array.isArray(raw.regions)
+    ? (raw.regions as string[])
+    : typeof raw.region === 'string' && raw.region
+      ? [raw.region]
+      : ['NAAP'];
+
   return {
     topic: typeof raw.topic === 'string' ? raw.topic : base.topic,
     background: typeof raw.background === 'string' ? raw.background : base.background,
-    region: typeof raw.region === 'string' && raw.region ? raw.region : 'NAAP',
+    regions,
     templateGroups,
   };
 }
