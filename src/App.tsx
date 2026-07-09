@@ -8,6 +8,7 @@ import {
   blankStoryline,
   defaultReport,
   defaultStoryline,
+  loadFolders,
   normalizeReport,
   normalizeStoryline,
   upsertFolder,
@@ -192,24 +193,25 @@ function App() {
   const [reportActiveId, setReportActiveId] = useState('');
   const { msg, visible, toast } = useToast();
 
-  const saveStorylineFolder = (visibility: StorylineDataType) => {
+  const saveStorylineFolder = () => {
     const name = storyline.topic.trim();
     if (!name) {
       toast('⚠️ 请先填写文件夹名称');
       return;
     }
     try {
+      const existing = loadFolders<StorylineState>('storylineFolders').find((f) => f.id === storylineActiveId);
       const item = upsertFolder({
         storageKey: 'storylineFolders',
         activeId: storylineActiveId,
         parentId: null,
         name,
         owner: '',
-        visibility,
+        visibility: existing?.visibility || 'public',
         state: storyline,
       });
       setStorylineActiveId(item.id);
-      toast(`✅ 已保存为${visibility === 'public' ? ' Public' : ' Personal'} 文件夹：` + name);
+      toast('✅ 已保存：' + name);
     } catch (e) {
       toast('⚠️ 保存失败：' + (e instanceof Error ? e.message : String(e)));
     }
@@ -336,7 +338,6 @@ function App() {
                 <StorylineTab
                   state={storyline}
                   setState={setStoryline}
-                  toast={toast}
                   onSave={saveStorylineFolder}
                   onUndo={undoStoryline}
                   onRedo={redoStoryline}

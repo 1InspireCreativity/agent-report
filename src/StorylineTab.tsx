@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { Plus, Trash2, LayoutTemplate, BarChart2, Link as LinkIcon, Undo2, Redo2 } from 'lucide-react';
 import type { StorylineState, StorylineDataType, ChartGroup, ChartCapability, TemplateGroup } from './types';
 import {
-  blankStoryline,
-  buildStorylinePayload,
   emptyTemplateGroup,
   emptyChartGroup,
   loadTemplateCatalog,
@@ -13,35 +11,23 @@ import {
   STORYLINE_TYPE_OPTIONS,
   TAG_OPTIONS,
 } from './utils';
-import { submitChartConfig } from './api';
-import PayloadPanel from './PayloadPanel';
-import SubmitHistoryPanel from './SubmitHistoryPanel';
 import MultiSelect from './MultiSelect';
-import {
-  addSubmissionRecord,
-  clearSubmissionHistory,
-  deleteSubmissionRecord,
-  loadSubmissionHistory,
-  STORYLINE_SUBMIT_HISTORY_KEY,
-} from './submissionHistory';
 
 interface Props {
   state: StorylineState;
   setState: React.Dispatch<React.SetStateAction<StorylineState>>;
-  toast: (msg: string) => void;
-  onSave: (visibility: StorylineDataType) => void;
+  onSave: () => void;
   onUndo?: () => void;
   onRedo?: () => void;
   canUndo?: boolean;
   canRedo?: boolean;
 }
 
-export default function StorylineTab({ state, setState, toast, onSave, onUndo, onRedo, canUndo, canRedo }: Props) {
+export default function StorylineTab({ state, setState, onSave, onUndo, onRedo, canUndo, canRedo }: Props) {
   const templateCatalog = loadTemplateCatalog();
   const [fieldDrafts, setFieldDrafts] = useState<Record<number, string>>({});
   const [drillDrafts, setDrillDrafts] = useState<Record<number, string>>({});
-  const [submitting, setSubmitting] = useState(false);
-  const [submitHistory, setSubmitHistory] = useState(() => loadSubmissionHistory(STORYLINE_SUBMIT_HISTORY_KEY));
+  const [isSaved, setIsSaved] = useState(false);
 
   const update = <K extends keyof StorylineState>(key: K, value: StorylineState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }));
@@ -137,45 +123,11 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
     updateChartGroup(tgId, groupId, (g) => ({ ...g, capabilities: [] }));
   };
 
-  const submit = async () => {
-    if (!state.topic) {
-      toast('⚠️ 请填写报告名称');
-      return;
-    }
-    if (!state.templateGroups.length) {
-      toast('⚠️ 请至少添加一个 Template ID');
-      return;
-    }
-    setSubmitting(true);
-    const chartPayload = buildStorylinePayload(state);
-    const result = await submitChartConfig(chartPayload);
-    setSubmitting(false);
-    const status = result.ok ? 'ok' : result.offline ? 'offline' : 'error';
-    setSubmitHistory(
-      addSubmissionRecord(STORYLINE_SUBMIT_HISTORY_KEY, {
-        label: state.topic,
-        owner: '',
-        meta: state.regions.join(', '),
-        status,
-        error: result.error,
-        payload: chartPayload,
-      })
-    );
-    if (result.ok) {
-      toast('✅ 图表配置已提交给后端，Agent 任务启动中…');
-    } else if (result.offline) {
-      toast('✅ 配置已生成（后端未配置，可复制 Agent Payload 使用）');
-    } else {
-      toast('⚠️ 提交失败：' + result.error);
-    }
+  const handleSave = () => {
+    onSave();
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 2000);
   };
-
-  const reset = () => {
-    if (!confirm('确认重置所有图表配置？')) return;
-    setState(blankStoryline());
-  };
-
-  const payload = buildStorylinePayload(state);
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50/50">
@@ -199,18 +151,12 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
             <Redo2 size={18} />
           </button>
         </div>
-        <div className="flex items-center gap-2">
+        <div>
           <button
-            onClick={() => onSave('personal')}
-            className="text-slate-700 hover:text-indigo-700 bg-white border border-slate-300 hover:border-indigo-300 px-4 py-1.5 rounded-md text-sm font-medium transition-colors shadow-sm"
+            onClick={handleSave}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-1.5 rounded-md shadow-sm font-medium transition-all text-sm w-24 flex justify-center"
           >
-            存为 Personal
-          </button>
-          <button
-            onClick={() => onSave('public')}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-1.5 rounded-md shadow-sm font-medium transition-all text-sm"
-          >
-            存为 Public
+            {isSaved ? 'Saved!' : 'Save'}
           </button>
         </div>
       </div>
@@ -574,47 +520,6 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                 ))
               )}
             </div>
-          </div>
-
-          {/* Payload */}
-          <PayloadPanel
-            label="Chart Config"
-            meta={`${state.templateGroups.length} 个 Template ID`}
-            payload={payload}
-            onCopy={() => toast('✅ 已复制到剪贴板')}
-          />
-
-          {/* Submission History */}
-          <SubmitHistoryPanel
-            records={submitHistory}
-            onCopy={(json) => {
-              navigator.clipboard.writeText(json).then(() => toast('✅ 已复制到剪贴板'));
-            }}
-            onDelete={(id) => {
-              setSubmitHistory(deleteSubmissionRecord(STORYLINE_SUBMIT_HISTORY_KEY, id));
-              toast('✅ 已删除该提交记录');
-            }}
-            onClear={() => {
-              if (!confirm('确认清空全部提交记录？此操作不可撤销。')) return;
-              setSubmitHistory(clearSubmissionHistory(STORYLINE_SUBMIT_HISTORY_KEY));
-              toast('✅ 已清空提交记录');
-            }}
-          />
-
-          <div className="flex items-center gap-3 pt-2">
-            <button
-              onClick={reset}
-              className="text-slate-600 hover:text-slate-800 bg-white border border-slate-300 px-4 py-2 rounded-md text-sm font-medium transition-colors"
-            >
-              重置
-            </button>
-            <button
-              onClick={submit}
-              disabled={submitting}
-              className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-5 py-2 rounded-md shadow-sm font-medium transition-all text-sm"
-            >
-              {submitting ? '提交中…' : '提交图表配置给 Agent'}
-            </button>
           </div>
         </div>
       </div>

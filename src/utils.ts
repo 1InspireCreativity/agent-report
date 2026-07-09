@@ -251,18 +251,18 @@ export function defaultStoryline(): StorylineState {
   };
 }
 
-export function blankStoryline(): StorylineState {
+export function blankStoryline(name = ''): StorylineState {
   return {
-    topic: '',
+    topic: name,
     background: '',
     regions: ['NAAP'],
     templateGroups: [],
   };
 }
 
-export function defaultReport(): ReportState {
+export function defaultReport(name = ''): ReportState {
   return {
-    name: '',
+    name,
     cycle: 'W',
     chartType: 'wuhuaro',
     description: '',

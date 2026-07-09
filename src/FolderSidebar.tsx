@@ -26,7 +26,7 @@ interface Props<T> {
   nameLabel: string;
   state: T;
   onLoad: (state: T) => void;
-  blankState: () => T;
+  blankState: (name?: string) => T;
   seed?: SeedFolder<T>[];
   toast: (msg: string) => void;
   getName: (state: T) => string;
@@ -176,7 +176,7 @@ export default function FolderSidebar<T>({
       visibility: 'public',
       color: folderIconColor(arr.length),
       updated_at: new Date().toLocaleString(),
-      state: blankState(),
+      state: blankState(name),
     };
     arr.unshift(item);
     saveFolders(storageKey, arr);
