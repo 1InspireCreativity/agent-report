@@ -2,11 +2,9 @@ import { useEffect, useState } from 'react';
 import StorylineTab from './StorylineTab';
 import FolderSidebar from './FolderSidebar';
 import ReportTab from './ReportTab';
-import LiveJsonPanel from './LiveJsonPanel';
 import { useToast } from './useToast';
 import {
   blankStoryline,
-  buildStorylinePayload,
   defaultReport,
   defaultStoryline,
   normalizeReport,
@@ -330,7 +328,7 @@ function App() {
         </div>
       </header>
 
-      <main className="sl-layout" style={activeTab === 'storyline' ? { maxWidth: 1680 } : undefined}>
+      <main className="sl-layout">
         {activeTab === 'storyline' && (
           <>
             <FolderSidebar
@@ -362,7 +360,6 @@ function App() {
                 canRedo={canRedoStoryline}
               />
             </div>
-            <LiveJsonPanel payload={buildStorylinePayload(storyline)} />
           </>
         )}
         {activeTab === 'report' && (

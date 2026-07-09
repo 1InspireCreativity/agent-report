@@ -275,7 +275,7 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                 <textarea
                   value={state.background}
                   onChange={(e) => update('background', e.target.value)}
-                  placeholder="描述当前业务背景、问题现象、分析触发原因……"
+                  placeholder="示例：folder内图表在什么背景下分析什么业务问题，为agent提供知识"
                   className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent min-h-[60px]"
                 />
               </div>
