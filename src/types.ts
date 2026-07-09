@@ -58,8 +58,6 @@ export interface ReportState {
   owner: string;
   ownerEmail: string;
   ownerDept: string;
-  ownerUsers: string[];
-  allowUsers: string[];
 }
 
 export interface SavedFolder<T> {

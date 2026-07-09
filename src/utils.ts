@@ -332,8 +332,6 @@ export function defaultReport(): ReportState {
     owner: '',
     ownerEmail: '',
     ownerDept: '',
-    ownerUsers: [],
-    allowUsers: [],
   };
 }
 
@@ -379,13 +377,17 @@ export function buildStorylinePayload(sl: StorylineState) {
   };
 }
 
-/** Maps report state to the exact POST/PUT /api/auto_report/report_data_templates request body. */
+/**
+ * Maps report state to the exact POST/PUT /api/auto_report/report_data_templates request body.
+ * owner/allow_users are placeholders derived from the plain Owner field until SSO supplies
+ * real usernames — swap this out once that lands.
+ */
 export function buildReportPayload(rpt: ReportState) {
   return {
     report_name: rpt.name || '',
     chart_template_ids: rpt.templateIds,
-    owner: rpt.ownerUsers,
-    allow_users: rpt.allowUsers,
+    owner: rpt.owner ? [rpt.owner] : [],
+    allow_users: [] as string[],
   };
 }
 
@@ -592,7 +594,5 @@ export function normalizeReport(
     owner: typeof raw.owner === 'string' ? raw.owner : base.owner,
     ownerEmail: typeof raw.ownerEmail === 'string' ? raw.ownerEmail : base.ownerEmail,
     ownerDept: typeof raw.ownerDept === 'string' ? raw.ownerDept : base.ownerDept,
-    ownerUsers: Array.isArray(raw.ownerUsers) ? (raw.ownerUsers as string[]) : base.ownerUsers,
-    allowUsers: Array.isArray(raw.allowUsers) ? (raw.allowUsers as string[]) : base.allowUsers,
   };
 }

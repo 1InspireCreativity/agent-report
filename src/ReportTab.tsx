@@ -22,8 +22,6 @@ interface Props {
 export default function ReportTab({ state, setState, toast, onSave }: Props) {
   const templateCatalog = loadTemplateCatalog();
   const [templateIdDraft, setTemplateIdDraft] = useState('');
-  const [ownerUserDraft, setOwnerUserDraft] = useState('');
-  const [allowUserDraft, setAllowUserDraft] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitHistory, setSubmitHistory] = useState(() => loadSubmissionHistory(REPORT_SUBMIT_HISTORY_KEY));
 
@@ -44,33 +42,6 @@ export default function ReportTab({ state, setState, toast, onSave }: Props) {
 
   const delTemplateId = (idx: number) => {
     setState((prev) => ({ ...prev, templateIds: prev.templateIds.filter((_, i) => i !== idx) }));
-  };
-
-  const addOwnerUser = () => {
-    const val = ownerUserDraft.trim();
-    if (!val) return;
-    setState((prev) => (prev.ownerUsers.includes(val) ? prev : { ...prev, ownerUsers: [...prev.ownerUsers, val] }));
-    setOwnerUserDraft('');
-  };
-  const delOwnerUser = (idx: number) => {
-    setState((prev) => ({ ...prev, ownerUsers: prev.ownerUsers.filter((_, i) => i !== idx) }));
-  };
-  const toggleOwnerPublic = () => {
-    setState((prev) =>
-      prev.ownerUsers.includes('public')
-        ? { ...prev, ownerUsers: prev.ownerUsers.filter((u) => u !== 'public') }
-        : { ...prev, ownerUsers: [...prev.ownerUsers, 'public'] }
-    );
-  };
-
-  const addAllowUser = () => {
-    const val = allowUserDraft.trim();
-    if (!val) return;
-    setState((prev) => (prev.allowUsers.includes(val) ? prev : { ...prev, allowUsers: [...prev.allowUsers, val] }));
-    setAllowUserDraft('');
-  };
-  const delAllowUser = (idx: number) => {
-    setState((prev) => ({ ...prev, allowUsers: prev.allowUsers.filter((_, i) => i !== idx) }));
   };
 
   const submit = async () => {
@@ -114,8 +85,6 @@ export default function ReportTab({ state, setState, toast, onSave }: Props) {
       owner: '',
       ownerEmail: '',
       ownerDept: '',
-      ownerUsers: [],
-      allowUsers: [],
     }));
   };
 
@@ -277,83 +246,6 @@ export default function ReportTab({ state, setState, toast, onSave }: Props) {
                 value={state.ownerDept}
                 onChange={(e) => update('ownerDept', e.target.value)}
               />
-            </div>
-          </div>
-          <div className="grid-2" style={{ margin: '16px 0 0' }}>
-            <div className="field" style={{ margin: 0 }}>
-              <div className="field-label">
-                Owner 用户名 <span className="req">*</span> <span className="hint">report_data_templates.owner，可含 public</span>
-              </div>
-              <div className="tags-wrap">
-                {state.ownerUsers.map((u, i) => (
-                  <span className="tag" title={u} key={i}>
-                    <span className="tag-text">{u}</span>
-                    <button className="tag-x" onClick={() => delOwnerUser(i)}>
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <div className="tag-input-row">
-                <input
-                  type="text"
-                  placeholder="用户名，如 wangqi"
-                  value={ownerUserDraft}
-                  onChange={(e) => setOwnerUserDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      addOwnerUser();
-                      e.preventDefault();
-                    }
-                  }}
-                />
-                <button className="btn btn-secondary btn-xs" onClick={addOwnerUser}>
-                  + 添加
-                </button>
-              </div>
-              <div className="radio-pills" style={{ marginTop: 8 }}>
-                <div className="radio-pill">
-                  <input
-                    type="checkbox"
-                    id="owner-public"
-                    checked={state.ownerUsers.includes('public')}
-                    onChange={toggleOwnerPublic}
-                  />
-                  <label htmlFor="owner-public">public（所有人可见）</label>
-                </div>
-              </div>
-            </div>
-            <div className="field" style={{ margin: 0 }}>
-              <div className="field-label">
-                Allow Users <span className="opt">可选</span> <span className="hint">额外授权可访问的用户名</span>
-              </div>
-              <div className="tags-wrap">
-                {state.allowUsers.map((u, i) => (
-                  <span className="tag" title={u} key={i}>
-                    <span className="tag-text">{u}</span>
-                    <button className="tag-x" onClick={() => delAllowUser(i)}>
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <div className="tag-input-row">
-                <input
-                  type="text"
-                  placeholder="用户名"
-                  value={allowUserDraft}
-                  onChange={(e) => setAllowUserDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      addAllowUser();
-                      e.preventDefault();
-                    }
-                  }}
-                />
-                <button className="btn btn-secondary btn-xs" onClick={addAllowUser}>
-                  + 添加
-                </button>
-              </div>
             </div>
           </div>
           <div className="footer-bar" style={{ padding: '14px 0 0', marginTop: 14 }}>
