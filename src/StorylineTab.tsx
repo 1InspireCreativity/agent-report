@@ -458,44 +458,6 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                             {/* Chart Configuration */}
                             <div className="p-3 bg-slate-50 border-t border-slate-200 space-y-4 rounded-b-lg">
                               <div>
-                                <label className="block text-[11px] font-medium text-slate-500 mb-1">指标字段 (field_list)</label>
-                                <div className="flex flex-wrap gap-1.5 mb-1.5">
-                                  {g.fieldList.map((f, fi) => (
-                                    <span
-                                      key={fi}
-                                      className="bg-sky-50 text-sky-700 px-2 py-0.5 rounded text-xs flex items-center gap-1"
-                                    >
-                                      {f}
-                                      <button onClick={() => delFieldListItem(tg.id, g.id, fi)} className="hover:text-red-600">
-                                        ×
-                                      </button>
-                                    </span>
-                                  ))}
-                                </div>
-                                <div className="flex gap-2">
-                                  <input
-                                    type="text"
-                                    placeholder="如：Stat Date"
-                                    value={fieldDrafts[g.id] || ''}
-                                    onChange={(e) => setFieldDrafts((prev) => ({ ...prev, [g.id]: e.target.value }))}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') {
-                                        addFieldListItem(tg.id, g.id);
-                                        e.preventDefault();
-                                      }
-                                    }}
-                                    className="flex-1 bg-white border border-slate-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
-                                  />
-                                  <button
-                                    onClick={() => addFieldListItem(tg.id, g.id)}
-                                    className="text-slate-600 hover:text-sky-600 bg-white border border-slate-200 hover:border-sky-200 px-3 py-1 rounded text-xs font-medium transition-colors shadow-sm"
-                                  >
-                                    + 添加
-                                  </button>
-                                </div>
-                              </div>
-
-                              <div>
                                 <label className="block text-[11px] font-medium text-slate-500 mb-1">拼数方式 (Data Aggregation)</label>
                                 <div className="space-y-2">
                                   <MultiSelect
@@ -540,6 +502,44 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                                       清除
                                     </button>
                                   )}
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="block text-[11px] font-medium text-slate-500 mb-1">指标字段 (field_list)</label>
+                                <div className="flex flex-wrap gap-1.5 mb-1.5">
+                                  {g.fieldList.map((f, fi) => (
+                                    <span
+                                      key={fi}
+                                      className="bg-sky-50 text-sky-700 px-2 py-0.5 rounded text-xs flex items-center gap-1"
+                                    >
+                                      {f}
+                                      <button onClick={() => delFieldListItem(tg.id, g.id, fi)} className="hover:text-red-600">
+                                        ×
+                                      </button>
+                                    </span>
+                                  ))}
+                                </div>
+                                <div className="flex gap-2">
+                                  <input
+                                    type="text"
+                                    placeholder="如：Stat Date"
+                                    value={fieldDrafts[g.id] || ''}
+                                    onChange={(e) => setFieldDrafts((prev) => ({ ...prev, [g.id]: e.target.value }))}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        addFieldListItem(tg.id, g.id);
+                                        e.preventDefault();
+                                      }
+                                    }}
+                                    className="flex-1 bg-white border border-slate-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                                  />
+                                  <button
+                                    onClick={() => addFieldListItem(tg.id, g.id)}
+                                    className="text-slate-600 hover:text-sky-600 bg-white border border-slate-200 hover:border-sky-200 px-3 py-1 rounded text-xs font-medium transition-colors shadow-sm"
+                                  >
+                                    + 添加
+                                  </button>
                                 </div>
                               </div>
                             </div>

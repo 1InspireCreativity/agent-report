@@ -191,6 +191,7 @@ function App() {
   const [report, setReport] = useState<ReportState>(defaultReport);
   const [storylineActiveId, setStorylineActiveId] = useState('');
   const [reportActiveId, setReportActiveId] = useState('');
+  const [storylineRefresh, setStorylineRefresh] = useState(0);
   const { msg, visible, toast } = useToast();
 
   const saveStorylineFolder = () => {
@@ -211,6 +212,7 @@ function App() {
         state: storyline,
       });
       setStorylineActiveId(item.id);
+      setStorylineRefresh((v) => v + 1);
       toast('✅ 已保存：' + name);
     } catch (e) {
       toast('⚠️ 保存失败：' + (e instanceof Error ? e.message : String(e)));
@@ -332,6 +334,8 @@ function App() {
               seed={STORYLINE_FOLDER_SEED}
               activeId={storylineActiveId}
               onActiveIdChange={setStorylineActiveId}
+              refreshToken={storylineRefresh}
+              listTemplates={(s) => s.templateGroups.map((tg) => tg.businessScene || tg.templateId || '(未命名 Template)')}
             />
             <div style={{ flex: 1, minWidth: 0, alignSelf: 'stretch' }}>
               {storylineActiveId ? (

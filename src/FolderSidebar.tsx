@@ -35,6 +35,8 @@ interface Props<T> {
   normalize: (raw: T) => T;
   activeId: string;
   onActiveIdChange: (id: string) => void;
+  refreshToken?: unknown;
+  listTemplates?: (state: T) => string[];
 }
 
 function flattenSeed<T>(
@@ -77,6 +79,8 @@ export default function FolderSidebar<T>({
   normalize,
   activeId,
   onActiveIdChange: setActiveId,
+  refreshToken,
+  listTemplates,
 }: Props<T>) {
   const [collapsed, setCollapsed] = useState(false);
   const [folders, setFolders] = useState<SavedFolder<T>[]>([]);
@@ -113,11 +117,12 @@ export default function FolderSidebar<T>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageKey]);
 
-  // Re-sync from storage whenever the active folder changes (covers saves triggered
-  // from outside this component, e.g. the inline save buttons in the main form).
+  // Re-sync from storage whenever the active folder changes, or an external save
+  // happens (e.g. the Save button in the main form re-saving the same active
+  // folder, which does not change activeId but does change its stored name/state).
   useEffect(() => {
     setFolders(loadFolders<T>(storageKey));
-  }, [storageKey, activeId]);
+  }, [storageKey, activeId, refreshToken]);
 
   const matchesFilter = (f: SavedFolder<T>) => {
     if (tab === 'mine' && f.visibility !== 'personal') return false;
@@ -413,6 +418,22 @@ export default function FolderSidebar<T>({
         {isExpanded && (
           <div className="sl-folder-children">
             {children.map((c) => renderFolderNode(c, depth + 1))}
+            {listTemplates &&
+              listTemplates(normalize(f.state)).map((label, i) => (
+                <div className="sl-template-preview-row" key={i} style={{ paddingLeft: indent + 16 }}>
+                  <span className="sl-template-preview-icon">
+                    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                      <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                      <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+                      <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                    </svg>
+                  </span>
+                  <span className="sl-template-preview-label" title={label}>
+                    {label}
+                  </span>
+                </div>
+              ))}
             <div
               className="sl-folder-add-child"
               style={{ paddingLeft: indent + 16 }}
