@@ -133,8 +133,8 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
     }));
   };
 
-  const setThreshold = (tgId: number, groupId: number, value: string) => {
-    updateChartGroup(tgId, groupId, (g) => ({ ...g, threshold: value }));
+  const clearCapabilities = (tgId: number, groupId: number) => {
+    updateChartGroup(tgId, groupId, (g) => ({ ...g, capabilities: [] }));
   };
 
   const submit = async () => {
@@ -541,7 +541,7 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
 
                               <div>
                                 <label className="block text-[11px] font-medium text-slate-500 mb-1">
-                                  分析能力 (Analysis Capability) <span className="text-red-500">*</span>
+                                  分析能力 (Analysis Capability) [可选]
                                 </label>
                                 <div className="flex flex-wrap gap-4 mt-1.5">
                                   {CAPABILITY_OPTIONS.map((o) => (
@@ -555,16 +555,15 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                                       <span className="text-[11px] text-slate-700">{o.label}</span>
                                     </label>
                                   ))}
+                                  {g.capabilities.length > 0 && (
+                                    <button
+                                      onClick={() => clearCapabilities(tg.id, g.id)}
+                                      className="text-[10px] text-slate-400 hover:text-slate-600 underline ml-2"
+                                    >
+                                      清除
+                                    </button>
+                                  )}
                                 </div>
-                                {g.capabilities.includes('threshold') && (
-                                  <input
-                                    type="text"
-                                    placeholder="例：YoY < -10% 标红；Rev Attain < 90% 预警"
-                                    value={g.threshold}
-                                    onChange={(e) => setThreshold(tg.id, g.id, e.target.value)}
-                                    className="w-full bg-white border border-slate-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent mt-2"
-                                  />
-                                )}
                               </div>
                             </div>
                           </div>

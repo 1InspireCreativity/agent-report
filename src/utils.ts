@@ -57,7 +57,7 @@ export const REGION_OPTIONS = [
 export const CAPABILITY_OPTIONS: { value: ChartCapability; label: string }[] = [
   { value: 'basic', label: '基础画图' },
   { value: 'attribution', label: '归因 / 下钻' },
-  { value: 'threshold', label: '阈值状态' },
+  { value: 'report', label: '分析报告' },
 ];
 
 export const TAG_OPTIONS = [
@@ -216,7 +216,6 @@ export function defaultStoryline(): StorylineState {
             aggregationMethods: ['Q'],
             aggregationOtherText: '',
             capabilities: ['basic', 'attribution'],
-            threshold: '',
           },
           {
             id: 2,
@@ -226,7 +225,6 @@ export function defaultStoryline(): StorylineState {
             aggregationMethods: [],
             aggregationOtherText: '',
             capabilities: ['basic'],
-            threshold: '',
           },
         ],
       },
@@ -246,7 +244,6 @@ export function defaultStoryline(): StorylineState {
             aggregationMethods: ['Q'],
             aggregationOtherText: '',
             capabilities: ['basic'],
-            threshold: '',
           },
         ],
       },
@@ -273,12 +270,12 @@ export function defaultReport(): ReportState {
   };
 }
 
-/** Packs per-chart 分析能力/阈值定义 into the opaque metric_chart_config the backend stores as-is. */
+/** Packs per-chart 分析能力 into the opaque metric_chart_config the backend stores as-is. */
 function buildMetricChartConfig(tg: TemplateGroup): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   tg.chartGroups.forEach((g, i) => {
-    if (g.capabilities.length || g.threshold) {
-      out[g.chartId || `chart_${i + 1}`] = { capabilities: g.capabilities, threshold: g.threshold || null };
+    if (g.capabilities.length) {
+      out[g.chartId || `chart_${i + 1}`] = { capabilities: g.capabilities };
     }
   });
   return out;
@@ -383,7 +380,6 @@ export function emptyChartGroup(): ChartGroup {
     aggregationMethods: [],
     aggregationOtherText: '',
     capabilities: ['basic'],
-    threshold: '',
   };
 }
 
@@ -399,7 +395,7 @@ export function emptyTemplateGroup(): TemplateGroup {
   };
 }
 
-const VALID_CAPABILITIES: ChartCapability[] = ['basic', 'attribution', 'threshold'];
+const VALID_CAPABILITIES: ChartCapability[] = ['basic', 'attribution', 'report'];
 
 function normalizeChartGroup(raw: Record<string, unknown> | undefined): ChartGroup {
   const r = raw || {};
@@ -426,7 +422,6 @@ function normalizeChartGroup(raw: Record<string, unknown> | undefined): ChartGro
     capabilities: Array.isArray(r.capabilities)
       ? (r.capabilities as ChartCapability[]).filter((c) => VALID_CAPABILITIES.includes(c))
       : ['basic'],
-    threshold: typeof r.threshold === 'string' ? r.threshold : '',
   };
 }
 

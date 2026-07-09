@@ -1,6 +1,6 @@
 export type StorylineDataType = 'public' | 'personal';
 
-export type ChartCapability = 'basic' | 'attribution' | 'threshold';
+export type ChartCapability = 'basic' | 'attribution' | 'report';
 
 export interface ChartGroup {
   id: number;
@@ -10,7 +10,6 @@ export interface ChartGroup {
   aggregationMethods: string[]; // Q/M/W/无需拼数处理/其他, chart-level
   aggregationOtherText: string;
   capabilities: ChartCapability[];
-  threshold: string;
 }
 
 export interface TemplateGroup {
