@@ -7,7 +7,6 @@ import {
   emptyChartGroup,
   loadTemplateCatalog,
   nextTagId,
-  nextGroupId,
   nextLinkId,
   parseQueryLink,
   CAPABILITY_OPTIONS,
@@ -96,22 +95,6 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
   const delChartGroup = (tgId: number, groupId: number) => {
     updateTemplateGroup(tgId, (tg) => ({ ...tg, chartGroups: tg.chartGroups.filter((g) => g.id !== groupId) }));
   };
-  const duplicateChartGroup = (tgId: number, groupId: number) => {
-    updateTemplateGroup(tgId, (tg) => {
-      const idx = tg.chartGroups.findIndex((g) => g.id === groupId);
-      if (idx < 0) return tg;
-      const copy: ChartGroup = {
-        ...tg.chartGroups[idx],
-        id: nextGroupId(),
-        fieldList: [...tg.chartGroups[idx].fieldList],
-        dataReports: tg.chartGroups[idx].dataReports.map((d) => ({ ...d, id: nextLinkId() })),
-      };
-      const chartGroups = [...tg.chartGroups];
-      chartGroups.splice(idx + 1, 0, copy);
-      return { ...tg, chartGroups };
-    });
-  };
-
   const updateChartGroup = (tgId: number, groupId: number, updater: (g: ChartGroup) => ChartGroup) => {
     updateTemplateGroup(tgId, (tg) => ({
       ...tg,
@@ -471,8 +454,8 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
                           <button
                             className="btn btn-secondary btn-xs"
                             style={{ flexShrink: 0 }}
-                            onClick={() => duplicateChartGroup(tg.id, g.id)}
-                            title="复制该 Chart ID"
+                            onClick={() => addDataReport(tg.id, g.id)}
+                            title="添加 Query Link"
                           >
                             + Add URL
                           </button>
@@ -532,9 +515,6 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
                           ))}
                         </div>
 
-                        <div className="field-label" style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}>
-                          Query Link
-                        </div>
                         <div className="tree-list">
                           {g.dataReports.length === 0 && <div className="tree-empty">暂无 Query Link</div>}
                           {g.dataReports.map((d, di) => (
