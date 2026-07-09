@@ -4,9 +4,9 @@ import {
   blankStoryline,
   buildStorylinePayload,
   emptyTemplateGroup,
+  emptyChartGroup,
   loadTemplateCatalog,
   nextTagId,
-  nextTemplateGroupId,
   nextGroupId,
   nextLinkId,
   parseQueryLink,
@@ -63,29 +63,6 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
     setState((prev) => ({ ...prev, templateGroups: prev.templateGroups.filter((tg) => tg.id !== tgId) }));
   };
 
-  const duplicateTemplateGroup = (tgId: number) => {
-    setState((prev) => {
-      const idx = prev.templateGroups.findIndex((tg) => tg.id === tgId);
-      if (idx < 0) return prev;
-      const src = prev.templateGroups[idx];
-      const copy: TemplateGroup = {
-        ...src,
-        id: nextTemplateGroupId(),
-        drillDimensions: [...src.drillDimensions],
-        tags: src.tags.map((t) => ({ ...t, id: nextTagId() })),
-        chartGroups: src.chartGroups.map((g) => ({
-          ...g,
-          id: nextGroupId(),
-          fieldList: [...g.fieldList],
-          dataReports: g.dataReports.map((d) => ({ ...d, id: nextLinkId() })),
-        })),
-      };
-      const templateGroups = [...prev.templateGroups];
-      templateGroups.splice(idx + 1, 0, copy);
-      return { ...prev, templateGroups };
-    });
-  };
-
   const setTemplateId = (tgId: number, value: string) => updateTemplateGroup(tgId, (tg) => ({ ...tg, templateId: value }));
   const setBusinessScene = (tgId: number, value: string) => updateTemplateGroup(tgId, (tg) => ({ ...tg, businessScene: value }));
   const setTemplateType = (tgId: number, value: StorylineDataType) => updateTemplateGroup(tgId, (tg) => ({ ...tg, type: value }));
@@ -113,6 +90,9 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
     updateTemplateGroup(tgId, (tg) => ({ ...tg, tags: tg.tags.filter((t) => t.id !== tagId) }));
   };
 
+  const addChartGroup = (tgId: number) => {
+    updateTemplateGroup(tgId, (tg) => ({ ...tg, chartGroups: [...tg.chartGroups, emptyChartGroup()] }));
+  };
   const delChartGroup = (tgId: number, groupId: number) => {
     updateTemplateGroup(tgId, (tg) => ({ ...tg, chartGroups: tg.chartGroups.filter((g) => g.id !== groupId) }));
   };
@@ -446,8 +426,8 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
                       <button
                         className="btn btn-secondary btn-xs"
                         style={{ flexShrink: 0 }}
-                        onClick={() => duplicateTemplateGroup(tg.id)}
-                        title="复制该 Template ID"
+                        onClick={() => addChartGroup(tg.id)}
+                        title="添加 Chart ID"
                       >
                         + Add Chart
                       </button>
