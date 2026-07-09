@@ -338,7 +338,7 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
                     style={{
                       border: '1px solid var(--c-border)',
                       borderRadius: 'var(--r-md)',
-                      background: 'var(--c-surface-2)',
+                      background: '#bbe3ff',
                       padding: 14,
                       marginBottom: 10,
                     }}
