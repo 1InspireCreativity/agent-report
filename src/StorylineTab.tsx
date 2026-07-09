@@ -533,7 +533,25 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
                         </div>
 
                         <div className="field-label" style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}>
-                          Query Link <span className="hint">按 Quarter / Month / Week 分组粘贴</span>
+                          拼数方式 <span className="hint">选择下一条 Query Link 所属的分组</span>
+                        </div>
+                        <div className="radio-pills">
+                          {GROUP_OPTIONS.map((o) => (
+                            <div className="radio-pill" key={o.value}>
+                              <input
+                                type="radio"
+                                id={`group-${g.id}-${o.value}`}
+                                name={`group-${g.id}`}
+                                checked={(linkGroupDrafts[g.id] || 'Q') === o.value}
+                                onChange={() => setLinkGroupDrafts((prev) => ({ ...prev, [g.id]: o.value }))}
+                              />
+                              <label htmlFor={`group-${g.id}-${o.value}`}>{o.value}</label>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="field-label" style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}>
+                          Query Link
                         </div>
                         <div className="tree-list">
                           {g.dataReports.length === 0 && <div className="tree-empty">暂无 Query Link</div>}
@@ -556,17 +574,6 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
                           ))}
                         </div>
                         <div className="tag-input-row">
-                          <select
-                            style={{ width: 90, flexShrink: 0 }}
-                            value={linkGroupDrafts[g.id] || 'Q'}
-                            onChange={(e) => setLinkGroupDrafts((prev) => ({ ...prev, [g.id]: e.target.value }))}
-                          >
-                            {GROUP_OPTIONS.map((o) => (
-                              <option value={o.value} key={o.value}>
-                                {o.value}
-                              </option>
-                            ))}
-                          </select>
                           <input
                             type="url"
                             placeholder="粘贴 Query Link"

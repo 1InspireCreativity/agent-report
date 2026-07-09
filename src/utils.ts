@@ -35,7 +35,8 @@ export const GROUP_OPTIONS: { value: string; label: string }[] = [
   { value: 'Q', label: 'Quarter (Q)' },
   { value: 'M', label: 'Month (M)' },
   { value: 'W', label: 'Week (W)' },
-  { value: '其他', label: '其他 / 无需拼数处理' },
+  { value: '其他', label: '其他' },
+  { value: '无需拼数处理', label: '无需拼数处理' },
 ];
 
 /** Parses report_id / dataset_id / query_id out of a pasted BI Portal report link. */
