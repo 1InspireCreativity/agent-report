@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Plus, Trash2, LayoutTemplate, BarChart2, Link as LinkIcon, Undo2, Redo2 } from 'lucide-react';
 import type { StorylineState, StorylineDataType, ChartGroup, ChartCapability, TemplateGroup } from './types';
 import {
+  blankStoryline,
+  buildStorylinePayload,
   emptyTemplateGroup,
   emptyChartGroup,
   loadTemplateCatalog,
@@ -11,11 +13,13 @@ import {
   STORYLINE_TYPE_OPTIONS,
   TAG_OPTIONS,
 } from './utils';
+import { submitChartConfig } from './api';
 import MultiSelect from './MultiSelect';
 
 interface Props {
   state: StorylineState;
   setState: React.Dispatch<React.SetStateAction<StorylineState>>;
+  toast: (msg: string) => void;
   onSave: () => void;
   onUndo?: () => void;
   onRedo?: () => void;
@@ -23,11 +27,12 @@ interface Props {
   canRedo?: boolean;
 }
 
-export default function StorylineTab({ state, setState, onSave, onUndo, onRedo, canUndo, canRedo }: Props) {
+export default function StorylineTab({ state, setState, toast, onSave, onUndo, onRedo, canUndo, canRedo }: Props) {
   const templateCatalog = loadTemplateCatalog();
   const [fieldDrafts, setFieldDrafts] = useState<Record<number, string>>({});
   const [drillDrafts, setDrillDrafts] = useState<Record<number, string>>({});
   const [isSaved, setIsSaved] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const update = <K extends keyof StorylineState>(key: K, value: StorylineState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }));
@@ -127,6 +132,32 @@ export default function StorylineTab({ state, setState, onSave, onUndo, onRedo, 
     onSave();
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2000);
+  };
+
+  const submit = async () => {
+    if (!state.topic) {
+      toast('⚠️ 请填写报告名称');
+      return;
+    }
+    if (!state.templateGroups.length) {
+      toast('⚠️ 请至少添加一个 Template ID');
+      return;
+    }
+    setSubmitting(true);
+    const result = await submitChartConfig(buildStorylinePayload(state));
+    setSubmitting(false);
+    if (result.ok) {
+      toast('✅ 图表配置已提交给后端，Agent 任务启动中…');
+    } else if (result.offline) {
+      toast('✅ 配置已生成（后端未配置）');
+    } else {
+      toast('⚠️ 提交失败：' + result.error);
+    }
+  };
+
+  const reset = () => {
+    if (!confirm('确认重置所有图表配置？')) return;
+    setState(blankStoryline());
   };
 
   return (
@@ -520,6 +551,22 @@ export default function StorylineTab({ state, setState, onSave, onUndo, onRedo, 
                 ))
               )}
             </div>
+          </div>
+
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              onClick={reset}
+              className="text-slate-600 hover:text-slate-800 bg-white border border-slate-300 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              重置
+            </button>
+            <button
+              onClick={submit}
+              disabled={submitting}
+              className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-5 py-2 rounded-md shadow-sm font-medium transition-all text-sm"
+            >
+              {submitting ? '提交中…' : '提交图表配置给 Agent'}
+            </button>
           </div>
         </div>
       </div>

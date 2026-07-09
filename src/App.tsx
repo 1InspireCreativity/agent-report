@@ -338,6 +338,7 @@ function App() {
                 <StorylineTab
                   state={storyline}
                   setState={setStoryline}
+                  toast={toast}
                   onSave={saveStorylineFolder}
                   onUndo={undoStoryline}
                   onRedo={redoStoryline}
