@@ -4,7 +4,6 @@ import {
   blankStoryline,
   buildStorylinePayload,
   emptyTemplateGroup,
-  emptyChartGroup,
   loadTemplateCatalog,
   nextTagId,
   nextTemplateGroupId,
@@ -114,9 +113,6 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
     updateTemplateGroup(tgId, (tg) => ({ ...tg, tags: tg.tags.filter((t) => t.id !== tagId) }));
   };
 
-  const addChartGroup = (tgId: number) => {
-    updateTemplateGroup(tgId, (tg) => ({ ...tg, chartGroups: [...tg.chartGroups, emptyChartGroup()] }));
-  };
   const delChartGroup = (tgId: number, groupId: number) => {
     updateTemplateGroup(tgId, (tg) => ({ ...tg, chartGroups: tg.chartGroups.filter((g) => g.id !== groupId) }));
   };
@@ -447,9 +443,6 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
                           ))}
                         </select>
                       )}
-                      <button className="btn btn-secondary btn-xs" style={{ flexShrink: 0 }} onClick={() => addChartGroup(tg.id)}>
-                        + 添加 Chart ID
-                      </button>
                       <button className="icon-btn" onClick={() => duplicateTemplateGroup(tg.id)} title="复制该 Template ID">
                         <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                           <path d="M12 5v14M5 12h14"></path>
