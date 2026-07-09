@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Plus, Trash2, LayoutTemplate, BarChart2, Link as LinkIcon, Undo2, Redo2 } from 'lucide-react';
 import type { StorylineState, StorylineDataType, ChartGroup, ChartCapability, TemplateGroup } from './types';
 import {
   blankStoryline,
@@ -188,463 +189,466 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
   const payload = buildStorylinePayload(state);
 
   return (
-    <div className="tab-panel active">
-      <div className="page-head">
-        <div className="page-head-row">
-          <div>
-            <div className="page-head-title">图表配置</div>
-          </div>
-          {(onUndo || onRedo) && (
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button className="icon-btn" onClick={onUndo} disabled={!canUndo} title="撤销">
-                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path d="M3 12a9 9 0 109-9M3 3v5h5"></path>
-                </svg>
-              </button>
-              <button className="icon-btn" onClick={onRedo} disabled={!canRedo} title="重做">
-                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 12a9 9 0 10-9 9M21 3v5h-5"></path>
-                </svg>
-              </button>
-            </div>
-          )}
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50/50">
+      {/* Editor Toolbar */}
+      <div className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm shrink-0">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onUndo}
+            disabled={!canUndo}
+            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-600 disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
+            title="Undo"
+          >
+            <Undo2 size={18} />
+          </button>
+          <button
+            onClick={onRedo}
+            disabled={!canRedo}
+            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-600 disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
+            title="Redo"
+          >
+            <Redo2 size={18} />
+          </button>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onSave('personal')}
+            className="text-slate-700 hover:text-indigo-700 bg-white border border-slate-300 hover:border-indigo-300 px-4 py-1.5 rounded-md text-sm font-medium transition-colors shadow-sm"
+          >
+            存为 Personal
+          </button>
+          <button
+            onClick={() => onSave('public')}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-1.5 rounded-md shadow-sm font-medium transition-all text-sm"
+          >
+            存为 Public
+          </button>
         </div>
       </div>
 
-      {/* 基础信息 */}
-      <div className="section-label">基础信息</div>
-      <div className="card">
-        <div className="card-head">
-          <div className="card-icon-wrap" style={{ background: '#EFF6FF' }}>
-            📁
-          </div>
-          <div className="card-head-text">
-            <div className="card-head-title">报告</div>
-          </div>
-        </div>
-        <div className="card-body">
-          <div className="field">
-            <div className="field-label">
-              报告名称 <span className="req">*</span>
-            </div>
-            <input
-              type="text"
-              placeholder="例：本周 Revenue下滑归因分析"
-              value={state.topic}
-              onChange={(e) => update('topic', e.target.value)}
-            />
-          </div>
-          <div className="field" style={{ margin: 0 }}>
-            <div className="field-label">
-              数据范围 Region <span className="req">*</span>
-            </div>
-            <MultiSelect
-              options={REGION_OPTIONS}
-              selected={state.regions}
-              onChange={(v) => update('regions', v)}
-              placeholder="Select data ranges..."
-            />
-          </div>
-          <div className="field" style={{ marginTop: 14, marginBottom: 0 }}>
-            <div className="field-label">
-              背景描述 <span className="req">*</span>
-            </div>
-            <textarea
-              rows={3}
-              placeholder="描述当前业务背景、问题现象、分析触发原因……"
-              value={state.background}
-              onChange={(e) => update('background', e.target.value)}
-            />
-          </div>
-          <div className="footer-bar" style={{ padding: '14px 0 0', marginTop: 14 }}>
-            <button className="btn btn-secondary btn-sm" onClick={() => onSave('public')}>
-              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="9"></circle>
-                <path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"></path>
-              </svg>
-              存为 Public
-            </button>
-            <button className="btn btn-secondary btn-sm" onClick={() => onSave('personal')}>
-              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <rect x="5" y="11" width="14" height="9" rx="2"></rect>
-                <path d="M8 11V7a4 4 0 018 0v4"></path>
-              </svg>
-              存为 Personal
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* 图表配置 */}
-      <div className="section-label" style={{ marginTop: 20 }}>
-        图表配置
-      </div>
-      <div className="card">
-        <div className="card-head">
-          <div className="card-icon-wrap" style={{ background: '#F5F3FF' }}>
-            🧩
-          </div>
-          <div className="card-head-text">
-            <div className="card-head-title">数据模板 / Template ID</div>
-          </div>
-          <div className="card-head-actions">
-            <span style={{ fontSize: 12, color: 'var(--c-text-4)' }}>共 {state.templateGroups.length} 个 Template ID</span>
-          </div>
-        </div>
-        <div className="card-body tight">
-          <div className="node-list">
-            {state.templateGroups.map((tg, i) => (
-              <div className="node" key={tg.id}>
-                <div className="node-head">
-                  <div className="node-idx">{i + 1}</div>
-                  <input
-                    className="node-name"
-                    type="text"
-                    placeholder="业务场景描述，如：GBS-1Team revenue和yoy"
-                    value={tg.businessScene}
-                    onChange={(e) => setBusinessScene(tg.id, e.target.value)}
-                  />
-                  <button className="node-del" onClick={() => delTemplateGroup(tg.id)}>
-                    <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V4h8v3"></path>
-                    </svg>
-                  </button>
+      {/* Editor Content */}
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="max-w-4xl mx-auto space-y-6 pb-20">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-visible">
+            {/* Folder Header */}
+            <div className="bg-slate-100 border-b border-slate-200 px-5 py-4 flex items-center justify-between rounded-t-xl">
+              <div className="flex-1 max-w-sm flex items-center gap-3">
+                <div className="bg-indigo-200 text-indigo-800 p-1.5 rounded flex-shrink-0">
+                  <BarChart2 className="w-5 h-5" />
                 </div>
-                <div className="node-body" style={{ display: 'block', padding: '16px 18px' }}>
-                  <div
-                    style={{
-                      border: '1px solid var(--c-border)',
-                      borderRadius: 'var(--r-md)',
-                      background: '#bbe3ff',
-                      padding: 14,
-                      marginBottom: 10,
-                    }}
-                  >
-                    <div className="field" style={{ margin: '0 0 12px' }}>
-                      <div className="field-label" style={{ marginBottom: 6 }}>
-                        Type <span className="hint">Public / Personal</span>
+                <div className="flex-1 flex items-center gap-2 relative">
+                  <span className="text-sm font-medium text-slate-600 whitespace-nowrap">报告名称</span>
+                  <input
+                    type="text"
+                    placeholder="例：本周 Revenue下滑归因分析"
+                    value={state.topic}
+                    onChange={(e) => update('topic', e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow font-medium"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pl-4">
+                <button
+                  onClick={addTemplateGroup}
+                  className="text-slate-700 hover:text-indigo-700 bg-white border border-slate-300 hover:border-indigo-300 px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1 shadow-sm"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Template
+                </button>
+              </div>
+            </div>
+
+            {/* Folder Configuration */}
+            <div className="px-5 py-4 border-b border-slate-200 bg-white grid gap-4 grid-cols-1 md:grid-cols-2">
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">数据范围 (Data Range)</label>
+                <MultiSelect
+                  options={REGION_OPTIONS}
+                  selected={state.regions}
+                  onChange={(v) => update('regions', v)}
+                  placeholder="Select data ranges..."
+                  className="z-20"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-medium text-slate-500 mb-1">背景描述 (Background Description)</label>
+                <textarea
+                  value={state.background}
+                  onChange={(e) => update('background', e.target.value)}
+                  placeholder="描述当前业务背景、问题现象、分析触发原因……"
+                  className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent min-h-[60px]"
+                />
+              </div>
+            </div>
+
+            {/* Templates Area */}
+            <div className="p-5 space-y-5">
+              {state.templateGroups.length === 0 ? (
+                <div className="text-center py-6 border border-dashed border-slate-200 rounded-lg bg-slate-50/50">
+                  <p className="text-sm text-slate-500">No templates yet.</p>
+                </div>
+              ) : (
+                state.templateGroups.map((tg) => (
+                  <div key={tg.id} className="border border-slate-200 rounded-lg overflow-visible relative bg-white">
+                    {/* Template Header */}
+                    <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between rounded-t-lg">
+                      <div className="flex-1 max-w-sm flex items-center gap-3">
+                        <div className="bg-purple-100 text-purple-700 p-1.5 rounded flex-shrink-0">
+                          <LayoutTemplate className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 flex items-center gap-2 relative">
+                          <span className="text-sm font-medium text-slate-500 whitespace-nowrap">Template ID</span>
+                          <input
+                            type="text"
+                            placeholder="motz7cum6ntsj6"
+                            value={tg.templateId}
+                            onChange={(e) => setTemplateId(tg.id, e.target.value)}
+                            className="w-full bg-white border border-slate-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-shadow"
+                          />
+                          {templateCatalog.length > 0 && (
+                            <select
+                              value=""
+                              title="从模板选择"
+                              onChange={(e) => {
+                                if (e.target.value) setTemplateId(tg.id, e.target.value);
+                              }}
+                              className="bg-white border border-slate-300 rounded-md px-2 py-1 text-xs flex-shrink-0"
+                            >
+                              <option value="">从模板选择…</option>
+                              {templateCatalog.map((t) => (
+                                <option value={t.templateId} key={t.id}>
+                                  {t.name}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
                       </div>
-                      <select value={tg.type} onChange={(e) => setTemplateType(tg.id, e.target.value as StorylineDataType)}>
-                        {STORYLINE_TYPE_OPTIONS.map((o) => (
-                          <option value={o.value} key={o.value}>
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="field-label" style={{ marginBottom: 6 }}>
-                      下钻Dimension <span className="opt">可选，可添加多个</span>
-                    </div>
-                    <div className="tags-wrap">
-                      {tg.drillDimensions.map((d, di) => (
-                        <span className="tag" title={d} key={di}>
-                          <span className="tag-text">{d}</span>
-                          <button className="tag-x" onClick={() => delDrillDimension(tg.id, di)}>
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                    <div className="tag-input-row" style={{ marginBottom: 12 }}>
-                      <input
-                        type="text"
-                        placeholder="如：NAAP Lever L1"
-                        value={drillDrafts[tg.id] || ''}
-                        onChange={(e) => setDrillDrafts((prev) => ({ ...prev, [tg.id]: e.target.value }))}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            addDrillDimension(tg.id);
-                            e.preventDefault();
-                          }
-                        }}
-                      />
-                      <button className="btn btn-secondary btn-xs" onClick={() => addDrillDimension(tg.id)}>
-                        + 添加
-                      </button>
-                    </div>
-
-                    <div className="field-label" style={{ marginBottom: 6 }}>
-                      标签 <span className="hint">一级分类 / 二级分类，属于该 Template ID</span>
-                    </div>
-                    <div className="tags-wrap">
-                      {tg.tags.map((t) => (
-                        <span className="tag" title={t.value ? `${t.category}: ${t.value}` : t.category} key={t.id}>
-                          <span className="tag-text">{t.value ? `${t.category} · ${t.value}` : t.category}</span>
-                          <button className="tag-x" onClick={() => delTemplateTag(tg.id, t.id)}>
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                    <div className="tag-input-row" style={{ marginBottom: 12 }}>
-                      <CategoryPicker
-                        style={{ flex: 1 }}
-                        value={tagDrafts[tg.id] || ''}
-                        onChange={(v) => setTagDrafts((prev) => ({ ...prev, [tg.id]: v }))}
-                      />
-                      <button className="btn btn-secondary btn-xs" onClick={() => addTemplateTag(tg.id)}>
-                        + 添加
-                      </button>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                      <span className="id-bar-icon template">
-                        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                          <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
-                          <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
-                          <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
-                          <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
-                        </svg>
-                      </span>
-                      <span className="id-bar-label" style={{ flexShrink: 0 }}>
-                        Template ID
-                      </span>
-                      <input
-                        type="text"
-                        placeholder="motz7cum6ntsj6"
-                        value={tg.templateId}
-                        onChange={(e) => setTemplateId(tg.id, e.target.value)}
-                        style={{ flex: 1 }}
-                      />
-                      {templateCatalog.length > 0 && (
-                        <select
-                          value=""
-                          style={{ width: 130, flexShrink: 0 }}
-                          title="从模板选择"
-                          onChange={(e) => {
-                            if (e.target.value) setTemplateId(tg.id, e.target.value);
-                          }}
+                      <div className="flex items-center gap-2 pl-4">
+                        <button
+                          onClick={() => addChartGroup(tg.id)}
+                          className="text-slate-600 hover:text-purple-600 bg-white border border-slate-200 hover:border-purple-200 px-2.5 py-1 rounded-md text-xs font-medium transition-colors flex items-center gap-1 shadow-sm"
                         >
-                          <option value="">从模板选择…</option>
-                          {templateCatalog.map((t) => (
-                            <option value={t.templateId} key={t.id}>
-                              {t.name}
+                          <Plus className="w-3 h-3" />
+                          Add Chart
+                        </button>
+                        <button
+                          onClick={() => delTemplateGroup(tg.id)}
+                          className="text-slate-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-md transition-colors"
+                          title="Remove Template"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Template Configuration */}
+                    <div className="px-4 py-3 border-b border-slate-200 bg-white grid gap-4 grid-cols-1 sm:grid-cols-2">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">业务场景 (Business Scene)</label>
+                        <input
+                          type="text"
+                          placeholder="如：GBS-1Team revenue和yoy"
+                          value={tg.businessScene}
+                          onChange={(e) => setBusinessScene(tg.id, e.target.value)}
+                          className="w-full bg-white border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">Type (类型)</label>
+                        <select
+                          value={tg.type}
+                          onChange={(e) => setTemplateType(tg.id, e.target.value as StorylineDataType)}
+                          className="w-full bg-white border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        >
+                          {STORYLINE_TYPE_OPTIONS.map((o) => (
+                            <option value={o.value} key={o.value}>
+                              {o.label}
                             </option>
                           ))}
                         </select>
-                      )}
-                      <button
-                        className="btn btn-secondary btn-xs"
-                        style={{ flexShrink: 0 }}
-                        onClick={() => addChartGroup(tg.id)}
-                        title="添加 Chart ID"
-                      >
-                        + Add Chart
-                      </button>
-                      <button className="icon-btn danger" onClick={() => delTemplateGroup(tg.id)} title="删除">
-                        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                          <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V4h8v3"></path>
-                        </svg>
-                      </button>
-                    </div>
-
-                    <div className="field-label" style={{ marginBottom: 8 }}>
-                      Chart ID <span className="hint">一个 Template ID 下可有多个 Chart ID</span>
-                    </div>
-                    {tg.chartGroups.map((g) => (
-                      <div
-                        key={g.id}
-                        style={{
-                          border: '1px solid var(--c-border)',
-                          borderRadius: 'var(--r)',
-                          background: '#fffaa2',
-                          padding: 12,
-                          marginBottom: 8,
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                          <span className="id-bar-icon chart">
-                            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                              <path d="M4 20V10M12 20V4M20 20v-7"></path>
-                            </svg>
-                          </span>
-                          <span className="id-bar-label" style={{ flexShrink: 0 }}>
-                            Chart ID
-                          </span>
-                          <input
-                            type="text"
-                            placeholder="GBSrev"
-                            value={g.chartId}
-                            onChange={(e) => setChartId(tg.id, g.id, e.target.value)}
-                            style={{ flex: 1 }}
-                          />
-                          <button
-                            className="btn btn-secondary btn-xs"
-                            style={{ flexShrink: 0 }}
-                            onClick={() => addQueryLink(tg.id, g.id)}
-                            title="添加 Query Link"
-                          >
-                            + Add URL
-                          </button>
-                          <button className="icon-btn danger" onClick={() => delChartGroup(tg.id, g.id)} title="删除">
-                            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                              <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V4h8v3"></path>
-                            </svg>
-                          </button>
-                        </div>
-
-                        <div className="field-label" style={{ marginBottom: 6, fontSize: 11.5 }}>
-                          指标字段 field_list
-                        </div>
-                        <div className="tags-wrap">
-                          {g.fieldList.map((f, fi) => (
-                            <span className="tag" title={f} key={fi}>
-                              <span className="tag-text">{f}</span>
-                              <button className="tag-x" onClick={() => delFieldListItem(tg.id, g.id, fi)}>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs font-medium text-slate-500 mb-1">下钻Dimension (可选)</label>
+                        <div className="flex flex-wrap gap-1.5 mb-1.5">
+                          {tg.drillDimensions.map((d, di) => (
+                            <span
+                              key={di}
+                              className="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-xs flex items-center gap-1"
+                            >
+                              {d}
+                              <button onClick={() => delDrillDimension(tg.id, di)} className="hover:text-red-600">
                                 ×
                               </button>
                             </span>
                           ))}
                         </div>
-                        <div className="tag-input-row">
+                        <div className="flex gap-2">
                           <input
                             type="text"
-                            placeholder="如：Stat Date"
-                            value={fieldDrafts[g.id] || ''}
-                            onChange={(e) => setFieldDrafts((prev) => ({ ...prev, [g.id]: e.target.value }))}
+                            placeholder="如：NAAP Lever L1"
+                            value={drillDrafts[tg.id] || ''}
+                            onChange={(e) => setDrillDrafts((prev) => ({ ...prev, [tg.id]: e.target.value }))}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
-                                addFieldListItem(tg.id, g.id);
+                                addDrillDimension(tg.id);
                                 e.preventDefault();
                               }
                             }}
+                            className="flex-1 bg-white border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                           />
-                          <button className="btn btn-secondary btn-xs" onClick={() => addFieldListItem(tg.id, g.id)}>
+                          <button
+                            onClick={() => addDrillDimension(tg.id)}
+                            className="text-slate-600 hover:text-purple-600 bg-white border border-slate-200 hover:border-purple-200 px-3 py-1 rounded-md text-xs font-medium transition-colors shadow-sm"
+                          >
                             + 添加
                           </button>
                         </div>
-
-                        <div className="field-label" style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}>
-                          Query Link
-                        </div>
-                        {g.queryLinks.length === 0 && <div className="tree-empty">暂无 Query Link</div>}
-                        {g.queryLinks.map((link, li) => (
-                          <div className="tag-input-row" key={li} style={{ marginBottom: 6 }}>
-                            <input
-                              type="url"
-                              placeholder="https://... (Query Link)"
-                              value={link}
-                              onChange={(e) => setQueryLink(tg.id, g.id, li, e.target.value)}
-                            />
-                            <button className="icon-btn danger" onClick={() => delQueryLink(tg.id, g.id, li)} title="删除">
-                              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V4h8v3"></path>
-                              </svg>
-                            </button>
-                          </div>
-                        ))}
-
-                        <div className="field-label" style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}>
-                          拼数方式 <span className="hint">与上方 Query Link 按顺序对应 Q/M/W</span>
-                        </div>
-                        <MultiSelect
-                          options={AGGREGATION_OPTIONS}
-                          selected={g.aggregationMethods}
-                          onChange={(v) => setAggregationMethods(tg.id, g.id, v)}
-                          placeholder="Select aggregation methods..."
-                        />
-                        {g.aggregationMethods.includes('其他') && (
-                          <input
-                            type="text"
-                            placeholder="请填写具体其他方式…"
-                            value={g.aggregationOtherText}
-                            onChange={(e) => setAggregationOtherText(tg.id, g.id, e.target.value)}
-                            style={{ marginTop: 8 }}
-                          />
-                        )}
-
-                        <div className="field-label" style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}>
-                          分析能力 <span className="hint">该 Chart ID 需要 Agent 执行的分析</span> <span className="req">*</span>
-                        </div>
-                        <div className="radio-pills">
-                          {CAPABILITY_OPTIONS.map((o) => (
-                            <div className="radio-pill" key={o.value}>
-                              <input
-                                type="checkbox"
-                                id={`cap-${g.id}-${o.value}`}
-                                checked={g.capabilities.includes(o.value)}
-                                onChange={() => toggleCapability(tg.id, g.id, o.value)}
-                              />
-                              <label htmlFor={`cap-${g.id}-${o.value}`}>{o.label}</label>
-                            </div>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs font-medium text-slate-500 mb-1">标签 (Tags)</label>
+                        <div className="flex flex-wrap gap-1.5 mb-1.5">
+                          {tg.tags.map((t) => (
+                            <span
+                              key={t.id}
+                              title={t.value ? `${t.category}: ${t.value}` : t.category}
+                              className="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-xs flex items-center gap-1"
+                            >
+                              {t.value ? `${t.category} · ${t.value}` : t.category}
+                              <button onClick={() => delTemplateTag(tg.id, t.id)} className="hover:text-red-600">
+                                ×
+                              </button>
+                            </span>
                           ))}
                         </div>
-                        {g.capabilities.includes('threshold') && (
-                          <>
-                            <div className="field-label" style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}>
-                              阈值定义 <span className="hint">触发阈值状态提醒的条件</span>
-                            </div>
-                            <input
-                              type="text"
-                              placeholder="例：YoY < -10% 标红；Rev Attain < 90% 预警"
-                              value={g.threshold}
-                              onChange={(e) => setThreshold(tg.id, g.id, e.target.value)}
-                            />
-                          </>
-                        )}
+                        <div className="flex gap-2">
+                          <CategoryPicker
+                            style={{ flex: 1 }}
+                            value={tagDrafts[tg.id] || ''}
+                            onChange={(v) => setTagDrafts((prev) => ({ ...prev, [tg.id]: v }))}
+                          />
+                          <button
+                            onClick={() => addTemplateTag(tg.id)}
+                            className="text-slate-600 hover:text-purple-600 bg-white border border-slate-200 hover:border-purple-200 px-3 py-1 rounded-md text-xs font-medium transition-colors shadow-sm"
+                          >
+                            + 添加
+                          </button>
+                        </div>
                       </div>
-                    ))}
+                    </div>
+
+                    {/* Charts Area */}
+                    <div className="p-4 space-y-4 bg-slate-50/30 rounded-b-lg">
+                      {tg.chartGroups.length === 0 ? (
+                        <div className="text-center py-4 border border-dashed border-slate-200 rounded-lg bg-white">
+                          <p className="text-xs text-slate-500">No charts in this template.</p>
+                        </div>
+                      ) : (
+                        tg.chartGroups.map((g) => (
+                          <div key={g.id} className="border border-slate-200 rounded-lg overflow-visible relative bg-white">
+                            {/* Chart Header */}
+                            <div className="bg-white border-b border-slate-200 px-3 py-2 flex items-center justify-between rounded-t-lg">
+                              <div className="flex-1 max-w-sm flex items-center gap-3">
+                                <div className="bg-sky-100 text-sky-700 p-1 rounded flex-shrink-0">
+                                  <BarChart2 className="w-3.5 h-3.5" />
+                                </div>
+                                <div className="flex-1 flex items-center gap-2">
+                                  <span className="text-xs font-medium text-slate-500 whitespace-nowrap">Chart ID</span>
+                                  <input
+                                    type="text"
+                                    placeholder="GBSrev"
+                                    value={g.chartId}
+                                    onChange={(e) => setChartId(tg.id, g.id, e.target.value)}
+                                    className="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-shadow"
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 pl-4">
+                                <button
+                                  onClick={() => addQueryLink(tg.id, g.id)}
+                                  className="text-slate-600 hover:text-sky-600 bg-white border border-slate-200 hover:border-sky-200 px-2 py-1 rounded text-xs font-medium transition-colors flex items-center gap-1 shadow-sm"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                  Add URL
+                                </button>
+                                <button
+                                  onClick={() => delChartGroup(tg.id, g.id)}
+                                  className="text-slate-400 hover:text-red-600 hover:bg-red-50 p-1 rounded transition-colors"
+                                  title="Remove Chart"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Links Area */}
+                            <div className="p-3 space-y-2 bg-white">
+                              {g.queryLinks.length === 0 ? (
+                                <p className="text-[11px] text-slate-400 italic pl-1">No query links added yet.</p>
+                              ) : (
+                                g.queryLinks.map((link, li) => (
+                                  <div key={li} className="flex items-center gap-2 relative group">
+                                    <div className="text-slate-400">
+                                      <LinkIcon className="w-3 h-3" />
+                                    </div>
+                                    <input
+                                      type="text"
+                                      placeholder="https://... (Query Link)"
+                                      value={link}
+                                      onChange={(e) => setQueryLink(tg.id, g.id, li, e.target.value)}
+                                      className="flex-1 bg-white border border-slate-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-slate-300 focus:border-slate-400 transition-shadow"
+                                    />
+                                    <button
+                                      onClick={() => delQueryLink(tg.id, g.id, li)}
+                                      className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-1"
+                                      title="Remove Link"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+
+                            {/* Chart Configuration */}
+                            <div className="p-3 bg-slate-50 border-t border-slate-200 space-y-4 rounded-b-lg">
+                              <div>
+                                <label className="block text-[11px] font-medium text-slate-500 mb-1">指标字段 (field_list)</label>
+                                <div className="flex flex-wrap gap-1.5 mb-1.5">
+                                  {g.fieldList.map((f, fi) => (
+                                    <span
+                                      key={fi}
+                                      className="bg-sky-50 text-sky-700 px-2 py-0.5 rounded text-xs flex items-center gap-1"
+                                    >
+                                      {f}
+                                      <button onClick={() => delFieldListItem(tg.id, g.id, fi)} className="hover:text-red-600">
+                                        ×
+                                      </button>
+                                    </span>
+                                  ))}
+                                </div>
+                                <div className="flex gap-2">
+                                  <input
+                                    type="text"
+                                    placeholder="如：Stat Date"
+                                    value={fieldDrafts[g.id] || ''}
+                                    onChange={(e) => setFieldDrafts((prev) => ({ ...prev, [g.id]: e.target.value }))}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        addFieldListItem(tg.id, g.id);
+                                        e.preventDefault();
+                                      }
+                                    }}
+                                    className="flex-1 bg-white border border-slate-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                                  />
+                                  <button
+                                    onClick={() => addFieldListItem(tg.id, g.id)}
+                                    className="text-slate-600 hover:text-sky-600 bg-white border border-slate-200 hover:border-sky-200 px-3 py-1 rounded text-xs font-medium transition-colors shadow-sm"
+                                  >
+                                    + 添加
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="block text-[11px] font-medium text-slate-500 mb-1">拼数方式 (Data Aggregation)</label>
+                                <div className="space-y-2">
+                                  <MultiSelect
+                                    options={AGGREGATION_OPTIONS}
+                                    selected={g.aggregationMethods}
+                                    onChange={(v) => setAggregationMethods(tg.id, g.id, v)}
+                                    placeholder="Select aggregation methods..."
+                                  />
+                                  {g.aggregationMethods.includes('其他') && (
+                                    <input
+                                      type="text"
+                                      value={g.aggregationOtherText}
+                                      onChange={(e) => setAggregationOtherText(tg.id, g.id, e.target.value)}
+                                      placeholder="请填写具体其他方式…"
+                                      className="w-full bg-white border border-slate-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent mt-2"
+                                    />
+                                  )}
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="block text-[11px] font-medium text-slate-500 mb-1">
+                                  分析能力 (Analysis Capability) <span className="text-red-500">*</span>
+                                </label>
+                                <div className="flex flex-wrap gap-4 mt-1.5">
+                                  {CAPABILITY_OPTIONS.map((o) => (
+                                    <label key={o.value} className="flex items-center gap-1.5 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={g.capabilities.includes(o.value)}
+                                        onChange={() => toggleCapability(tg.id, g.id, o.value)}
+                                        className="text-sky-600 focus:ring-sky-500 border-slate-300 rounded"
+                                      />
+                                      <span className="text-[11px] text-slate-700">{o.label}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                                {g.capabilities.includes('threshold') && (
+                                  <input
+                                    type="text"
+                                    placeholder="例：YoY < -10% 标红；Rev Attain < 90% 预警"
+                                    value={g.threshold}
+                                    onChange={(e) => setThreshold(tg.id, g.id, e.target.value)}
+                                    className="w-full bg-white border border-slate-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent mt-2"
+                                  />
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                ))
+              )}
+            </div>
           </div>
-          <button className="add-row" onClick={addTemplateGroup}>
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-              <path d="M12 5v14M5 12h14"></path>
-            </svg>
-            添加 Template ID
-          </button>
-        </div>
-      </div>
 
-      {/* Payload */}
-      <div className="section-label" style={{ marginTop: 20 }}>
-        Agent Payload
-      </div>
-      <PayloadPanel
-        label="Chart Config"
-        meta={`${state.templateGroups.length} 个 Template ID`}
-        payload={payload}
-        onCopy={() => toast('✅ 已复制到剪贴板')}
-      />
+          {/* Payload */}
+          <PayloadPanel
+            label="Chart Config"
+            meta={`${state.templateGroups.length} 个 Template ID`}
+            payload={payload}
+            onCopy={() => toast('✅ 已复制到剪贴板')}
+          />
 
-      {/* Submission History */}
-      <div className="section-label" style={{ marginTop: 20 }}>
-        提交记录
-      </div>
-      <SubmitHistoryPanel
-        records={submitHistory}
-        onCopy={(json) => {
-          navigator.clipboard.writeText(json).then(() => toast('✅ 已复制到剪贴板'));
-        }}
-        onDelete={(id) => {
-          setSubmitHistory(deleteSubmissionRecord(STORYLINE_SUBMIT_HISTORY_KEY, id));
-          toast('✅ 已删除该提交记录');
-        }}
-        onClear={() => {
-          if (!confirm('确认清空全部提交记录？此操作不可撤销。')) return;
-          setSubmitHistory(clearSubmissionHistory(STORYLINE_SUBMIT_HISTORY_KEY));
-          toast('✅ 已清空提交记录');
-        }}
-      />
+          {/* Submission History */}
+          <SubmitHistoryPanel
+            records={submitHistory}
+            onCopy={(json) => {
+              navigator.clipboard.writeText(json).then(() => toast('✅ 已复制到剪贴板'));
+            }}
+            onDelete={(id) => {
+              setSubmitHistory(deleteSubmissionRecord(STORYLINE_SUBMIT_HISTORY_KEY, id));
+              toast('✅ 已删除该提交记录');
+            }}
+            onClear={() => {
+              if (!confirm('确认清空全部提交记录？此操作不可撤销。')) return;
+              setSubmitHistory(clearSubmissionHistory(STORYLINE_SUBMIT_HISTORY_KEY));
+              toast('✅ 已清空提交记录');
+            }}
+          />
 
-      <div className="footer-bar" style={{ border: 'none', paddingTop: 16 }}>
-        <button className="btn btn-ghost btn-sm" onClick={reset}>
-          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-            <path d="M3 12a9 9 0 109-9M3 3v5h5"></path>
-          </svg>
-          重置
-        </button>
-        <button className="btn btn-primary" onClick={submit} disabled={submitting}>
-          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
-            <path d="M5 12l5 5L20 7"></path>
-          </svg>
-          {submitting ? '提交中…' : '提交图表配置给 Agent'}
-        </button>
-        <div className="autosave">
-          <div className="autosave-dot"></div>自动保存中
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              onClick={reset}
+              className="text-slate-600 hover:text-slate-800 bg-white border border-slate-300 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              重置
+            </button>
+            <button
+              onClick={submit}
+              disabled={submitting}
+              className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-5 py-2 rounded-md shadow-sm font-medium transition-all text-sm"
+            >
+              {submitting ? '提交中…' : '提交图表配置给 Agent'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

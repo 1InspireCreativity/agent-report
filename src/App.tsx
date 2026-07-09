@@ -350,7 +350,7 @@ function App() {
               activeId={storylineActiveId}
               onActiveIdChange={setStorylineActiveId}
             />
-            <div className="page" style={{ margin: 0, flex: 1 }}>
+            <div style={{ flex: 1, minWidth: 0, alignSelf: 'stretch' }}>
               <StorylineTab
                 state={storyline}
                 setState={setStoryline}
