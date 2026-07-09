@@ -8,28 +8,34 @@ export interface ReportTag {
 
 export type ChartCapability = 'basic' | 'attribution' | 'threshold';
 
+export interface DataReportLink {
+  id: number;
+  group: string; // 'Q' | 'M' | 'W' | custom label, matches backend "group"
+  link: string;
+  reportId: string;
+  datasetId: string;
+  queryId: string;
+}
+
 export interface ChartGroup {
   id: number;
   chartId: string;
-  queryLinks: string[];
-  joinMethods: string[];
-  drillDimension: string;
+  fieldList: string[];
+  dataReports: DataReportLink[];
   capabilities: ChartCapability[];
   threshold: string;
-  type: StorylineDataType;
 }
 
 export interface TemplateGroup {
   id: number;
-  templateId: string;
+  templateId: string; // chart_template_id
+  businessScene: string;
+  drillDimensions: string[];
+  creator: string;
+  owner: string[];
+  type: StorylineDataType;
   tags: ReportTag[];
   chartGroups: ChartGroup[];
-}
-
-export interface AttributionNode {
-  id: number;
-  scenario: string;
-  templateGroups: TemplateGroup[];
 }
 
 export type ReportCycle = 'W' | '2W' | 'M';
@@ -40,7 +46,7 @@ export interface StorylineState {
   analyst: string;
   background: string;
   region: string;
-  nodes: AttributionNode[];
+  templateGroups: TemplateGroup[];
 }
 
 export interface ReportState {
@@ -52,6 +58,8 @@ export interface ReportState {
   owner: string;
   ownerEmail: string;
   ownerDept: string;
+  ownerUsers: string[];
+  allowUsers: string[];
 }
 
 export interface SavedFolder<T> {

@@ -28,33 +28,30 @@ function naapRevenueVariant(name: string, chartId: string) {
     topic: name,
     background: `NAAP 大盘 Revenue（${name}）归因分析。`,
     region: 'NAAP',
-    nodes: [
+    templateGroups: [
       {
         id: 1,
-        scenario: `${name} Revenue`,
-        templateGroups: [
+        templateId: 'naap_revenue_template',
+        businessScene: `${name} Revenue`,
+        drillDimensions: [],
+        creator: '',
+        owner: [],
+        type: 'public' as const,
+        tags: [
           {
             id: 1,
-            templateId: 'naap_revenue_template',
-            tags: [
-              {
-                id: 1,
-                category: '经营结果与效果指标 / Business Outcome & Performance Metrics',
-                value: '收入与交易结果 / Revenue & Transaction Outcome',
-              },
-            ],
-            chartGroups: [
-              {
-                id: 1,
-                chartId,
-                queryLinks: [],
-                joinMethods: [],
-                drillDimension: '',
-                capabilities: ['basic' as const],
-                threshold: '',
-                type: 'public' as const,
-              },
-            ],
+            category: '经营结果与效果指标 / Business Outcome & Performance Metrics',
+            value: '收入与交易结果 / Revenue & Transaction Outcome',
+          },
+        ],
+        chartGroups: [
+          {
+            id: 1,
+            chartId,
+            fieldList: [],
+            dataReports: [],
+            capabilities: ['basic' as const],
+            threshold: '',
           },
         ],
       },
@@ -70,33 +67,30 @@ const STORYLINE_FOLDER_SEED = [
       topic: 'NAAP Revenue',
       background: 'NAAP 大盘 Revenue 周环比下滑，需要归因分析驱动因素。',
       region: 'NAAP',
-      nodes: [
+      templateGroups: [
         {
           id: 1,
-          scenario: 'NAAP Revenue WoW',
-          templateGroups: [
+          templateId: 'naap_revenue_template',
+          businessScene: 'NAAP Revenue WoW',
+          drillDimensions: [],
+          creator: '',
+          owner: [],
+          type: 'public' as const,
+          tags: [
             {
               id: 1,
-              templateId: 'naap_revenue_template',
-              tags: [
-                {
-                  id: 1,
-                  category: '经营结果与效果指标 / Business Outcome & Performance Metrics',
-                  value: '收入与交易结果 / Revenue & Transaction Outcome',
-                },
-              ],
-              chartGroups: [
-                {
-                  id: 1,
-                  chartId: 'NAAPRevWoW',
-                  queryLinks: [],
-                  joinMethods: [],
-                  drillDimension: '',
-                  capabilities: ['basic' as const],
-                  threshold: '',
-                  type: 'public' as const,
-                },
-              ],
+              category: '经营结果与效果指标 / Business Outcome & Performance Metrics',
+              value: '收入与交易结果 / Revenue & Transaction Outcome',
+            },
+          ],
+          chartGroups: [
+            {
+              id: 1,
+              chartId: 'NAAPRevWoW',
+              fieldList: [],
+              dataReports: [],
+              capabilities: ['basic' as const],
+              threshold: '',
             },
           ],
         },
@@ -121,33 +115,30 @@ const STORYLINE_FOLDER_SEED = [
       topic: 'NA YOY',
       background: 'NA 大盘 Revenue 同比出现异常波动，需要归因分析。',
       region: 'NA',
-      nodes: [
+      templateGroups: [
         {
           id: 1,
-          scenario: 'NA Revenue YOY',
-          templateGroups: [
+          templateId: 'na_yoy_template',
+          businessScene: 'NA Revenue YOY',
+          drillDimensions: [],
+          creator: '',
+          owner: [],
+          type: 'public' as const,
+          tags: [
             {
               id: 1,
-              templateId: 'na_yoy_template',
-              tags: [
-                {
-                  id: 1,
-                  category: '经营结果与效果指标 / Business Outcome & Performance Metrics',
-                  value: '收入与交易结果 / Revenue & Transaction Outcome',
-                },
-              ],
-              chartGroups: [
-                {
-                  id: 1,
-                  chartId: 'NARevYOY',
-                  queryLinks: [],
-                  joinMethods: [],
-                  drillDimension: '',
-                  capabilities: ['basic' as const],
-                  threshold: '',
-                  type: 'public' as const,
-                },
-              ],
+              category: '经营结果与效果指标 / Business Outcome & Performance Metrics',
+              value: '收入与交易结果 / Revenue & Transaction Outcome',
+            },
+          ],
+          chartGroups: [
+            {
+              id: 1,
+              chartId: 'NARevYOY',
+              fieldList: [],
+              dataReports: [],
+              capabilities: ['basic' as const],
+              threshold: '',
             },
           ],
         },
@@ -261,7 +252,7 @@ function App() {
             onClick={() => setActiveTab('storyline')}
           >
             <span className="t-icon">📊</span>图表配置
-            <span className="t-badge">{storyline.nodes.length}</span>
+            <span className="t-badge">{storyline.templateGroups.length}</span>
           </button>
           <button
             className={`topbar-tab ${activeTab === 'report' ? 'active' : ''}`}
@@ -296,7 +287,7 @@ function App() {
               toast={toast}
               getName={(s) => s.topic}
               getOwner={(s) => s.analyst}
-              countItems={(s) => s.nodes.length}
+              countItems={(s) => s.templateGroups.length}
               normalize={normalizeStoryline}
               blankState={blankStoryline}
               seed={STORYLINE_FOLDER_SEED}

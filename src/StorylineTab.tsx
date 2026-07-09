@@ -3,16 +3,16 @@ import type { StorylineState, StorylineDataType, ChartGroup, ChartCapability, Te
 import {
   blankStoryline,
   buildStorylinePayload,
-  emptyNode,
   emptyTemplateGroup,
   emptyChartGroup,
-  joinMethodLabel,
   loadTemplateCatalog,
   nextTagId,
   nextTemplateGroupId,
   nextGroupId,
+  nextLinkId,
+  parseQueryLink,
   CAPABILITY_OPTIONS,
-  JOIN_METHOD_OPTIONS,
+  GROUP_OPTIONS,
   REGION_OPTIONS,
   STORYLINE_TYPE_OPTIONS,
 } from './utils';
@@ -38,244 +38,162 @@ interface Props {
 export default function StorylineTab({ state, setState, toast, onSave }: Props) {
   const templateCatalog = loadTemplateCatalog();
   const [linkDrafts, setLinkDrafts] = useState<Record<number, string>>({});
-  const [joinMethodDrafts, setJoinMethodDrafts] = useState<Record<number, string>>({});
+  const [linkGroupDrafts, setLinkGroupDrafts] = useState<Record<number, string>>({});
+  const [fieldDrafts, setFieldDrafts] = useState<Record<number, string>>({});
+  const [drillDrafts, setDrillDrafts] = useState<Record<number, string>>({});
+  const [ownerDrafts, setOwnerDrafts] = useState<Record<number, string>>({});
   const [tagDrafts, setTagDrafts] = useState<Record<number, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitHistory, setSubmitHistory] = useState(() => loadSubmissionHistory(STORYLINE_SUBMIT_HISTORY_KEY));
-
-  const addTemplateTag = (nodeId: number, tgId: number) => {
-    const draft = tagDrafts[tgId] || '';
-    if (!draft) return;
-    const sepIdx = draft.indexOf('::');
-    const category = sepIdx >= 0 ? draft.slice(0, sepIdx) : draft;
-    const val = sepIdx >= 0 ? draft.slice(sepIdx + 2) : '';
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) =>
-        n.id === nodeId
-          ? {
-              ...n,
-              templateGroups: n.templateGroups.map((tg) =>
-                tg.id === tgId ? { ...tg, tags: [...tg.tags, { id: nextTagId(), category, value: val }] } : tg
-              ),
-            }
-          : n
-      ),
-    }));
-    setTagDrafts((prev) => ({ ...prev, [tgId]: '' }));
-  };
-
-  const delTemplateTag = (nodeId: number, tgId: number, tagId: number) => {
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) =>
-        n.id === nodeId
-          ? {
-              ...n,
-              templateGroups: n.templateGroups.map((tg) =>
-                tg.id === tgId ? { ...tg, tags: tg.tags.filter((t) => t.id !== tagId) } : tg
-              ),
-            }
-          : n
-      ),
-    }));
-  };
 
   const update = <K extends keyof StorylineState>(key: K, value: StorylineState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }));
   };
 
-  const setScenario = (nodeId: number, value: string) => {
+  const updateTemplateGroup = (tgId: number, updater: (tg: TemplateGroup) => TemplateGroup) => {
     setState((prev) => ({
       ...prev,
-      nodes: prev.nodes.map((n) => (n.id === nodeId ? { ...n, scenario: value } : n)),
+      templateGroups: prev.templateGroups.map((tg) => (tg.id === tgId ? updater(tg) : tg)),
     }));
   };
 
-  const addNode = () => {
-    setState((prev) => ({ ...prev, nodes: [...prev.nodes, emptyNode()] }));
+  const addTemplateGroup = () => {
+    setState((prev) => ({ ...prev, templateGroups: [...prev.templateGroups, emptyTemplateGroup()] }));
   };
 
-  const delNode = (nodeId: number) => {
-    setState((prev) => ({ ...prev, nodes: prev.nodes.filter((n) => n.id !== nodeId) }));
+  const delTemplateGroup = (tgId: number) => {
+    setState((prev) => ({ ...prev, templateGroups: prev.templateGroups.filter((tg) => tg.id !== tgId) }));
   };
 
-  const addTemplateGroup = (nodeId: number) => {
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) =>
-        n.id === nodeId ? { ...n, templateGroups: [...n.templateGroups, emptyTemplateGroup()] } : n
-      ),
-    }));
+  const duplicateTemplateGroup = (tgId: number) => {
+    setState((prev) => {
+      const idx = prev.templateGroups.findIndex((tg) => tg.id === tgId);
+      if (idx < 0) return prev;
+      const src = prev.templateGroups[idx];
+      const copy: TemplateGroup = {
+        ...src,
+        id: nextTemplateGroupId(),
+        owner: [...src.owner],
+        drillDimensions: [...src.drillDimensions],
+        tags: src.tags.map((t) => ({ ...t, id: nextTagId() })),
+        chartGroups: src.chartGroups.map((g) => ({
+          ...g,
+          id: nextGroupId(),
+          fieldList: [...g.fieldList],
+          dataReports: g.dataReports.map((d) => ({ ...d, id: nextLinkId() })),
+        })),
+      };
+      const templateGroups = [...prev.templateGroups];
+      templateGroups.splice(idx + 1, 0, copy);
+      return { ...prev, templateGroups };
+    });
   };
 
-  const delTemplateGroup = (nodeId: number, tgId: number) => {
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) =>
-        n.id === nodeId ? { ...n, templateGroups: n.templateGroups.filter((tg) => tg.id !== tgId) } : n
-      ),
-    }));
-  };
+  const setTemplateId = (tgId: number, value: string) => updateTemplateGroup(tgId, (tg) => ({ ...tg, templateId: value }));
+  const setBusinessScene = (tgId: number, value: string) => updateTemplateGroup(tgId, (tg) => ({ ...tg, businessScene: value }));
+  const setCreator = (tgId: number, value: string) => updateTemplateGroup(tgId, (tg) => ({ ...tg, creator: value }));
+  const setTemplateType = (tgId: number, value: StorylineDataType) => updateTemplateGroup(tgId, (tg) => ({ ...tg, type: value }));
 
-  const duplicateTemplateGroup = (nodeId: number, tgId: number) => {
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) => {
-        if (n.id !== nodeId) return n;
-        const idx = n.templateGroups.findIndex((tg) => tg.id === tgId);
-        if (idx < 0) return n;
-        const src = n.templateGroups[idx];
-        const copy: TemplateGroup = {
-          ...src,
-          id: nextTemplateGroupId(),
-          tags: src.tags.map((t) => ({ ...t, id: nextTagId() })),
-          chartGroups: src.chartGroups.map((g) => ({ ...g, id: nextGroupId() })),
-        };
-        const templateGroups = [...n.templateGroups];
-        templateGroups.splice(idx + 1, 0, copy);
-        return { ...n, templateGroups };
-      }),
-    }));
-  };
-
-  const setTemplateId = (nodeId: number, tgId: number, value: string) => {
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) =>
-        n.id === nodeId
-          ? {
-              ...n,
-              templateGroups: n.templateGroups.map((tg) => (tg.id === tgId ? { ...tg, templateId: value } : tg)),
-            }
-          : n
-      ),
-    }));
-  };
-
-  const addChartGroup = (nodeId: number, tgId: number) => {
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) =>
-        n.id === nodeId
-          ? {
-              ...n,
-              templateGroups: n.templateGroups.map((tg) =>
-                tg.id === tgId ? { ...tg, chartGroups: [...tg.chartGroups, emptyChartGroup()] } : tg
-              ),
-            }
-          : n
-      ),
-    }));
-  };
-
-  const delChartGroup = (nodeId: number, tgId: number, groupId: number) => {
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) =>
-        n.id === nodeId
-          ? {
-              ...n,
-              templateGroups: n.templateGroups.map((tg) =>
-                tg.id === tgId ? { ...tg, chartGroups: tg.chartGroups.filter((g) => g.id !== groupId) } : tg
-              ),
-            }
-          : n
-      ),
-    }));
-  };
-
-  const duplicateChartGroup = (nodeId: number, tgId: number, groupId: number) => {
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) => {
-        if (n.id !== nodeId) return n;
-        return {
-          ...n,
-          templateGroups: n.templateGroups.map((tg) => {
-            if (tg.id !== tgId) return tg;
-            const idx = tg.chartGroups.findIndex((g) => g.id === groupId);
-            if (idx < 0) return tg;
-            const copy: ChartGroup = { ...tg.chartGroups[idx], id: nextGroupId() };
-            const chartGroups = [...tg.chartGroups];
-            chartGroups.splice(idx + 1, 0, copy);
-            return { ...tg, chartGroups };
-          }),
-        };
-      }),
-    }));
-  };
-
-  const updateChartGroup = (
-    nodeId: number,
-    tgId: number,
-    groupId: number,
-    updater: (g: ChartGroup) => ChartGroup
-  ) => {
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) =>
-        n.id === nodeId
-          ? {
-              ...n,
-              templateGroups: n.templateGroups.map((tg) =>
-                tg.id === tgId
-                  ? { ...tg, chartGroups: tg.chartGroups.map((g) => (g.id === groupId ? updater(g) : g)) }
-                  : tg
-              ),
-            }
-          : n
-      ),
-    }));
-  };
-
-  const setChartId = (nodeId: number, tgId: number, groupId: number, value: string) => {
-    updateChartGroup(nodeId, tgId, groupId, (g) => ({ ...g, chartId: value }));
-  };
-
-  const addGroupQueryLink = (nodeId: number, tgId: number, groupId: number) => {
-    const val = (linkDrafts[groupId] || '').trim();
+  const addOwner = (tgId: number) => {
+    const val = (ownerDrafts[tgId] || '').trim();
     if (!val) return;
-    updateChartGroup(nodeId, tgId, groupId, (g) => ({ ...g, queryLinks: [...g.queryLinks, val] }));
+    updateTemplateGroup(tgId, (tg) => (tg.owner.includes(val) ? tg : { ...tg, owner: [...tg.owner, val] }));
+    setOwnerDrafts((prev) => ({ ...prev, [tgId]: '' }));
+  };
+  const delOwner = (tgId: number, idx: number) => {
+    updateTemplateGroup(tgId, (tg) => ({ ...tg, owner: tg.owner.filter((_, i) => i !== idx) }));
+  };
+
+  const addDrillDimension = (tgId: number) => {
+    const val = (drillDrafts[tgId] || '').trim();
+    if (!val) return;
+    updateTemplateGroup(tgId, (tg) => ({ ...tg, drillDimensions: [...tg.drillDimensions, val] }));
+    setDrillDrafts((prev) => ({ ...prev, [tgId]: '' }));
+  };
+  const delDrillDimension = (tgId: number, idx: number) => {
+    updateTemplateGroup(tgId, (tg) => ({ ...tg, drillDimensions: tg.drillDimensions.filter((_, i) => i !== idx) }));
+  };
+
+  const addTemplateTag = (tgId: number) => {
+    const draft = tagDrafts[tgId] || '';
+    if (!draft) return;
+    const sepIdx = draft.indexOf('::');
+    const category = sepIdx >= 0 ? draft.slice(0, sepIdx) : draft;
+    const val = sepIdx >= 0 ? draft.slice(sepIdx + 2) : '';
+    updateTemplateGroup(tgId, (tg) => ({ ...tg, tags: [...tg.tags, { id: nextTagId(), category, value: val }] }));
+    setTagDrafts((prev) => ({ ...prev, [tgId]: '' }));
+  };
+  const delTemplateTag = (tgId: number, tagId: number) => {
+    updateTemplateGroup(tgId, (tg) => ({ ...tg, tags: tg.tags.filter((t) => t.id !== tagId) }));
+  };
+
+  const addChartGroup = (tgId: number) => {
+    updateTemplateGroup(tgId, (tg) => ({ ...tg, chartGroups: [...tg.chartGroups, emptyChartGroup()] }));
+  };
+  const delChartGroup = (tgId: number, groupId: number) => {
+    updateTemplateGroup(tgId, (tg) => ({ ...tg, chartGroups: tg.chartGroups.filter((g) => g.id !== groupId) }));
+  };
+  const duplicateChartGroup = (tgId: number, groupId: number) => {
+    updateTemplateGroup(tgId, (tg) => {
+      const idx = tg.chartGroups.findIndex((g) => g.id === groupId);
+      if (idx < 0) return tg;
+      const copy: ChartGroup = {
+        ...tg.chartGroups[idx],
+        id: nextGroupId(),
+        fieldList: [...tg.chartGroups[idx].fieldList],
+        dataReports: tg.chartGroups[idx].dataReports.map((d) => ({ ...d, id: nextLinkId() })),
+      };
+      const chartGroups = [...tg.chartGroups];
+      chartGroups.splice(idx + 1, 0, copy);
+      return { ...tg, chartGroups };
+    });
+  };
+
+  const updateChartGroup = (tgId: number, groupId: number, updater: (g: ChartGroup) => ChartGroup) => {
+    updateTemplateGroup(tgId, (tg) => ({
+      ...tg,
+      chartGroups: tg.chartGroups.map((g) => (g.id === groupId ? updater(g) : g)),
+    }));
+  };
+
+  const setChartId = (tgId: number, groupId: number, value: string) => {
+    updateChartGroup(tgId, groupId, (g) => ({ ...g, chartId: value }));
+  };
+
+  const addFieldListItem = (tgId: number, groupId: number) => {
+    const val = (fieldDrafts[groupId] || '').trim();
+    if (!val) return;
+    updateChartGroup(tgId, groupId, (g) => ({ ...g, fieldList: [...g.fieldList, val] }));
+    setFieldDrafts((prev) => ({ ...prev, [groupId]: '' }));
+  };
+  const delFieldListItem = (tgId: number, groupId: number, idx: number) => {
+    updateChartGroup(tgId, groupId, (g) => ({ ...g, fieldList: g.fieldList.filter((_, i) => i !== idx) }));
+  };
+
+  const addDataReport = (tgId: number, groupId: number) => {
+    const link = (linkDrafts[groupId] || '').trim();
+    if (!link) return;
+    const group = linkGroupDrafts[groupId] || 'Q';
+    const parsed = parseQueryLink(link);
+    updateChartGroup(tgId, groupId, (g) => ({
+      ...g,
+      dataReports: [...g.dataReports, { id: nextLinkId(), group, link, ...parsed }],
+    }));
     setLinkDrafts((prev) => ({ ...prev, [groupId]: '' }));
   };
-
-  const delGroupQueryLink = (nodeId: number, tgId: number, groupId: number, idx: number) => {
-    updateChartGroup(nodeId, tgId, groupId, (g) => ({ ...g, queryLinks: g.queryLinks.filter((_, i) => i !== idx) }));
+  const delDataReport = (tgId: number, groupId: number, idx: number) => {
+    updateChartGroup(tgId, groupId, (g) => ({ ...g, dataReports: g.dataReports.filter((_, i) => i !== idx) }));
   };
 
-  const addJoinMethod = (nodeId: number, tgId: number, groupId: number) => {
-    const val = joinMethodDrafts[groupId];
-    if (!val) return;
-    updateChartGroup(nodeId, tgId, groupId, (g) =>
-      g.joinMethods.includes(val) ? g : { ...g, joinMethods: [...g.joinMethods, val] }
-    );
-    setJoinMethodDrafts((prev) => ({ ...prev, [groupId]: '' }));
-  };
-
-  const delJoinMethod = (nodeId: number, tgId: number, groupId: number, idx: number) => {
-    updateChartGroup(nodeId, tgId, groupId, (g) => ({ ...g, joinMethods: g.joinMethods.filter((_, i) => i !== idx) }));
-  };
-
-  const setDrillDimension = (nodeId: number, tgId: number, groupId: number, value: string) => {
-    updateChartGroup(nodeId, tgId, groupId, (g) => ({ ...g, drillDimension: value }));
-  };
-
-  const toggleCapability = (nodeId: number, tgId: number, groupId: number, cap: ChartCapability) => {
-    updateChartGroup(nodeId, tgId, groupId, (g) => ({
+  const toggleCapability = (tgId: number, groupId: number, cap: ChartCapability) => {
+    updateChartGroup(tgId, groupId, (g) => ({
       ...g,
-      capabilities: g.capabilities.includes(cap)
-        ? g.capabilities.filter((c) => c !== cap)
-        : [...g.capabilities, cap],
+      capabilities: g.capabilities.includes(cap) ? g.capabilities.filter((c) => c !== cap) : [...g.capabilities, cap],
     }));
   };
 
-  const setThreshold = (nodeId: number, tgId: number, groupId: number, value: string) => {
-    updateChartGroup(nodeId, tgId, groupId, (g) => ({ ...g, threshold: value }));
-  };
-
-  const setChartType = (nodeId: number, tgId: number, groupId: number, value: StorylineDataType) => {
-    updateChartGroup(nodeId, tgId, groupId, (g) => ({ ...g, type: value }));
+  const setThreshold = (tgId: number, groupId: number, value: string) => {
+    updateChartGroup(tgId, groupId, (g) => ({ ...g, threshold: value }));
   };
 
   const submit = async () => {
@@ -283,8 +201,8 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
       toast('⚠️ 请填写报告名称');
       return;
     }
-    if (!state.nodes.length) {
-      toast('⚠️ 请至少添加一个归因节点');
+    if (!state.templateGroups.length) {
+      toast('⚠️ 请至少添加一个 Template ID');
       return;
     }
     setSubmitting(true);
@@ -416,345 +334,370 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
             🧩
           </div>
           <div className="card-head-text">
-            <div className="card-head-title">图表配置</div>
+            <div className="card-head-title">数据模板 / Template ID</div>
           </div>
           <div className="card-head-actions">
-            <span style={{ fontSize: 12, color: 'var(--c-text-4)' }}>共 {state.nodes.length} 个节点</span>
+            <span style={{ fontSize: 12, color: 'var(--c-text-4)' }}>共 {state.templateGroups.length} 个 Template ID</span>
           </div>
         </div>
         <div className="card-body tight">
           <div className="node-list">
-            {state.nodes.map((n, i) => (
-              <div className="node" key={n.id}>
+            {state.templateGroups.map((tg, i) => (
+              <div className="node" key={tg.id}>
                 <div className="node-head">
                   <div className="node-idx">{i + 1}</div>
                   <input
                     className="node-name"
                     type="text"
-                    placeholder="如：Template ID + NAAP Gaming | Daily Revenue & YOY"
-                    value={n.scenario}
-                    onChange={(e) => setScenario(n.id, e.target.value)}
+                    placeholder="业务场景描述，如：GBS-1Team revenue和yoy"
+                    value={tg.businessScene}
+                    onChange={(e) => setBusinessScene(tg.id, e.target.value)}
                   />
-                  <button className="node-del" onClick={() => delNode(n.id)}>
+                  <button className="node-del" onClick={() => delTemplateGroup(tg.id)}>
                     <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V4h8v3"></path>
                     </svg>
                   </button>
                 </div>
                 <div className="node-body" style={{ display: 'block', padding: '16px 18px' }}>
-                  <div className="field" style={{ margin: 0 }}>
-                    <div className="field-label">
-                      Template ID <span className="hint">一个图表配置下可有多个 Template ID</span>{' '}
-                      <span className="req">*</span>
+                  <div
+                    style={{
+                      border: '1px solid var(--c-border)',
+                      borderRadius: 'var(--r-md)',
+                      background: 'var(--c-surface-2)',
+                      padding: 14,
+                      marginBottom: 10,
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                      <span className="id-bar-icon template">
+                        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                          <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                          <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+                          <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                        </svg>
+                      </span>
+                      <span className="id-bar-label" style={{ flexShrink: 0 }}>
+                        Template ID
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="motz7cum6ntsj6"
+                        value={tg.templateId}
+                        onChange={(e) => setTemplateId(tg.id, e.target.value)}
+                        style={{ flex: 1 }}
+                      />
+                      {templateCatalog.length > 0 && (
+                        <select
+                          value=""
+                          style={{ width: 130, flexShrink: 0 }}
+                          title="从模板选择"
+                          onChange={(e) => {
+                            if (e.target.value) setTemplateId(tg.id, e.target.value);
+                          }}
+                        >
+                          <option value="">从模板选择…</option>
+                          {templateCatalog.map((t) => (
+                            <option value={t.templateId} key={t.id}>
+                              {t.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      <button className="icon-btn" onClick={() => duplicateTemplateGroup(tg.id)} title="复制该 Template ID">
+                        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path d="M12 5v14M5 12h14"></path>
+                        </svg>
+                      </button>
+                      <button className="icon-btn danger" onClick={() => delTemplateGroup(tg.id)} title="删除">
+                        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                      </button>
                     </div>
-                    {n.templateGroups.map((tg) => (
+
+                    <div className="grid-2" style={{ margin: '0 0 12px' }}>
+                      <div className="field" style={{ margin: 0 }}>
+                        <div className="field-label" style={{ marginBottom: 6 }}>
+                          Creator <span className="hint">邮箱</span>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="name@bytedance.com"
+                          value={tg.creator}
+                          onChange={(e) => setCreator(tg.id, e.target.value)}
+                        />
+                      </div>
+                      <div className="field" style={{ margin: 0 }}>
+                        <div className="field-label" style={{ marginBottom: 6 }}>
+                          Type <span className="hint">Public / Personal</span>
+                        </div>
+                        <select value={tg.type} onChange={(e) => setTemplateType(tg.id, e.target.value as StorylineDataType)}>
+                          {STORYLINE_TYPE_OPTIONS.map((o) => (
+                            <option value={o.value} key={o.value}>
+                              {o.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="field-label" style={{ marginBottom: 6 }}>
+                      Owner <span className="hint">可添加多个用户名</span>
+                    </div>
+                    <div className="tags-wrap">
+                      {tg.owner.map((o, oi) => (
+                        <span className="tag" title={o} key={oi}>
+                          <span className="tag-text">{o}</span>
+                          <button className="tag-x" onClick={() => delOwner(tg.id, oi)}>
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="tag-input-row" style={{ marginBottom: 12 }}>
+                      <input
+                        type="text"
+                        placeholder="用户名，如 wangqi"
+                        value={ownerDrafts[tg.id] || ''}
+                        onChange={(e) => setOwnerDrafts((prev) => ({ ...prev, [tg.id]: e.target.value }))}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            addOwner(tg.id);
+                            e.preventDefault();
+                          }
+                        }}
+                      />
+                      <button className="btn btn-secondary btn-xs" onClick={() => addOwner(tg.id)}>
+                        + 添加
+                      </button>
+                    </div>
+
+                    <div className="field-label" style={{ marginBottom: 6 }}>
+                      下钻Dimension <span className="opt">可选，可添加多个</span>
+                    </div>
+                    <div className="tags-wrap">
+                      {tg.drillDimensions.map((d, di) => (
+                        <span className="tag" title={d} key={di}>
+                          <span className="tag-text">{d}</span>
+                          <button className="tag-x" onClick={() => delDrillDimension(tg.id, di)}>
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="tag-input-row" style={{ marginBottom: 12 }}>
+                      <input
+                        type="text"
+                        placeholder="如：NAAP Lever L1"
+                        value={drillDrafts[tg.id] || ''}
+                        onChange={(e) => setDrillDrafts((prev) => ({ ...prev, [tg.id]: e.target.value }))}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            addDrillDimension(tg.id);
+                            e.preventDefault();
+                          }
+                        }}
+                      />
+                      <button className="btn btn-secondary btn-xs" onClick={() => addDrillDimension(tg.id)}>
+                        + 添加
+                      </button>
+                    </div>
+
+                    <div className="field-label" style={{ marginBottom: 6 }}>
+                      标签 <span className="hint">一级分类 / 二级分类，属于该 Template ID</span>
+                    </div>
+                    <div className="tags-wrap">
+                      {tg.tags.map((t) => (
+                        <span className="tag" title={t.value ? `${t.category}: ${t.value}` : t.category} key={t.id}>
+                          <span className="tag-text">{t.value ? `${t.category} · ${t.value}` : t.category}</span>
+                          <button className="tag-x" onClick={() => delTemplateTag(tg.id, t.id)}>
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="tag-input-row" style={{ marginBottom: 12 }}>
+                      <CategoryPicker
+                        style={{ flex: 1 }}
+                        value={tagDrafts[tg.id] || ''}
+                        onChange={(v) => setTagDrafts((prev) => ({ ...prev, [tg.id]: v }))}
+                      />
+                      <button className="btn btn-secondary btn-xs" onClick={() => addTemplateTag(tg.id)}>
+                        + 添加
+                      </button>
+                    </div>
+
+                    <div className="field-label" style={{ marginBottom: 8 }}>
+                      Chart ID <span className="hint">一个 Template ID 下可有多个 Chart ID</span>
+                    </div>
+                    {tg.chartGroups.map((g) => (
                       <div
-                        key={tg.id}
+                        key={g.id}
                         style={{
                           border: '1px solid var(--c-border)',
-                          borderRadius: 'var(--r-md)',
-                          background: 'var(--c-surface-2)',
-                          padding: 14,
-                          marginBottom: 10,
+                          borderRadius: 'var(--r)',
+                          background: 'var(--c-surface)',
+                          padding: 12,
+                          marginBottom: 8,
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                          <span className="id-bar-icon template">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                          <span className="id-bar-icon chart">
                             <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                              <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
-                              <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
-                              <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
-                              <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                              <path d="M4 20V10M12 20V4M20 20v-7"></path>
                             </svg>
                           </span>
                           <span className="id-bar-label" style={{ flexShrink: 0 }}>
-                            Template ID
+                            Chart ID
                           </span>
                           <input
                             type="text"
-                            placeholder="motz7cum6ntsj6"
-                            value={tg.templateId}
-                            onChange={(e) => setTemplateId(n.id, tg.id, e.target.value)}
+                            placeholder="GBSrev"
+                            value={g.chartId}
+                            onChange={(e) => setChartId(tg.id, g.id, e.target.value)}
                             style={{ flex: 1 }}
                           />
-                          {templateCatalog.length > 0 && (
-                            <select
-                              value=""
-                              style={{ width: 130, flexShrink: 0 }}
-                              title="从模板选择"
-                              onChange={(e) => {
-                                if (e.target.value) setTemplateId(n.id, tg.id, e.target.value);
-                              }}
-                            >
-                              <option value="">从模板选择…</option>
-                              {templateCatalog.map((t) => (
-                                <option value={t.templateId} key={t.id}>
-                                  {t.name}
-                                </option>
-                              ))}
-                            </select>
-                          )}
-                          <button
-                            className="icon-btn"
-                            onClick={() => duplicateTemplateGroup(n.id, tg.id)}
-                            title="复制该 Template ID"
-                          >
+                          <button className="icon-btn" onClick={() => duplicateChartGroup(tg.id, g.id)} title="复制该 Chart ID">
                             <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                               <path d="M12 5v14M5 12h14"></path>
                             </svg>
                           </button>
-                          <button
-                            className="icon-btn danger"
-                            onClick={() => delTemplateGroup(n.id, tg.id)}
-                            title="删除"
-                          >
+                          <button className="icon-btn danger" onClick={() => delChartGroup(tg.id, g.id)} title="删除">
                             <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                               <path d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
                           </button>
                         </div>
-                        <div className="field-label" style={{ marginBottom: 6 }}>
-                          标签 <span className="hint">一级分类 / 二级分类，属于该 Template ID</span>
+
+                        <div className="field-label" style={{ marginBottom: 6, fontSize: 11.5 }}>
+                          指标字段 field_list
                         </div>
                         <div className="tags-wrap">
-                          {tg.tags.map((t) => (
-                            <span className="tag" title={t.value ? `${t.category}: ${t.value}` : t.category} key={t.id}>
-                              <span className="tag-text">{t.value ? `${t.category} · ${t.value}` : t.category}</span>
-                              <button className="tag-x" onClick={() => delTemplateTag(n.id, tg.id, t.id)}>
+                          {g.fieldList.map((f, fi) => (
+                            <span className="tag" title={f} key={fi}>
+                              <span className="tag-text">{f}</span>
+                              <button className="tag-x" onClick={() => delFieldListItem(tg.id, g.id, fi)}>
                                 ×
                               </button>
                             </span>
                           ))}
                         </div>
-                        <div className="tag-input-row" style={{ marginBottom: 12 }}>
-                          <CategoryPicker
-                            style={{ flex: 1 }}
-                            value={tagDrafts[tg.id] || ''}
-                            onChange={(v) => setTagDrafts((prev) => ({ ...prev, [tg.id]: v }))}
+                        <div className="tag-input-row">
+                          <input
+                            type="text"
+                            placeholder="如：Stat Date"
+                            value={fieldDrafts[g.id] || ''}
+                            onChange={(e) => setFieldDrafts((prev) => ({ ...prev, [g.id]: e.target.value }))}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                addFieldListItem(tg.id, g.id);
+                                e.preventDefault();
+                              }
+                            }}
                           />
-                          <button className="btn btn-secondary btn-xs" onClick={() => addTemplateTag(n.id, tg.id)}>
+                          <button className="btn btn-secondary btn-xs" onClick={() => addFieldListItem(tg.id, g.id)}>
                             + 添加
                           </button>
                         </div>
-                        <div className="field-label" style={{ marginBottom: 8 }}>
-                          Chart ID{' '}
-                          <span className="hint">
-                            一个Template ID下可有多个Chart ID，拼数方式/下钻Dimension/分析能力/Type 属于每个 Chart ID
-                          </span>
+
+                        <div className="field-label" style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}>
+                          Query Link <span className="hint">按 Quarter / Month / Week 分组粘贴</span>
                         </div>
-                        {tg.chartGroups.map((g) => (
-                          <div
-                            key={g.id}
-                            style={{
-                              border: '1px solid var(--c-border)',
-                              borderRadius: 'var(--r)',
-                              background: 'var(--c-surface)',
-                              padding: 12,
-                              marginBottom: 8,
-                            }}
+                        <div className="tree-list">
+                          {g.dataReports.length === 0 && <div className="tree-empty">暂无 Query Link</div>}
+                          {g.dataReports.map((d, di) => (
+                            <div className="tree-item" key={di}>
+                              <svg className="tree-connector" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <path d="M6 3v10a2 2 0 002 2h8"></path>
+                              </svg>
+                              <svg className="tree-item-icon" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <path d="M10 13a5 5 0 007.07 0l1.42-1.42a5 5 0 00-7.07-7.07L10 6"></path>
+                                <path d="M14 11a5 5 0 00-7.07 0l-1.42 1.42a5 5 0 007.07 7.07L14 18"></path>
+                              </svg>
+                              <span className="tree-item-text" title={d.link}>
+                                [{d.group}] {d.link}
+                              </span>
+                              <button className="tree-item-x" onClick={() => delDataReport(tg.id, g.id, di)}>
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="tag-input-row">
+                          <select
+                            style={{ width: 90, flexShrink: 0 }}
+                            value={linkGroupDrafts[g.id] || 'Q'}
+                            onChange={(e) => setLinkGroupDrafts((prev) => ({ ...prev, [g.id]: e.target.value }))}
                           >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                              <span className="id-bar-icon chart">
-                                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                  <path d="M4 20V10M12 20V4M20 20v-7"></path>
-                                </svg>
-                              </span>
-                              <span className="id-bar-label" style={{ flexShrink: 0 }}>
-                                Chart ID
-                              </span>
+                            {GROUP_OPTIONS.map((o) => (
+                              <option value={o.value} key={o.value}>
+                                {o.value}
+                              </option>
+                            ))}
+                          </select>
+                          <input
+                            type="url"
+                            placeholder="粘贴 Query Link"
+                            value={linkDrafts[g.id] || ''}
+                            onChange={(e) => setLinkDrafts((prev) => ({ ...prev, [g.id]: e.target.value }))}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                addDataReport(tg.id, g.id);
+                                e.preventDefault();
+                              }
+                            }}
+                          />
+                          <button className="btn btn-secondary btn-xs" onClick={() => addDataReport(tg.id, g.id)}>
+                            + 添加
+                          </button>
+                        </div>
+
+                        <div className="field-label" style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}>
+                          分析能力 <span className="hint">该 Chart ID 需要 Agent 执行的分析</span> <span className="req">*</span>
+                        </div>
+                        <div className="radio-pills">
+                          {CAPABILITY_OPTIONS.map((o) => (
+                            <div className="radio-pill" key={o.value}>
                               <input
-                                type="text"
-                                placeholder="GBSrev"
-                                value={g.chartId}
-                                onChange={(e) => setChartId(n.id, tg.id, g.id, e.target.value)}
-                                style={{ flex: 1 }}
+                                type="checkbox"
+                                id={`cap-${g.id}-${o.value}`}
+                                checked={g.capabilities.includes(o.value)}
+                                onChange={() => toggleCapability(tg.id, g.id, o.value)}
                               />
-                              <button
-                                className="icon-btn"
-                                onClick={() => duplicateChartGroup(n.id, tg.id, g.id)}
-                                title="复制该 Chart ID"
-                              >
-                                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                  <path d="M12 5v14M5 12h14"></path>
-                                </svg>
-                              </button>
-                              <button
-                                className="icon-btn danger"
-                                onClick={() => delChartGroup(n.id, tg.id, g.id)}
-                                title="删除"
-                              >
-                                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                  <path d="M6 18L18 6M6 6l12 12"></path>
-                                </svg>
-                              </button>
+                              <label htmlFor={`cap-${g.id}-${o.value}`}>{o.label}</label>
                             </div>
-
-                            <div className="field-label" style={{ marginBottom: 6, fontSize: 11.5 }}>
-                              Query Link
-                            </div>
-                            <div className="tree-list">
-                              {g.queryLinks.length === 0 && <div className="tree-empty">暂无 Query Link</div>}
-                              {g.queryLinks.map((l, li) => (
-                                <div className="tree-item" key={li}>
-                                  <svg className="tree-connector" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                    <path d="M6 3v10a2 2 0 002 2h8"></path>
-                                  </svg>
-                                  <svg className="tree-item-icon" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                    <path d="M10 13a5 5 0 007.07 0l1.42-1.42a5 5 0 00-7.07-7.07L10 6"></path>
-                                    <path d="M14 11a5 5 0 00-7.07 0l-1.42 1.42a5 5 0 007.07 7.07L14 18"></path>
-                                  </svg>
-                                  <span className="tree-item-text" title={l}>
-                                    {l}
-                                  </span>
-                                  <button className="tree-item-x" onClick={() => delGroupQueryLink(n.id, tg.id, g.id, li)}>
-                                    ×
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                            <div className="tag-input-row">
-                              <input
-                                type="url"
-                                placeholder="粘贴Query Links, 例：By Quarter , Month , Week"
-                                value={linkDrafts[g.id] || ''}
-                                onChange={(e) => setLinkDrafts((prev) => ({ ...prev, [g.id]: e.target.value }))}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    addGroupQueryLink(n.id, tg.id, g.id);
-                                    e.preventDefault();
-                                  }
-                                }}
-                              />
-                              <button
-                                className="btn btn-secondary btn-xs"
-                                onClick={() => addGroupQueryLink(n.id, tg.id, g.id)}
-                              >
-                                + 添加
-                              </button>
-                            </div>
-
+                          ))}
+                        </div>
+                        {g.capabilities.includes('threshold') && (
+                          <>
                             <div className="field-label" style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}>
-                              拼数方式
+                              阈值定义 <span className="hint">触发阈值状态提醒的条件</span>
                             </div>
-                            <div className="tree-list">
-                              {g.joinMethods.length === 0 && <div className="tree-empty">暂无拼数方式</div>}
-                              {g.joinMethods.map((jm, ji) => (
-                                <div className="tree-item" key={ji}>
-                                  <svg className="tree-connector" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                    <path d="M6 3v10a2 2 0 002 2h8"></path>
-                                  </svg>
-                                  <svg className="tree-item-icon" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                    <rect x="3" y="4" width="18" height="17" rx="2"></rect>
-                                    <path d="M3 9h18M8 3v3M16 3v3"></path>
-                                  </svg>
-                                  <span className="tree-item-text">{joinMethodLabel(jm)}</span>
-                                  <button className="tree-item-x" onClick={() => delJoinMethod(n.id, tg.id, g.id, ji)}>
-                                    ×
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                            <div className="tag-input-row">
-                              <select
-                                value={joinMethodDrafts[g.id] || ''}
-                                onChange={(e) => setJoinMethodDrafts((prev) => ({ ...prev, [g.id]: e.target.value }))}
-                              >
-                                <option value="">请选择…</option>
-                                {JOIN_METHOD_OPTIONS.map((o) => (
-                                  <option value={o.value} key={o.value}>
-                                    {o.label}
-                                  </option>
-                                ))}
-                              </select>
-                              <button
-                                className="btn btn-secondary btn-xs"
-                                onClick={() => addJoinMethod(n.id, tg.id, g.id)}
-                              >
-                                + 添加
-                              </button>
-                            </div>
-
-                            <div className="field-label" style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}>
-                              分析能力 <span className="hint">该 Chart ID 需要 Agent 执行的分析</span>{' '}
-                              <span className="req">*</span>
-                            </div>
-                            <div className="radio-pills">
-                              {CAPABILITY_OPTIONS.map((o) => (
-                                <div className="radio-pill" key={o.value}>
-                                  <input
-                                    type="checkbox"
-                                    id={`cap-${g.id}-${o.value}`}
-                                    checked={g.capabilities.includes(o.value)}
-                                    onChange={() => toggleCapability(n.id, tg.id, g.id, o.value)}
-                                  />
-                                  <label htmlFor={`cap-${g.id}-${o.value}`}>{o.label}</label>
-                                </div>
-                              ))}
-                            </div>
-                            {g.capabilities.includes('threshold') && (
-                              <>
-                                <div
-                                  className="field-label"
-                                  style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}
-                                >
-                                  阈值定义 <span className="hint">触发阈值状态提醒的条件</span>
-                                </div>
-                                <input
-                                  type="text"
-                                  placeholder="例：YoY < -10% 标红；Rev Attain < 90% 预警"
-                                  value={g.threshold}
-                                  onChange={(e) => setThreshold(n.id, tg.id, g.id, e.target.value)}
-                                />
-                              </>
-                            )}
-
-                            <div className="field-label" style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}>
-                              下钻Dimension <span className="opt">可选</span>
-                            </div>
-                            <textarea
-                              rows={2}
-                              style={{ fontSize: 12.5 }}
-                              placeholder="说明该 Chart ID 依据哪些维度下钻，如：NAAP Lever L1、Industry 4.0 Level 1…"
-                              value={g.drillDimension}
-                              onChange={(e) => setDrillDimension(n.id, tg.id, g.id, e.target.value)}
+                            <input
+                              type="text"
+                              placeholder="例：YoY < -10% 标红；Rev Attain < 90% 预警"
+                              value={g.threshold}
+                              onChange={(e) => setThreshold(tg.id, g.id, e.target.value)}
                             />
-
-                            <div
-                              className="field-label"
-                              style={{ marginTop: 10, marginBottom: 6, fontSize: 11.5 }}
-                            >
-                              Type <span className="hint">支持 Public / Personal</span>
-                            </div>
-                            <select
-                              value={g.type}
-                              onChange={(e) => setChartType(n.id, tg.id, g.id, e.target.value as StorylineDataType)}
-                            >
-                              {STORYLINE_TYPE_OPTIONS.map((o) => (
-                                <option value={o.value} key={o.value}>
-                                  {o.label}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        ))}
-                        <button className="btn btn-secondary btn-xs" onClick={() => addChartGroup(n.id, tg.id)}>
-                          + 添加 Chart ID
-                        </button>
+                          </>
+                        )}
                       </div>
                     ))}
-                    <button className="btn btn-secondary btn-xs" onClick={() => addTemplateGroup(n.id)}>
-                      + 添加 Template ID
+                    <button className="btn btn-secondary btn-xs" onClick={() => addChartGroup(tg.id)}>
+                      + 添加 Chart ID
                     </button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-          <button className="add-row" onClick={addNode}>
+          <button className="add-row" onClick={addTemplateGroup}>
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
               <path d="M12 5v14M5 12h14"></path>
             </svg>
-            添加
+            添加 Template ID
           </button>
         </div>
       </div>
@@ -765,7 +708,7 @@ export default function StorylineTab({ state, setState, toast, onSave }: Props) 
       </div>
       <PayloadPanel
         label="Chart Config"
-        meta={`${state.nodes.length} 节点`}
+        meta={`${state.templateGroups.length} 个 Template ID`}
         payload={payload}
         onCopy={() => toast('✅ 已复制到剪贴板')}
       />

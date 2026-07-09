@@ -1,7 +1,7 @@
 import type {
-  AttributionNode,
   ChartCapability,
   ChartGroup,
+  DataReportLink,
   ReportState,
   ReportTag,
   SavedFolder,
@@ -29,16 +29,29 @@ export const STORYLINE_TYPE_OPTIONS: { value: StorylineDataType; label: string }
   { value: 'personal', label: 'Personal' },
 ];
 
-export const JOIN_METHOD_OPTIONS: { value: string; label: string }[] = [
-  { value: 'quarter', label: 'Quarter' },
-  { value: 'month', label: 'Month' },
-  { value: 'week', label: 'Week' },
-  { value: 'other', label: '其他' },
-  { value: 'none', label: '无需拼数处理' },
+// Matches backend "group" values on data_reports entries (Q/M/W are the recognized
+// composable groups; 其他 marks a link that stands alone / needs no composing).
+export const GROUP_OPTIONS: { value: string; label: string }[] = [
+  { value: 'Q', label: 'Quarter (Q)' },
+  { value: 'M', label: 'Month (M)' },
+  { value: 'W', label: 'Week (W)' },
+  { value: '其他', label: '其他 / 无需拼数处理' },
 ];
 
-export function joinMethodLabel(value: string): string {
-  return JOIN_METHOD_OPTIONS.find((o) => o.value === value)?.label || value;
+/** Parses report_id / dataset_id / query_id out of a pasted BI Portal report link. */
+export function parseQueryLink(link: string): { reportId: string; datasetId: string; queryId: string } {
+  const reportId = /\/report\/edit\/(\d+)/.exec(link)?.[1] || '';
+  const datasetId = /[?&]dataset=(\d+)/.exec(link)?.[1] || '';
+  const queryId = /[?&]queryId=(\d+)/.exec(link)?.[1] || '';
+  return { reportId, datasetId, queryId };
+}
+
+/** compose_type = concatenation of distinct Q/M/W groups present, in that order, followed by any custom groups. */
+export function deriveComposeType(dataReports: DataReportLink[]): string {
+  const present = new Set(dataReports.map((d) => d.group).filter(Boolean));
+  const ordered = ['Q', 'M', 'W'].filter((g) => present.has(g));
+  const rest = [...present].filter((g) => !['Q', 'M', 'W'].includes(g));
+  return [...ordered, ...rest].join('');
 }
 
 export const REGION_OPTIONS = [
@@ -221,67 +234,77 @@ export function deleteTemplate(id: string): SavedTemplate[] {
 
 export function defaultStoryline(): StorylineState {
   return {
-    topic: '',
+    topic: 'GBS-1Team revenue和yoy',
     analyst: '',
     background: '',
     region: 'NAAP',
-    nodes: [
+    templateGroups: [
       {
         id: 1,
-        scenario: 'GBS-1Team revenue和yoy',
-        templateGroups: [
+        templateId: 'motz7cum6ntsj6',
+        businessScene: 'GBS-1Team revenue和yoy',
+        drillDimensions: ['NAAP Lever L1', 'Industry 4.0 Level 1'],
+        creator: '',
+        owner: [],
+        type: 'public',
+        tags: [
+          { id: 1, category: '重要分析字段 / Important Analysis Fields', value: '战略杠杆 / Strategic Lever' },
+          { id: 2, category: '行业 / Industry', value: '行业4.0 / Industry 4.0' },
+        ],
+        chartGroups: [
           {
             id: 1,
-            templateId: 'motz7cum6ntsj6',
-            tags: [
-              { id: 1, category: '重要分析字段 / Important Analysis Fields', value: '战略杠杆 / Strategic Lever' },
-              { id: 2, category: '行业 / Industry', value: '行业4.0 / Industry 4.0' },
-            ],
-            chartGroups: [
+            chartId: 'GBSrev',
+            fieldList: ['Stat Date', 'Dollar Revenue Real - Rev Attain (HQ)'],
+            dataReports: [
               {
                 id: 1,
-                chartId: 'GBSrev',
-                queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1145582?dataset=1159057&queryId=64894787'],
-                joinMethods: ['other'],
-                drillDimension: 'NAAP Lever L1 Industry 4.0 Level 1',
-                capabilities: ['basic', 'attribution'],
-                threshold: '',
-                type: 'public',
-              },
-              {
-                id: 2,
-                chartId: 'GBSYOY',
-                queryLinks: [],
-                joinMethods: [],
-                drillDimension: '',
-                capabilities: ['basic'],
-                threshold: '',
-                type: 'public',
+                group: 'Q',
+                link: 'https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1145582?dataset=1159057&queryId=648947878',
+                reportId: '1145582',
+                datasetId: '1159057',
+                queryId: '648947878',
               },
             ],
+            capabilities: ['basic', 'attribution'],
+            threshold: '',
+          },
+          {
+            id: 2,
+            chartId: 'GBSYOY',
+            fieldList: [],
+            dataReports: [],
+            capabilities: ['basic'],
+            threshold: '',
           },
         ],
       },
       {
         id: 2,
-        scenario: 'NAAP-1Team revenue和yoy',
-        templateGroups: [
+        templateId: 'mp3ue3hglacfiq',
+        businessScene: 'NAAP-1Team revenue和yoy',
+        drillDimensions: ['NAAP Lever L1', 'Industry 4.0 Level 1'],
+        creator: '',
+        owner: [],
+        type: 'personal',
+        tags: [],
+        chartGroups: [
           {
-            id: 2,
-            templateId: 'mp3ue3hglacfiq',
-            tags: [],
-            chartGroups: [
+            id: 3,
+            chartId: '',
+            fieldList: [],
+            dataReports: [
               {
-                id: 3,
-                chartId: '',
-                queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1147165?dataset=1159057&queryId=648951830'],
-                joinMethods: [],
-                drillDimension: 'NAAP Lever L1 Industry 4.0 Level 1',
-                capabilities: ['basic'],
-                threshold: '',
-                type: 'personal',
+                id: 2,
+                group: 'Q',
+                link: 'https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1147165?dataset=1159057&queryId=648951830',
+                reportId: '1147165',
+                datasetId: '1159057',
+                queryId: '648951830',
               },
             ],
+            capabilities: ['basic'],
+            threshold: '',
           },
         ],
       },
@@ -295,7 +318,7 @@ export function blankStoryline(): StorylineState {
     analyst: '',
     background: '',
     region: 'NAAP',
-    nodes: [],
+    templateGroups: [],
   };
 }
 
@@ -309,47 +332,60 @@ export function defaultReport(): ReportState {
     owner: '',
     ownerEmail: '',
     ownerDept: '',
+    ownerUsers: [],
+    allowUsers: [],
+  };
+}
+
+/** Packs per-chart 分析能力/阈值定义 into the opaque metric_chart_config the backend stores as-is. */
+function buildMetricChartConfig(tg: TemplateGroup): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  tg.chartGroups.forEach((g, i) => {
+    if (g.capabilities.length || g.threshold) {
+      out[g.chartId || `chart_${i + 1}`] = { capabilities: g.capabilities, threshold: g.threshold || null };
+    }
+  });
+  return out;
+}
+
+/** Maps one Template ID card to the exact POST /api/auto_report/data_templates request body. */
+export function buildDataTemplatePayload(tg: TemplateGroup) {
+  return {
+    business_scene: tg.businessScene || '',
+    chart_template_id: tg.templateId || '',
+    metric_chart_config: buildMetricChartConfig(tg),
+    drill_dimensions: tg.drillDimensions,
+    data_report_config: tg.chartGroups.map((g) => ({
+      chart_id: g.chartId || '',
+      compose_type: deriveComposeType(g.dataReports),
+      field_list: g.fieldList,
+      data_reports: g.dataReports.map((d) => ({
+        group: d.group,
+        report_id: Number(d.reportId) || 0,
+        dataset_id: Number(d.datasetId) || 0,
+        query_id: Number(d.queryId) || 0,
+        link: d.link,
+      })),
+    })),
+    creator: tg.creator || '',
+    owner: tg.owner,
+    type: tg.type === 'public' ? 'Public' : 'Personal',
   };
 }
 
 export function buildStorylinePayload(sl: StorylineState) {
   return {
-    type: 'storyline_config',
-    topic: sl.topic || '（未填写）',
-    analyst: sl.analyst || null,
-    background: sl.background || '（未填写）',
-    region: sl.region || null,
-    attribution_nodes: sl.nodes.map((n, i) => ({
-      index: i + 1,
-      scenario: n.scenario || `节点${i + 1}`,
-      template_groups: n.templateGroups.map((tg) => ({
-        template_id: tg.templateId || null,
-        tags: tg.tags.map((t) => ({ category: t.category, value: t.value })),
-        chart_groups: tg.chartGroups.map((g) => ({
-          chart_id: g.chartId || null,
-          query_links: g.queryLinks,
-          join_methods: g.joinMethods,
-          drill_dimension: g.drillDimension || null,
-          capabilities: g.capabilities,
-          threshold: g.capabilities.includes('threshold') ? g.threshold || null : null,
-          type: g.type,
-        })),
-      })),
-    })),
+    data_templates: sl.templateGroups.map(buildDataTemplatePayload),
   };
 }
 
+/** Maps report state to the exact POST/PUT /api/auto_report/report_data_templates request body. */
 export function buildReportPayload(rpt: ReportState) {
   return {
-    type: 'weekly_report_config',
-    report_name: rpt.name || '（未填写）',
-    cycle: rpt.cycle,
-    chart_type: rpt.chartType,
-    description: rpt.description || null,
-    template_ids: rpt.templateIds,
-    owner: rpt.owner || null,
-    owner_email: rpt.ownerEmail || null,
-    owner_dept: rpt.ownerDept || null,
+    report_name: rpt.name || '',
+    chart_template_ids: rpt.templateIds,
+    owner: rpt.ownerUsers,
+    allow_users: rpt.allowUsers,
   };
 }
 
@@ -376,12 +412,6 @@ export function highlightJson(json: string): { text: string; cls: string }[] {
   return parts;
 }
 
-let nodeIdCounter = 100;
-export function nextNodeId() {
-  nodeIdCounter += 1;
-  return nodeIdCounter;
-}
-
 let templateGroupIdCounter = 100;
 export function nextTemplateGroupId() {
   templateGroupIdCounter += 1;
@@ -394,17 +424,10 @@ export function nextGroupId() {
   return groupIdCounter;
 }
 
-export function emptyChartGroup(): ChartGroup {
-  return {
-    id: nextGroupId(),
-    chartId: '',
-    queryLinks: [],
-    joinMethods: [],
-    drillDimension: '',
-    capabilities: ['basic'],
-    threshold: '',
-    type: 'public',
-  };
+let linkIdCounter = 100;
+export function nextLinkId() {
+  linkIdCounter += 1;
+  return linkIdCounter;
 }
 
 let tagIdCounter = 100;
@@ -413,39 +436,64 @@ export function nextTagId() {
   return tagIdCounter;
 }
 
-export function emptyTemplateGroup(): TemplateGroup {
-  return { id: nextTemplateGroupId(), templateId: '', tags: [], chartGroups: [] };
-}
-
-export function emptyNode(): AttributionNode {
+export function emptyChartGroup(): ChartGroup {
   return {
-    id: nextNodeId(),
-    scenario: '',
-    templateGroups: [],
+    id: nextGroupId(),
+    chartId: '',
+    fieldList: [],
+    dataReports: [],
+    capabilities: ['basic'],
+    threshold: '',
   };
 }
 
-interface LegacyChartDefaults {
-  joinMethods: string[];
-  drillDimension: string;
-  type: StorylineDataType;
+export function emptyTemplateGroup(): TemplateGroup {
+  return {
+    id: nextTemplateGroupId(),
+    templateId: '',
+    businessScene: '',
+    drillDimensions: [],
+    creator: '',
+    owner: [],
+    type: 'public',
+    tags: [],
+    chartGroups: [],
+  };
 }
 
 const VALID_CAPABILITIES: ChartCapability[] = ['basic', 'attribution', 'threshold'];
 
-function normalizeChartGroup(raw: Record<string, unknown> | undefined, legacy: LegacyChartDefaults): ChartGroup {
+function normalizeDataReportLink(raw: Record<string, unknown> | undefined): DataReportLink {
   const r = raw || {};
+  const link = typeof r.link === 'string' ? r.link : '';
+  const parsed = parseQueryLink(link);
+  return {
+    id: typeof r.id === 'number' ? r.id : nextLinkId(),
+    group: typeof r.group === 'string' ? r.group : '',
+    link,
+    reportId: typeof r.reportId === 'string' ? r.reportId : parsed.reportId,
+    datasetId: typeof r.datasetId === 'string' ? r.datasetId : parsed.datasetId,
+    queryId: typeof r.queryId === 'string' ? r.queryId : parsed.queryId,
+  };
+}
+
+function normalizeChartGroup(raw: Record<string, unknown> | undefined): ChartGroup {
+  const r = raw || {};
+  // Back-compat: old shape stored a flat `queryLinks: string[]` with no group tagging.
+  const legacyLinks = Array.isArray(r.queryLinks)
+    ? (r.queryLinks as string[]).map((l) => normalizeDataReportLink({ link: l }))
+    : [];
   return {
     id: typeof r.id === 'number' ? r.id : nextGroupId(),
     chartId: typeof r.chartId === 'string' ? r.chartId : '',
-    queryLinks: Array.isArray(r.queryLinks) ? (r.queryLinks as string[]) : [],
-    joinMethods: Array.isArray(r.joinMethods) ? (r.joinMethods as string[]) : legacy.joinMethods,
-    drillDimension: typeof r.drillDimension === 'string' ? r.drillDimension : legacy.drillDimension,
+    fieldList: Array.isArray(r.fieldList) ? (r.fieldList as string[]) : [],
+    dataReports: Array.isArray(r.dataReports)
+      ? (r.dataReports as Record<string, unknown>[]).map(normalizeDataReportLink)
+      : legacyLinks,
     capabilities: Array.isArray(r.capabilities)
       ? (r.capabilities as ChartCapability[]).filter((c) => VALID_CAPABILITIES.includes(c))
       : ['basic'],
     threshold: typeof r.threshold === 'string' ? r.threshold : '',
-    type: r.type === 'personal' || r.type === 'public' ? r.type : legacy.type,
   };
 }
 
@@ -464,99 +512,69 @@ function normalizeTags(raw: unknown): ReportTag[] {
     : [];
 }
 
-function normalizeTemplateGroup(raw: Record<string, unknown> | undefined, legacy: LegacyChartDefaults): TemplateGroup {
+function normalizeTemplateGroup(raw: Record<string, unknown> | undefined, legacyScenario: string): TemplateGroup {
   const r = raw || {};
   const chartGroupsRaw = Array.isArray(r.chartGroups) ? (r.chartGroups as Record<string, unknown>[]) : [];
-  // drillDimension briefly lived at the template level; push it back down as the
-  // per-chart default when reading data saved in that shape.
-  const chartLegacy: LegacyChartDefaults =
-    typeof r.drillDimension === 'string' && r.drillDimension ? { ...legacy, drillDimension: r.drillDimension } : legacy;
+  // drillDimensions used to live per-chart as a single string; collect any into one array.
+  const legacyDrillDims = chartGroupsRaw
+    .map((g) => (typeof g.drillDimension === 'string' ? g.drillDimension : ''))
+    .filter(Boolean);
   return {
     id: typeof r.id === 'number' ? r.id : nextTemplateGroupId(),
     templateId: typeof r.templateId === 'string' ? r.templateId : '',
+    businessScene: typeof r.businessScene === 'string' && r.businessScene ? r.businessScene : legacyScenario,
+    drillDimensions: Array.isArray(r.drillDimensions)
+      ? (r.drillDimensions as string[])
+      : typeof r.drillDimension === 'string' && r.drillDimension
+        ? [r.drillDimension]
+        : legacyDrillDims,
+    creator: typeof r.creator === 'string' ? r.creator : '',
+    owner: Array.isArray(r.owner) ? (r.owner as string[]) : [],
+    type: r.type === 'personal' || r.type === 'public' ? r.type : 'public',
     tags: normalizeTags(r.tags),
-    chartGroups: chartGroupsRaw.map((g) => normalizeChartGroup(g, chartLegacy)),
+    chartGroups: chartGroupsRaw.map(normalizeChartGroup),
   };
 }
 
-// Migrates persisted nodes from earlier shapes (pre-redesign { name, desc, links },
-// the flat { chartIds, queryLinks, joinMethod } shape, or the 2-level
-// { templateId, chartGroups } shape) into the current 3-level
-// { templateGroups: [{ templateId, chartGroups }] } shape. 拼数方式/下钻Dimension/Type
-// used to live on the node or template - those become the per-chart-group default
-// when migrating older data.
-function normalizeNode(raw: Record<string, unknown> | undefined): AttributionNode {
-  const r = raw || {};
-  const legacyLinks = Array.isArray(r.links) ? (r.links as string[]) : undefined;
-  const legacy: LegacyChartDefaults = {
-    joinMethods: Array.isArray(r.joinMethods)
-      ? (r.joinMethods as string[])
-      : typeof r.joinMethod === 'string' && r.joinMethod
-        ? [r.joinMethod]
-        : [],
-    drillDimension:
-      typeof r.drillDimension === 'string' ? r.drillDimension : typeof r.desc === 'string' ? r.desc : '',
-    type: r.type === 'personal' ? 'personal' : 'public',
-  };
-
-  let templateGroups: TemplateGroup[];
-  if (Array.isArray(r.templateGroups)) {
-    templateGroups = (r.templateGroups as Record<string, unknown>[]).map((tg) => normalizeTemplateGroup(tg, legacy));
-  } else {
-    let chartGroups: ChartGroup[];
-    if (Array.isArray(r.chartGroups)) {
-      chartGroups = (r.chartGroups as Record<string, unknown>[]).map((g) => normalizeChartGroup(g, legacy));
-    } else {
-      const legacyChartIds = Array.isArray(r.chartIds) ? (r.chartIds as string[]) : [];
-      const legacyQueryLinks = Array.isArray(r.queryLinks) ? (r.queryLinks as string[]) : legacyLinks || [];
-      if (legacyChartIds.length) {
-        chartGroups = legacyChartIds.map((c, i) =>
-          normalizeChartGroup({ chartId: c, queryLinks: i === 0 ? legacyQueryLinks : [] }, legacy)
-        );
-      } else if (legacyQueryLinks.length) {
-        chartGroups = [normalizeChartGroup({ chartId: '', queryLinks: legacyQueryLinks }, legacy)];
-      } else {
-        chartGroups = [];
-      }
-    }
-    templateGroups =
-      typeof r.templateId === 'string' && (r.templateId || chartGroups.length)
-        ? [{ id: nextTemplateGroupId(), templateId: r.templateId, tags: [], chartGroups }]
-        : [];
-  }
-
-  return {
-    id: typeof r.id === 'number' ? r.id : nextNodeId(),
-    scenario: typeof r.scenario === 'string' ? r.scenario : typeof r.name === 'string' ? r.name : '',
-    templateGroups,
-  };
-}
-
+// Migrates persisted storylines from earlier shapes: the pre-redesign
+// { nodes: [{ scenario, templateGroups }] } 3-level shape, or the current flat
+// { templateGroups } shape. Node-level `scenario` becomes each template's
+// businessScene when migrating older data.
 export function normalizeStoryline(
-  raw: (Partial<StorylineState> & { tags?: unknown }) | null | undefined
+  raw: (Partial<StorylineState> & { tags?: unknown; nodes?: unknown }) | null | undefined
 ): StorylineState {
   const base = defaultStoryline();
   if (!raw) return base;
-  const nodes = Array.isArray(raw.nodes)
-    ? raw.nodes.map((n) => normalizeNode(n as unknown as Record<string, unknown>))
-    : base.nodes;
-  // tags briefly lived at the report level; move any saved ones into the first template group.
-  const legacyTags = normalizeTags(raw.tags);
-  if (legacyTags.length && nodes[0]?.templateGroups[0]) {
-    const tg = nodes[0].templateGroups[0];
-    tg.tags = [...tg.tags, ...legacyTags.filter((t) => !tg.tags.some((e) => e.category === t.category && e.value === t.value))];
+
+  let templateGroups: TemplateGroup[];
+  if (Array.isArray(raw.templateGroups)) {
+    templateGroups = (raw.templateGroups as unknown as Record<string, unknown>[]).map((tg) =>
+      normalizeTemplateGroup(tg, '')
+    );
+  } else if (Array.isArray(raw.nodes)) {
+    templateGroups = (raw.nodes as Record<string, unknown>[]).flatMap((n) => {
+      const scenario = typeof n.scenario === 'string' ? n.scenario : typeof n.name === 'string' ? n.name : '';
+      const groups = Array.isArray(n.templateGroups) ? (n.templateGroups as Record<string, unknown>[]) : [];
+      return groups.map((tg) => normalizeTemplateGroup(tg, scenario));
+    });
+  } else {
+    templateGroups = base.templateGroups;
   }
+
   return {
     topic: typeof raw.topic === 'string' ? raw.topic : base.topic,
     analyst: typeof raw.analyst === 'string' ? raw.analyst : base.analyst,
     background: typeof raw.background === 'string' ? raw.background : base.background,
     region: typeof raw.region === 'string' && raw.region ? raw.region : 'NAAP',
-    nodes,
+    templateGroups,
   };
 }
 
 export function normalizeReport(
-  raw: (Partial<ReportState> & { dataQueryId?: string; chartId?: string; chartIds?: string[] }) | null | undefined
+  raw:
+    | (Partial<ReportState> & { dataQueryId?: string; chartId?: string; chartIds?: string[] })
+    | null
+    | undefined
 ): ReportState {
   const base = defaultReport();
   if (!raw) return base;
@@ -574,5 +592,7 @@ export function normalizeReport(
     owner: typeof raw.owner === 'string' ? raw.owner : base.owner,
     ownerEmail: typeof raw.ownerEmail === 'string' ? raw.ownerEmail : base.ownerEmail,
     ownerDept: typeof raw.ownerDept === 'string' ? raw.ownerDept : base.ownerDept,
+    ownerUsers: Array.isArray(raw.ownerUsers) ? (raw.ownerUsers as string[]) : base.ownerUsers,
+    allowUsers: Array.isArray(raw.allowUsers) ? (raw.allowUsers as string[]) : base.allowUsers,
   };
 }
