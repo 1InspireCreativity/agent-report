@@ -536,11 +536,16 @@ input[type="color"]{padding:4px 6px;height:36px;cursor:pointer;border-radius:var
 /* ══════════ STORYLINE SIDEBAR ══════════ */
 .sl-layout{display:flex;align-items:stretch;height:calc(100vh - 56px);max-width:1320px;margin:0 auto;}
 .sl-sidebar{
-  width:272px;flex-shrink:0;background:var(--c-surface);
+  width:var(--sl-sidebar-w,272px);flex-shrink:0;background:var(--c-surface);
   border-right:1px solid var(--c-border);
   display:flex;flex-direction:column;justify-content:space-between;
 }
 .sl-sidebar.collapsed{width:auto;min-height:0;padding:10px;}
+.sl-sidebar-resize-handle{
+  position:absolute;top:0;right:-3px;width:6px;height:100%;
+  cursor:col-resize;z-index:10;
+}
+.sl-sidebar-resize-handle:hover,.sl-sidebar-resize-handle:active{background:var(--c-blue-l);}
 .sl-sidebar-inner{padding:18px 16px;display:flex;flex-direction:column;gap:14px;flex:1;overflow-y:auto;}
 .sl-sidebar-headrow{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
 .sl-sidebar-title{font-size:11px;color:var(--c-text-4);}

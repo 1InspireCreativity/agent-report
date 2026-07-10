@@ -90,6 +90,10 @@ export default function FolderSidebar<T>({
   showTemplateCatalog = false,
 }: Props<T>) {
   const [collapsed, setCollapsed] = useState(false);
+  const [width, setWidth] = useState(() => {
+    const saved = Number(localStorage.getItem(storageKey + ':width'));
+    return saved >= 200 && saved <= 480 ? saved : 272;
+  });
   const [folders, setFolders] = useState<SavedFolder<T>[]>([]);
   const [search, setSearch] = useState('');
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
@@ -216,8 +220,12 @@ export default function FolderSidebar<T>({
       updated_at: new Date().toLocaleString(),
     };
     const originalIdx = arr.findIndex((x) => x.id === f.id);
+    let insertAfter = originalIdx;
+    arr.forEach((x, i) => {
+      if (i > insertAfter && (x.name === baseName || versionRe.test(x.name))) insertAfter = i;
+    });
     const next = [...arr];
-    next.splice(originalIdx + 1, 0, copy);
+    next.splice(insertAfter + 1, 0, copy);
     saveFolders(storageKey, next);
     setFolders(next);
     toast('✅ 已复制文件夹：' + copy.name);
@@ -460,6 +468,26 @@ export default function FolderSidebar<T>({
     );
   };
 
+  const startResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = width;
+    const onMouseMove = (ev: MouseEvent) => {
+      const next = Math.min(480, Math.max(200, startWidth + ev.clientX - startX));
+      setWidth(next);
+    };
+    const onMouseUp = () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      setWidth((w) => {
+        localStorage.setItem(storageKey + ':width', String(w));
+        return w;
+      });
+    };
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  };
+
   if (collapsed) {
     return (
       <div className="sl-sidebar collapsed">
@@ -475,7 +503,11 @@ export default function FolderSidebar<T>({
   const topLevel = folders.filter((f) => f.parentId === null && matchesFilter(f));
 
   return (
-    <div className="sl-sidebar">
+    <div
+      className="sl-sidebar"
+      style={{ ['--sl-sidebar-w' as string]: `${width}px`, position: 'relative' } as React.CSSProperties}
+    >
+      <div className="sl-sidebar-resize-handle" onMouseDown={startResize} title="拖动调整宽度" />
       <div className="sl-sidebar-inner">
         <div className="sl-sidebar-headrow">
           <div>
