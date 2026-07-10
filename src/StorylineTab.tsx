@@ -207,7 +207,7 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                   <Folder className="w-5 h-5" />
                 </div>
                 <div className="flex-1 flex items-center gap-2 relative">
-                  <span className="text-sm font-medium text-slate-600 whitespace-nowrap">报告名称</span>
+                  <span className="text-sm font-medium text-slate-600 whitespace-nowrap">图表名称</span>
                   <input
                     type="text"
                     placeholder="例：本周 Revenue下滑归因分析"
