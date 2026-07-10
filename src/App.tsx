@@ -379,6 +379,7 @@ function App() {
               toast={toast}
               getName={(s) => s.topic}
               getOwner={() => ''}
+              renameState={(s, name) => ({ ...s, topic: name })}
               countItems={(s) => s.templateGroups.length}
               normalize={normalizeStoryline}
               blankState={blankStoryline}
@@ -435,6 +436,7 @@ function App() {
               toast={toast}
               getName={(s) => s.name}
               getOwner={() => ''}
+              renameState={(s, name) => ({ ...s, name })}
               countItems={(s) => s.templateIds.length}
               normalize={normalizeReport}
               blankState={defaultReport}

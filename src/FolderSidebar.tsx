@@ -32,6 +32,7 @@ interface Props<T> {
   toast: (msg: string) => void;
   getName: (state: T) => string;
   getOwner: (state: T) => string;
+  renameState: (state: T, name: string) => T;
   countItems: (state: T) => number;
   normalize: (raw: T) => T;
   activeId: string;
@@ -78,6 +79,7 @@ export default function FolderSidebar<T>({
   toast,
   getName,
   getOwner,
+  renameState,
   countItems,
   normalize,
   activeId,
@@ -198,15 +200,26 @@ export default function FolderSidebar<T>({
   const duplicateFolder = (f: SavedFolder<T>, e: React.MouseEvent) => {
     e.stopPropagation();
     const arr = loadFolders<T>(storageKey);
+    const baseName = f.name.replace(/ - 副本_V\d+$/, '');
+    const versionRe = new RegExp(`^${baseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} - 副本_V(\\d+)$`);
+    const usedVersions = arr
+      .map((x) => x.name.match(versionRe))
+      .filter((m): m is RegExpMatchArray => m !== null)
+      .map((m) => parseInt(m[1], 10));
+    const nextVersion = usedVersions.length ? Math.max(...usedVersions) + 1 : 1;
+    const newName = `${baseName} - 副本_V${nextVersion}`;
     const copy: SavedFolder<T> = {
       ...f,
       id: String(Date.now()),
-      name: f.name + ' (Copy)',
+      name: newName,
+      state: renameState(f.state, newName),
       updated_at: new Date().toLocaleString(),
     };
-    arr.unshift(copy);
-    saveFolders(storageKey, arr);
-    setFolders(arr);
+    const originalIdx = arr.findIndex((x) => x.id === f.id);
+    const next = [...arr];
+    next.splice(originalIdx + 1, 0, copy);
+    saveFolders(storageKey, next);
+    setFolders(next);
     toast('✅ 已复制文件夹：' + copy.name);
   };
 
@@ -322,13 +335,6 @@ export default function FolderSidebar<T>({
               placeholder={nameLabel}
               value={editDraft.name}
               onChange={(e) => setEditDraft((prev) => ({ ...prev, name: e.target.value }))}
-              onClick={(e) => e.stopPropagation()}
-            />
-            <input
-              type="text"
-              placeholder="Owner"
-              value={editDraft.owner}
-              onChange={(e) => setEditDraft((prev) => ({ ...prev, owner: e.target.value }))}
               onClick={(e) => e.stopPropagation()}
             />
             <select

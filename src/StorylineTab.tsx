@@ -14,6 +14,14 @@ import {
 } from './utils';
 import { submitChartConfig } from './api';
 import MultiSelect from './MultiSelect';
+import SubmitHistoryPanel from './SubmitHistoryPanel';
+import {
+  addSubmissionRecord,
+  clearSubmissionHistory,
+  deleteSubmissionRecord,
+  loadSubmissionHistory,
+  STORYLINE_SUBMIT_HISTORY_KEY,
+} from './submissionHistory';
 
 interface Props {
   state: StorylineState;
@@ -34,6 +42,7 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
   const [showAggregation, setShowAggregation] = useState<Record<number, boolean>>({});
   const [showAnalysis, setShowAnalysis] = useState<Record<number, boolean>>({});
   const [showFieldList, setShowFieldList] = useState<Record<number, boolean>>({});
+  const [submitHistory, setSubmitHistory] = useState(() => loadSubmissionHistory(STORYLINE_SUBMIT_HISTORY_KEY));
 
   // Hidden by default until the user explicitly checks the box, regardless of
   // whether the chart already has data for it.
@@ -148,8 +157,20 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
       return;
     }
     setSubmitting(true);
-    const result = await submitChartConfig(buildStorylinePayload(state));
+    const payload = buildStorylinePayload(state);
+    const result = await submitChartConfig(payload);
     setSubmitting(false);
+    const status = result.ok ? 'ok' : result.offline ? 'offline' : 'error';
+    setSubmitHistory(
+      addSubmissionRecord(STORYLINE_SUBMIT_HISTORY_KEY, {
+        label: state.topic,
+        owner: '',
+        meta: `${state.templateGroups.length} 个 Template`,
+        status,
+        error: result.error,
+        payload,
+      })
+    );
     if (result.ok) {
       toast('✅ 图表配置已提交给后端，Agent 任务启动中…');
     } else if (result.offline) {
@@ -305,7 +326,7 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                         <label className="block text-xs font-medium text-slate-500 mb-1">业务场景 (Business Scene)</label>
                         <input
                           type="text"
-                          placeholder="如：GBS-1Team revenue和yoy"
+                          placeholder="如：GBS-1 Team Revenue 和 YOY"
                           value={tg.businessScene}
                           onChange={(e) => setBusinessScene(tg.id, e.target.value)}
                           className="w-full bg-white border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -580,6 +601,22 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
               )}
             </div>
           </div>
+
+          <SubmitHistoryPanel
+            records={submitHistory}
+            onCopy={(json) => {
+              navigator.clipboard.writeText(json).then(() => toast('✅ 已复制到剪贴板'));
+            }}
+            onDelete={(id) => {
+              setSubmitHistory(deleteSubmissionRecord(STORYLINE_SUBMIT_HISTORY_KEY, id));
+              toast('✅ 已删除该提交记录');
+            }}
+            onClear={() => {
+              if (!confirm('确认清空全部提交记录？此操作不可撤销。')) return;
+              setSubmitHistory(clearSubmissionHistory(STORYLINE_SUBMIT_HISTORY_KEY));
+              toast('✅ 已清空提交记录');
+            }}
+          />
 
           <div className="flex items-center gap-3 pt-2">
             <button

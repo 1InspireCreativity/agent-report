@@ -68,16 +68,16 @@ export const CAPABILITY_OPTIONS: { value: ChartCapability; label: string }[] = [
 ];
 
 export const TAG_OPTIONS = [
-  'Performance',
   'Advertising',
-  'Open Loop C',
-  'Moderation',
-  'Material',
-  'Short Drama',
   'Creator',
+  'Material',
+  'Moderation',
   'No Cash',
-  'TTS',
+  'Open Loop C',
+  'Performance',
+  'Short Drama',
   'Third Party',
+  'TTS'
 ];
 
 export const FOLDER_ICON_COLORS = ['#111827', '#059669', '#9CA3AF', '#D97706', '#2563EB', '#DC2626', '#7C3AED'];
