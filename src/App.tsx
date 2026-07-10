@@ -289,7 +289,7 @@ function App() {
       if (idx < 0) return;
       arr[idx] = {
         ...arr[idx],
-        name: storyline.topic.trim() || arr[idx].name,
+        name: storyline.topic.trim() || 'Untitled Folder',
         state: storyline,
         updated_at: new Date().toLocaleString(),
       };
@@ -309,7 +309,7 @@ function App() {
       if (idx < 0) return;
       arr[idx] = {
         ...arr[idx],
-        name: report.name.trim() || arr[idx].name,
+        name: report.name.trim() || 'Untitled Folder',
         state: report,
         updated_at: new Date().toLocaleString(),
       };

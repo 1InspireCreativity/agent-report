@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Folder as FolderIcon } from 'lucide-react';
+import { Folder as FolderIcon, Copy as CopyIcon } from 'lucide-react';
 import type { SavedFolder, SavedTemplate, StorylineDataType } from './types';
 import {
   deleteTemplate,
@@ -402,9 +402,7 @@ export default function FolderSidebar<T>({
             </svg>
           </button>
           <button className="sl-folder-add" onClick={(e) => duplicateFolder(f, e)} title="复制文件夹">
-            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-              <path d="M12 5v14M5 12h14"></path>
-            </svg>
+            <CopyIcon size={11} />
           </button>
           <button className="sl-folder-add danger" onClick={(e) => deleteFolder(f, e)} title="删除文件夹">
             <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">

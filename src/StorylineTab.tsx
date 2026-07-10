@@ -445,29 +445,15 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                             {/* Chart Configuration */}
                             <div className="p-3 bg-slate-50 border-t border-slate-200 space-y-4 rounded-b-lg">
                               <div>
-                                <label className="block text-[11px] font-medium text-slate-500 mb-1">是否拼数</label>
-                                <div className="flex gap-4">
-                                  <label className="flex items-center gap-1.5 cursor-pointer">
-                                    <input
-                                      type="radio"
-                                      name={`has-agg-${g.id}`}
-                                      checked={!isAggregationShown(g)}
-                                      onChange={() => setShowAggregation((prev) => ({ ...prev, [g.id]: false }))}
-                                      className="text-sky-600 focus:ring-sky-500 border-slate-300"
-                                    />
-                                    <span className="text-[11px] text-slate-700">否</span>
-                                  </label>
-                                  <label className="flex items-center gap-1.5 cursor-pointer">
-                                    <input
-                                      type="radio"
-                                      name={`has-agg-${g.id}`}
-                                      checked={isAggregationShown(g)}
-                                      onChange={() => setShowAggregation((prev) => ({ ...prev, [g.id]: true }))}
-                                      className="text-sky-600 focus:ring-sky-500 border-slate-300"
-                                    />
-                                    <span className="text-[11px] text-slate-700">是</span>
-                                  </label>
-                                </div>
+                                <label className="flex items-center gap-2 cursor-pointer w-fit">
+                                  <input
+                                    type="checkbox"
+                                    checked={isAggregationShown(g)}
+                                    onChange={() => setShowAggregation((prev) => ({ ...prev, [g.id]: !isAggregationShown(g) }))}
+                                    className="text-sky-600 focus:ring-sky-500 border-slate-300 rounded"
+                                  />
+                                  <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded">是否拼数</span>
+                                </label>
                                 {isAggregationShown(g) && (
                                   <div className="mt-2">
                                     <label className="block text-[11px] font-medium text-slate-500 mb-1">拼数方式 (Data Aggregation)</label>
@@ -493,35 +479,18 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                               </div>
 
                               <div>
-                                <label className="block text-[11px] font-medium text-slate-500 mb-1">是否分析</label>
-                                <div className="flex gap-4">
-                                  <label className="flex items-center gap-1.5 cursor-pointer">
-                                    <input
-                                      type="radio"
-                                      name={`has-analysis-${g.id}`}
-                                      checked={!isAnalysisShown(g)}
-                                      onChange={() => setShowAnalysis((prev) => ({ ...prev, [g.id]: false }))}
-                                      className="text-sky-600 focus:ring-sky-500 border-slate-300"
-                                    />
-                                    <span className="text-[11px] text-slate-700">否</span>
-                                  </label>
-                                  <label className="flex items-center gap-1.5 cursor-pointer">
-                                    <input
-                                      type="radio"
-                                      name={`has-analysis-${g.id}`}
-                                      checked={isAnalysisShown(g)}
-                                      onChange={() => setShowAnalysis((prev) => ({ ...prev, [g.id]: true }))}
-                                      className="text-sky-600 focus:ring-sky-500 border-slate-300"
-                                    />
-                                    <span className="text-[11px] text-slate-700">是</span>
-                                  </label>
-                                </div>
+                                <label className="flex items-center gap-2 cursor-pointer w-fit">
+                                  <input
+                                    type="checkbox"
+                                    checked={isAnalysisShown(g)}
+                                    onChange={() => setShowAnalysis((prev) => ({ ...prev, [g.id]: !isAnalysisShown(g) }))}
+                                    className="text-sky-600 focus:ring-sky-500 border-slate-300 rounded"
+                                  />
+                                  <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded">是否分析</span>
+                                </label>
                                 {isAnalysisShown(g) && (
                                   <div className="mt-2">
-                                    <label className="block text-[11px] font-medium text-slate-500 mb-1">
-                                      分析能力 (Analysis Capability)
-                                    </label>
-                                    <div className="flex flex-wrap gap-4 mt-1.5">
+                                    <div className="flex flex-wrap gap-4">
                                       {CAPABILITY_OPTIONS.map((o) => (
                                         <label key={o.value} className="flex items-center gap-1.5 cursor-pointer">
                                           <input
@@ -548,29 +517,15 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                               </div>
 
                               <div>
-                                <label className="block text-[11px] font-medium text-slate-500 mb-1">是否字段</label>
-                                <div className="flex gap-4">
-                                  <label className="flex items-center gap-1.5 cursor-pointer">
-                                    <input
-                                      type="radio"
-                                      name={`has-fields-${g.id}`}
-                                      checked={!isFieldListShown(g)}
-                                      onChange={() => setShowFieldList((prev) => ({ ...prev, [g.id]: false }))}
-                                      className="text-sky-600 focus:ring-sky-500 border-slate-300"
-                                    />
-                                    <span className="text-[11px] text-slate-700">否</span>
-                                  </label>
-                                  <label className="flex items-center gap-1.5 cursor-pointer">
-                                    <input
-                                      type="radio"
-                                      name={`has-fields-${g.id}`}
-                                      checked={isFieldListShown(g)}
-                                      onChange={() => setShowFieldList((prev) => ({ ...prev, [g.id]: true }))}
-                                      className="text-sky-600 focus:ring-sky-500 border-slate-300"
-                                    />
-                                    <span className="text-[11px] text-slate-700">是</span>
-                                  </label>
-                                </div>
+                                <label className="flex items-center gap-2 cursor-pointer w-fit">
+                                  <input
+                                    type="checkbox"
+                                    checked={isFieldListShown(g)}
+                                    onChange={() => setShowFieldList((prev) => ({ ...prev, [g.id]: !isFieldListShown(g) }))}
+                                    className="text-sky-600 focus:ring-sky-500 border-slate-300 rounded"
+                                  />
+                                  <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded">是否字段</span>
+                                </label>
                                 {isFieldListShown(g) && (
                                   <div className="mt-2">
                                     <label className="block text-[11px] font-medium text-slate-500 mb-1">指标字段 (field_list)</label>
