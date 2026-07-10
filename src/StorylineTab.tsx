@@ -335,7 +335,7 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                         </select>
                       </div>
                       <div className="sm:col-span-2">
-                        <label className="block text-xs font-medium text-slate-500 mb-1">下钻Dimension (可选)</label>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">下钻Dimension (键盘Enter来添加)</label>
                         <div className="flex flex-wrap gap-1.5 mb-1.5">
                           {tg.drillDimensions.map((d, di) => (
                             <span

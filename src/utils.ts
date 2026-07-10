@@ -255,7 +255,7 @@ export function blankStoryline(name = ''): StorylineState {
   return {
     topic: name,
     background: '',
-    regions: ['NAAP'],
+    regions: [],
     templateGroups: [],
   };
 }

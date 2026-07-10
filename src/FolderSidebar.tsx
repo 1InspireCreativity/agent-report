@@ -85,7 +85,6 @@ export default function FolderSidebar<T>({
   const [collapsed, setCollapsed] = useState(false);
   const [folders, setFolders] = useState<SavedFolder<T>[]>([]);
   const [search, setSearch] = useState('');
-  const [tab, setTab] = useState<'all' | 'mine'>('all');
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState('');
   const [editDraft, setEditDraft] = useState<{ name: string; owner: string; visibility: StorylineDataType }>({
@@ -125,7 +124,6 @@ export default function FolderSidebar<T>({
   }, [storageKey, activeId, refreshToken]);
 
   const matchesFilter = (f: SavedFolder<T>) => {
-    if (tab === 'mine' && f.visibility !== 'personal') return false;
     if (search.trim() && !f.name.toLowerCase().includes(search.trim().toLowerCase())) return false;
     return true;
   };
@@ -485,32 +483,19 @@ export default function FolderSidebar<T>({
           />
         </div>
 
-        <div className="sl-tabs">
-          <div className={`sl-tab ${tab === 'all' ? 'active' : ''}`} onClick={() => setTab('all')}>
-            All
-          </div>
-          <div className={`sl-tab ${tab === 'mine' ? 'active' : ''}`} onClick={() => setTab('mine')}>
-            My Templates
-          </div>
+        <div className="sl-folders-head">
+          <span>FOLDERS</span>
+          <button className="sl-sidebar-toggle" onClick={() => startNew(null)} title="新建文件夹">
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path d="M12 5v14M5 12h14"></path>
+            </svg>
+          </button>
         </div>
 
-        {tab === 'all' && (
-          <>
-            <div className="sl-folders-head">
-              <span>FOLDERS</span>
-              <button className="sl-sidebar-toggle" onClick={() => startNew(null)} title="新建文件夹">
-                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M12 5v14M5 12h14"></path>
-                </svg>
-              </button>
-            </div>
-
-            <div className="sl-folder-list">
-              {topLevel.length === 0 && <div className="sl-folder-empty">暂无文件夹</div>}
-              {topLevel.map((f) => renderFolderNode(f, 0))}
-            </div>
-          </>
-        )}
+        <div className="sl-folder-list">
+          {topLevel.length === 0 && <div className="sl-folder-empty">暂无文件夹</div>}
+          {topLevel.map((f) => renderFolderNode(f, 0))}
+        </div>
 
         <div className="sl-folders-head" style={{ marginTop: 16 }}>
           <span>TEMPLATES</span>
