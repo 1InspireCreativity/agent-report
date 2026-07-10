@@ -300,7 +300,9 @@ export default function FolderSidebar<T>({
 
   const renderFolderNode = (f: SavedFolder<T>, depth: number): React.ReactNode => {
     const children = folders.filter((c) => c.parentId === f.id && matchesFilter(c));
-    const isExpanded = expandedIds.has(f.id);
+    // The active folder always shows its templates/subfolders, without needing
+    // a manual toggle click first.
+    const isExpanded = expandedIds.has(f.id) || f.id === activeId;
     const indent = 8 + depth * 16;
 
     if (editingId === f.id) {

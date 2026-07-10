@@ -584,6 +584,7 @@ input[type="color"]{padding:4px 6px;height:36px;cursor:pointer;border-radius:var
 }
 .sl-folder-meta{display:flex;align-items:center;gap:3px;font-size:11px;color:var(--c-text-4);flex-shrink:0;}
 .sl-folder-add{
+  position:relative;
   width:20px;height:20px;border-radius:50%;border:1px solid var(--c-border);
   background:var(--c-surface);display:flex;align-items:center;justify-content:center;
   cursor:pointer;color:var(--c-text-4);flex-shrink:0;opacity:0;transition:opacity .12s;
@@ -591,6 +592,14 @@ input[type="color"]{padding:4px 6px;height:36px;cursor:pointer;border-radius:var
 .sl-folder-row:hover .sl-folder-add{opacity:1;}
 .sl-folder-add:hover{border-color:var(--c-border-2);color:var(--c-text-2);}
 .sl-folder-add.danger:hover{border-color:var(--c-red);color:var(--c-red);background:var(--c-red-l);}
+.sl-folder-add[title]::after{
+  content:attr(title);
+  position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
+  background:#1E293B;color:#fff;font-size:11px;font-weight:500;white-space:nowrap;
+  padding:4px 8px;border-radius:5px;pointer-events:none;
+  opacity:0;transition:opacity .1s;z-index:60;
+}
+.sl-folder-add[title]:hover::after{opacity:1;}
 .sl-folder-row-edit{cursor:default;align-items:center;background:var(--c-surface-2);}
 .sl-folder-row-edit .sl-folder-add{opacity:1;}
 .sl-template-preview-row{
