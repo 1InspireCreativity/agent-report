@@ -27,6 +27,7 @@ export type ChartType = 'wuhuaro' | 'fensi' | 'maomaochong' | 'bar';
 
 export interface StorylineState {
   topic: string;
+  date: string; // YYYYMMDD, set to today on creation and refreshed on each Save
   background: string;
   regions: string[];
   templateGroups: TemplateGroup[];

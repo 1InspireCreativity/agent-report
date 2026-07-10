@@ -9,6 +9,13 @@ import type {
   TemplateGroup,
 } from './types';
 
+export function todayYYYYMMDD(): string {
+  const d = new Date();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}${m}${day}`;
+}
+
 export const CYCLE_OPTIONS: { value: ReportState['cycle']; label: string }[] = [
   { value: 'W', label: '每周（W）' },
   { value: '2W', label: '双周（2W）' },
@@ -197,6 +204,7 @@ export function deleteTemplate(id: string): SavedTemplate[] {
 export function defaultStoryline(): StorylineState {
   return {
     topic: 'GBS-1Team revenue和yoy',
+    date: todayYYYYMMDD(),
     background: '',
     regions: ['NAAP'],
     templateGroups: [
@@ -254,6 +262,7 @@ export function defaultStoryline(): StorylineState {
 export function blankStoryline(name = ''): StorylineState {
   return {
     topic: name,
+    date: todayYYYYMMDD(),
     background: '',
     regions: [],
     templateGroups: [],
@@ -493,6 +502,7 @@ export function normalizeStoryline(
 
   return {
     topic: typeof raw.topic === 'string' ? raw.topic : base.topic,
+    date: typeof raw.date === 'string' && raw.date ? raw.date : base.date,
     background: typeof raw.background === 'string' ? raw.background : base.background,
     regions,
     templateGroups,

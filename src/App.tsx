@@ -11,6 +11,7 @@ import {
   loadFolders,
   normalizeReport,
   normalizeStoryline,
+  todayYYYYMMDD,
   upsertFolder,
 } from './utils';
 import type { ReportState, StorylineDataType, StorylineState } from './types';
@@ -201,6 +202,7 @@ function App() {
       return;
     }
     try {
+      const nextState = { ...storyline, date: todayYYYYMMDD() };
       const existing = loadFolders<StorylineState>('storylineFolders').find((f) => f.id === storylineActiveId);
       const item = upsertFolder({
         storageKey: 'storylineFolders',
@@ -209,8 +211,9 @@ function App() {
         name,
         owner: '',
         visibility: existing?.visibility || 'public',
-        state: storyline,
+        state: nextState,
       });
+      setStoryline(nextState);
       setStorylineActiveId(item.id);
       setStorylineRefresh((v) => v + 1);
       toast('✅ 已保存：' + name);
