@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Folder as FolderIcon } from 'lucide-react';
 import type { SavedFolder, SavedTemplate, StorylineDataType } from './types';
 import {
   deleteTemplate,
@@ -310,11 +311,7 @@ export default function FolderSidebar<T>({
           style={{ paddingLeft: indent }}
           onClick={(e) => e.stopPropagation()}
         >
-          <span className="sl-folder-icon" style={{ background: f.color }}>
-            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"></path>
-            </svg>
-          </span>
+          <FolderIcon size={14} color="#4F46E5" style={{ flexShrink: 0 }} />
           <div className="sl-folder-edit-fields">
             <input
               type="text"
@@ -381,11 +378,11 @@ export default function FolderSidebar<T>({
               <path d="M9 6l6 6-6 6"></path>
             </svg>
           </button>
-          <span className="sl-folder-icon" style={{ background: f.color }}>
-            <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"></path>
-            </svg>
-          </span>
+          <FolderIcon
+            size={14}
+            color={f.id === activeId ? '#4F46E5' : '#94A3B8'}
+            style={{ flexShrink: 0 }}
+          />
           <span className="sl-folder-name" title={f.name}>
             {f.name}
           </span>
