@@ -3,7 +3,6 @@ import { Undo2, Redo2 } from 'lucide-react';
 import type { ReportState } from './types';
 import { buildReportPayload, CYCLE_OPTIONS, CHART_TYPE_OPTIONS } from './utils';
 import { submitReportConfig } from './api';
-import PayloadPanel from './PayloadPanel';
 import SubmitHistoryPanel from './SubmitHistoryPanel';
 import {
   addSubmissionRecord,
@@ -95,8 +94,6 @@ export default function ReportTab({ state, setState, toast, onSave, onUndo, onRe
       templateIds: [],
     }));
   };
-
-  const payload = buildReportPayload(state);
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50/50">
@@ -237,17 +234,6 @@ export default function ReportTab({ state, setState, toast, onSave, onUndo, onRe
           </div>
         </div>
       </div>
-
-      {/* Payload */}
-      <div className="section-label" style={{ marginTop: 20 }}>
-        Agent Payload
-      </div>
-      <PayloadPanel
-        label="Weekly Report Config"
-        meta={state.name || '未命名报告'}
-        payload={payload}
-        onCopy={() => toast('✅ 已复制到剪贴板')}
-      />
 
       {/* Submission History */}
       <div className="section-label" style={{ marginTop: 20 }}>

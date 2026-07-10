@@ -6,7 +6,6 @@ import {
   buildStorylinePayload,
   emptyTemplateGroup,
   emptyChartGroup,
-  loadTemplateCatalog,
   CAPABILITY_OPTIONS,
   AGGREGATION_OPTIONS,
   REGION_OPTIONS,
@@ -28,7 +27,6 @@ interface Props {
 }
 
 export default function StorylineTab({ state, setState, toast, onSave, onUndo, onRedo, canUndo, canRedo }: Props) {
-  const templateCatalog = loadTemplateCatalog();
   const [fieldDrafts, setFieldDrafts] = useState<Record<number, string>>({});
   const [drillDrafts, setDrillDrafts] = useState<Record<number, string>>({});
   const [isSaved, setIsSaved] = useState(false);
@@ -268,23 +266,6 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                             onChange={(e) => setTemplateId(tg.id, e.target.value)}
                             className="w-full bg-white border border-slate-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-shadow"
                           />
-                          {templateCatalog.length > 0 && (
-                            <select
-                              value=""
-                              title="从模板选择"
-                              onChange={(e) => {
-                                if (e.target.value) setTemplateId(tg.id, e.target.value);
-                              }}
-                              className="bg-white border border-slate-300 rounded-md px-2 py-1 text-xs flex-shrink-0"
-                            >
-                              <option value="">从模板选择…</option>
-                              {templateCatalog.map((t) => (
-                                <option value={t.templateId} key={t.id}>
-                                  {t.name}
-                                </option>
-                              ))}
-                            </select>
-                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 pl-4">
