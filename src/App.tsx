@@ -361,6 +361,7 @@ function App() {
               onActiveIdChange={setStorylineActiveId}
               refreshToken={storylineRefresh}
               listTemplates={(s) => s.templateGroups.map((tg) => tg.businessScene || tg.templateId || '(未命名 Template)')}
+              showTemplateCatalog={false}
             />
             <div style={{ flex: 1, minWidth: 0, alignSelf: 'stretch' }}>
               {storylineActiveId ? (

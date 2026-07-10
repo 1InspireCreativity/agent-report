@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ReportState, StorylineDataType } from './types';
-import { buildReportPayload, loadTemplateCatalog, CYCLE_OPTIONS, CHART_TYPE_OPTIONS } from './utils';
+import { buildReportPayload, CYCLE_OPTIONS, CHART_TYPE_OPTIONS } from './utils';
 import { submitReportConfig } from './api';
 import PayloadPanel from './PayloadPanel';
 import SubmitHistoryPanel from './SubmitHistoryPanel';
@@ -20,7 +20,6 @@ interface Props {
 }
 
 export default function ReportTab({ state, setState, toast, onSave }: Props) {
-  const templateCatalog = loadTemplateCatalog();
   const [templateIdDraft, setTemplateIdDraft] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitHistory, setSubmitHistory] = useState(() => loadSubmissionHistory(REPORT_SUBMIT_HISTORY_KEY));
@@ -190,23 +189,6 @@ export default function ReportTab({ state, setState, toast, onSave }: Props) {
                 + 添加
               </button>
             </div>
-            {templateCatalog.length > 0 && (
-              <select
-                value=""
-                style={{ marginTop: 8, width: '100%' }}
-                title="从模板选择"
-                onChange={(e) => {
-                  if (e.target.value) addTemplateIdValue(e.target.value);
-                }}
-              >
-                <option value="">从模板选择…</option>
-                {templateCatalog.map((t) => (
-                  <option value={t.templateId} key={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            )}
           </div>
           <div className="footer-bar" style={{ padding: '14px 0 0', marginTop: 14 }}>
             <button className="btn btn-secondary btn-sm" onClick={() => onSave('public')}>

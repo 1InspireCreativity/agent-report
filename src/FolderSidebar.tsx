@@ -37,6 +37,7 @@ interface Props<T> {
   onActiveIdChange: (id: string) => void;
   refreshToken?: unknown;
   listTemplates?: (state: T) => string[];
+  showTemplateCatalog?: boolean;
 }
 
 function flattenSeed<T>(
@@ -81,6 +82,7 @@ export default function FolderSidebar<T>({
   onActiveIdChange: setActiveId,
   refreshToken,
   listTemplates,
+  showTemplateCatalog = true,
 }: Props<T>) {
   const [collapsed, setCollapsed] = useState(false);
   const [folders, setFolders] = useState<SavedFolder<T>[]>([]);
@@ -497,6 +499,8 @@ export default function FolderSidebar<T>({
           {topLevel.map((f) => renderFolderNode(f, 0))}
         </div>
 
+        {showTemplateCatalog && (
+          <>
         <div className="sl-folders-head" style={{ marginTop: 16 }}>
           <span>TEMPLATES</span>
           <button className="sl-sidebar-toggle" onClick={startNewTemplate} title="新建模板">
@@ -569,6 +573,8 @@ export default function FolderSidebar<T>({
             )
           )}
         </div>
+          </>
+        )}
       </div>
 
       <div className="sl-sidebar-footer">
