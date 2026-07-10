@@ -37,7 +37,8 @@ interface Props<T> {
   activeId: string;
   onActiveIdChange: (id: string) => void;
   refreshToken?: unknown;
-  listTemplates?: (state: T) => string[];
+  listTemplates?: (state: T) => { id: string; label: string }[];
+  onTemplateClick?: (folder: SavedFolder<T>, templateId: string) => void;
   showTemplateCatalog?: boolean;
 }
 
@@ -83,6 +84,7 @@ export default function FolderSidebar<T>({
   onActiveIdChange: setActiveId,
   refreshToken,
   listTemplates,
+  onTemplateClick,
   showTemplateCatalog = false,
 }: Props<T>) {
   const [collapsed, setCollapsed] = useState(false);
@@ -415,8 +417,16 @@ export default function FolderSidebar<T>({
         {isExpanded && (
           <div className="sl-folder-children">
             {listTemplates &&
-              listTemplates(normalize(f.state)).map((label, i) => (
-                <div className="sl-template-preview-row" key={i} style={{ paddingLeft: indent + 16 }}>
+              listTemplates(normalize(f.state)).map((item) => (
+                <div
+                  className="sl-template-preview-row"
+                  key={item.id}
+                  style={{ paddingLeft: indent + 16, cursor: onTemplateClick ? 'pointer' : undefined }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onTemplateClick?.(f, item.id);
+                  }}
+                >
                   <span className="sl-template-preview-icon">
                     <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
@@ -425,8 +435,8 @@ export default function FolderSidebar<T>({
                       <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     </svg>
                   </span>
-                  <span className="sl-template-preview-label" title={label}>
-                    {label}
+                  <span className="sl-template-preview-label" title={item.label}>
+                    {item.label}
                   </span>
                 </div>
               ))}

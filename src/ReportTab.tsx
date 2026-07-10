@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Undo2, Redo2, Folder } from 'lucide-react';
+import { Undo2, Redo2, Folder, LayoutTemplate, Plus, Trash2 } from 'lucide-react';
 import type { ReportState } from './types';
 import { buildReportPayload, CYCLE_OPTIONS, CHART_TYPE_OPTIONS } from './utils';
 import { submitReportConfig } from './api';
@@ -24,7 +24,6 @@ interface Props {
 }
 
 export default function ReportTab({ state, setState, toast, onSave, onUndo, onRedo, canUndo, canRedo }: Props) {
-  const [templateIdDraft, setTemplateIdDraft] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [submitHistory, setSubmitHistory] = useState(() => loadSubmissionHistory(REPORT_SUBMIT_HISTORY_KEY));
@@ -39,15 +38,15 @@ export default function ReportTab({ state, setState, toast, onSave, onUndo, onRe
     setState((prev) => ({ ...prev, [key]: value }));
   };
 
-  const addTemplateIdValue = (val: string) => {
-    if (!val) return;
-    setState((prev) => ({ ...prev, templateIds: [...prev.templateIds, val] }));
+  const addTemplateId = () => {
+    setState((prev) => ({ ...prev, templateIds: [...prev.templateIds, ''] }));
   };
 
-  const addTemplateId = () => {
-    const val = templateIdDraft.trim();
-    addTemplateIdValue(val);
-    setTemplateIdDraft('');
+  const setTemplateId = (idx: number, value: string) => {
+    setState((prev) => ({
+      ...prev,
+      templateIds: prev.templateIds.map((t, i) => (i === idx ? value : t)),
+    }));
   };
 
   const delTemplateId = (idx: number) => {
@@ -153,7 +152,7 @@ export default function ReportTab({ state, setState, toast, onSave, onUndo, onRe
             {/* Configuration */}
             <div className="px-5 py-4 border-b border-slate-200 bg-white grid gap-4 grid-cols-1 md:grid-cols-2">
               <div className="md:col-span-2">
-                <label className="block text-xs font-medium text-slate-500 mb-1">报告描述 (可选)</label>
+                <label className="block text-xs font-medium text-slate-500 mb-1">报告描述</label>
                 <textarea
                   placeholder="例：CNOB分析报告给XX周会使用"
                   value={state.description}
@@ -192,39 +191,42 @@ export default function ReportTab({ state, setState, toast, onSave, onUndo, onRe
                 </select>
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs font-medium text-slate-500 mb-1">
-                  Template ID (支持添加多个，键盘Enter来添加)
-                </label>
-                <div className="flex flex-wrap gap-1.5 mb-1.5">
-                  {state.templateIds.map((t, i) => (
-                    <span key={i} className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-xs flex items-center gap-1">
-                      {t}
-                      <button onClick={() => delTemplateId(i)} className="hover:text-red-600">
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="motz7cum6ntsj6"
-                    value={templateIdDraft}
-                    onChange={(e) => setTemplateIdDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        addTemplateId();
-                        e.preventDefault();
-                      }
-                    }}
-                    className="flex-1 bg-white border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium text-slate-500">Template ID (支持添加多个)</label>
                   <button
                     onClick={addTemplateId}
-                    className="text-slate-600 hover:text-indigo-600 bg-white border border-slate-200 hover:border-indigo-200 px-3 py-1 rounded-md text-xs font-medium transition-colors shadow-sm"
+                    className="text-slate-600 hover:text-indigo-600 bg-white border border-slate-200 hover:border-indigo-200 px-2 py-1 rounded text-xs font-medium transition-colors flex items-center gap-1 shadow-sm"
                   >
-                    + 添加
+                    <Plus className="w-3 h-3" />
+                    Add Template ID
                   </button>
+                </div>
+                <div className="space-y-2">
+                  {state.templateIds.length === 0 ? (
+                    <p className="text-[11px] text-slate-400 italic pl-1">No template IDs added yet.</p>
+                  ) : (
+                    state.templateIds.map((t, i) => (
+                      <div key={i} className="flex items-center gap-2 relative group">
+                        <div className="text-slate-400">
+                          <LayoutTemplate className="w-3 h-3" />
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="motz7cum6ntsj6"
+                          value={t}
+                          onChange={(e) => setTemplateId(i, e.target.value)}
+                          className="flex-1 bg-white border border-slate-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-slate-300 focus:border-slate-400 transition-shadow"
+                        />
+                        <button
+                          onClick={() => delTemplateId(i)}
+                          className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-1"
+                          title="Remove Template ID"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>

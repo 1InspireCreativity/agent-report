@@ -230,7 +230,7 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
 
             {/* Folder Configuration */}
             <div className="px-5 py-4 border-b border-slate-200 bg-white grid gap-4 grid-cols-1 md:grid-cols-2">
-              <div>
+              <div className="md:col-span-2">
                 <label className="block text-xs font-medium text-slate-500 mb-1">数据范围 (Data Range)</label>
                 <MultiSelect
                   options={REGION_OPTIONS}
@@ -259,7 +259,11 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                 </div>
               ) : (
                 state.templateGroups.map((tg) => (
-                  <div key={tg.id} className="border border-slate-200 rounded-lg overflow-visible relative bg-white">
+                  <div
+                    key={tg.id}
+                    id={`chart-template-${tg.id}`}
+                    className="border border-slate-200 rounded-lg overflow-visible relative bg-white scroll-mt-4"
+                  >
                     {/* Template Header */}
                     <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between rounded-t-lg">
                       <div className="flex-1 max-w-sm flex items-center gap-3">

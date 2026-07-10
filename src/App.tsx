@@ -202,6 +202,7 @@ function App() {
   const [reportActiveId, setReportActiveId] = useState('');
   const [storylineRefresh, setStorylineRefresh] = useState(0);
   const [reportRefresh, setReportRefresh] = useState(0);
+  const [pendingScrollTemplateId, setPendingScrollTemplateId] = useState<string | null>(null);
   const { msg, visible, toast } = useToast();
 
   const saveStorylineFolder = () => {
@@ -279,6 +280,17 @@ function App() {
     }
   }, [storyline, report]);
 
+  // Scroll to a chart template card after clicking its sidebar preview row;
+  // retries until the card exists (e.g. after switching the active folder).
+  useEffect(() => {
+    if (!pendingScrollTemplateId) return;
+    const el = document.getElementById(`chart-template-${pendingScrollTemplateId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setPendingScrollTemplateId(null);
+    }
+  }, [pendingScrollTemplateId, storyline, storylineActiveId]);
+
   // Live-sync the active storyline folder: every edit (including renaming via
   // 报告名称) persists to the folder immediately, without pressing Save.
   useEffect(() => {
@@ -320,16 +332,6 @@ function App() {
     }
   }, [report, reportActiveId]);
 
-  const handleExport = () => {
-    const payload = activeTab === 'report' ? report : storyline;
-    const json = JSON.stringify(payload, null, 2);
-    const a = document.createElement('a');
-    a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
-    a.download = (activeTab === 'report' ? 'report' : 'storyline') + '-config-' + Date.now() + '.json';
-    a.click();
-    toast('✅ 配置已导出为 JSON 文件');
-  };
-
   return (
     <>
       <header className="topbar">
@@ -358,12 +360,6 @@ function App() {
           </button>
         </nav>
         <div className="topbar-right">
-          <button className="topbar-btn" onClick={handleExport}>
-            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-            </svg>
-            导出配置
-          </button>
           <div className="topbar-avatar" title="ESTHER">
             E
           </div>
@@ -390,7 +386,19 @@ function App() {
               activeId={storylineActiveId}
               onActiveIdChange={setStorylineActiveId}
               refreshToken={storylineRefresh}
-              listTemplates={(s) => s.templateGroups.map((tg) => tg.businessScene || tg.templateId || '(未命名 Template)')}
+              listTemplates={(s) =>
+                s.templateGroups.map((tg) => ({
+                  id: String(tg.id),
+                  label: tg.businessScene || tg.templateId || '(未命名 Template)',
+                }))
+              }
+              onTemplateClick={(folder, templateId) => {
+                if (folder.id !== storylineActiveId) {
+                  setStoryline(normalizeStoryline(folder.state));
+                  setStorylineActiveId(folder.id);
+                }
+                setPendingScrollTemplateId(templateId);
+              }}
             />
             <div style={{ flex: 1, minWidth: 0, alignSelf: 'stretch' }}>
               {storylineActiveId ? (
