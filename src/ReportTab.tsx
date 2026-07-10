@@ -88,8 +88,8 @@ export default function ReportTab({ state, setState, toast, onSave, onUndo, onRe
     setState((prev) => ({
       ...prev,
       name: '',
-      cycle: 'W',
-      chartType: 'wuhuaro',
+      cycle: '',
+      chartType: '',
       description: '',
       templateIds: [],
     }));
@@ -177,6 +177,7 @@ export default function ReportTab({ state, setState, toast, onSave, onUndo, onRe
                 汇报周期 <span className="req">*</span>
               </div>
               <select value={state.cycle} onChange={(e) => update('cycle', e.target.value as ReportState['cycle'])}>
+                <option value="">请选择…</option>
                 {CYCLE_OPTIONS.map((o) => (
                   <option value={o.value} key={o.value}>
                     {o.label}
@@ -192,6 +193,7 @@ export default function ReportTab({ state, setState, toast, onSave, onUndo, onRe
                 value={state.chartType}
                 onChange={(e) => update('chartType', e.target.value as ReportState['chartType'])}
               >
+                <option value="">请选择…</option>
                 {CHART_TYPE_OPTIONS.map((o) => (
                   <option value={o.value} key={o.value}>
                     {o.label}

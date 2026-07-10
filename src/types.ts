@@ -22,8 +22,8 @@ export interface TemplateGroup {
   chartGroups: ChartGroup[];
 }
 
-export type ReportCycle = 'W' | '2W' | 'M';
-export type ChartType = 'wuhuaro' | 'fensi' | 'maomaochong' | 'bar';
+export type ReportCycle = '' | 'W' | '2W' | 'M';
+export type ChartType = '' | 'wuhuaro' | 'fensi' | 'maomaochong' | 'bar';
 
 export interface StorylineState {
   topic: string;

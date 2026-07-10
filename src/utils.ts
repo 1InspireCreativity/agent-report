@@ -272,8 +272,8 @@ export function blankStoryline(name = ''): StorylineState {
 export function defaultReport(name = ''): ReportState {
   return {
     name,
-    cycle: 'W',
-    chartType: 'wuhuaro',
+    cycle: '',
+    chartType: '',
     description: '',
     templateIds: [],
   };

@@ -414,7 +414,6 @@ export default function FolderSidebar<T>({
         </div>
         {isExpanded && (
           <div className="sl-folder-children">
-            {children.map((c) => renderFolderNode(c, depth + 1))}
             {listTemplates &&
               listTemplates(normalize(f.state)).map((label, i) => (
                 <div className="sl-template-preview-row" key={i} style={{ paddingLeft: indent + 16 }}>
@@ -431,6 +430,7 @@ export default function FolderSidebar<T>({
                   </span>
                 </div>
               ))}
+            {children.map((c) => renderFolderNode(c, depth + 1))}
             <div
               className="sl-folder-add-child"
               style={{ paddingLeft: indent + 16 }}

@@ -31,6 +31,15 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
   const [drillDrafts, setDrillDrafts] = useState<Record<number, string>>({});
   const [isSaved, setIsSaved] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showAggregation, setShowAggregation] = useState<Record<number, boolean>>({});
+  const [showAnalysis, setShowAnalysis] = useState<Record<number, boolean>>({});
+  const [showFieldList, setShowFieldList] = useState<Record<number, boolean>>({});
+
+  // Hidden by default; once data already exists (loaded from a saved folder) or the
+  // user explicitly answers 是, the section stays visible.
+  const isAggregationShown = (g: ChartGroup) => showAggregation[g.id] ?? g.aggregationMethods.length > 0;
+  const isAnalysisShown = (g: ChartGroup) => showAnalysis[g.id] ?? g.capabilities.length > 0;
+  const isFieldListShown = (g: ChartGroup) => showFieldList[g.id] ?? g.fieldList.length > 0;
 
   const update = <K extends keyof StorylineState>(key: K, value: StorylineState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }));
@@ -392,7 +401,7 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                                   className="text-slate-600 hover:text-sky-600 bg-white border border-slate-200 hover:border-sky-200 px-2 py-1 rounded text-xs font-medium transition-colors flex items-center gap-1 shadow-sm"
                                 >
                                   <Plus className="w-3 h-3" />
-                                  Add URL
+                                  Add AC query
                                 </button>
                                 <button
                                   onClick={() => delChartGroup(tg.id, g.id)}
@@ -436,90 +445,171 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                             {/* Chart Configuration */}
                             <div className="p-3 bg-slate-50 border-t border-slate-200 space-y-4 rounded-b-lg">
                               <div>
-                                <label className="block text-[11px] font-medium text-slate-500 mb-1">拼数方式 (Data Aggregation)</label>
-                                <div className="space-y-2">
-                                  <MultiSelect
-                                    options={AGGREGATION_OPTIONS}
-                                    selected={g.aggregationMethods}
-                                    onChange={(v) => setAggregationMethods(tg.id, g.id, v)}
-                                    placeholder="Select aggregation methods..."
-                                  />
-                                  {g.aggregationMethods.includes('其他') && (
+                                <label className="block text-[11px] font-medium text-slate-500 mb-1">是否拼数</label>
+                                <div className="flex gap-4">
+                                  <label className="flex items-center gap-1.5 cursor-pointer">
                                     <input
-                                      type="text"
-                                      value={g.aggregationOtherText}
-                                      onChange={(e) => setAggregationOtherText(tg.id, g.id, e.target.value)}
-                                      placeholder="请填写具体其他方式…"
-                                      className="w-full bg-white border border-slate-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent mt-2"
+                                      type="radio"
+                                      name={`has-agg-${g.id}`}
+                                      checked={!isAggregationShown(g)}
+                                      onChange={() => setShowAggregation((prev) => ({ ...prev, [g.id]: false }))}
+                                      className="text-sky-600 focus:ring-sky-500 border-slate-300"
                                     />
-                                  )}
+                                    <span className="text-[11px] text-slate-700">否</span>
+                                  </label>
+                                  <label className="flex items-center gap-1.5 cursor-pointer">
+                                    <input
+                                      type="radio"
+                                      name={`has-agg-${g.id}`}
+                                      checked={isAggregationShown(g)}
+                                      onChange={() => setShowAggregation((prev) => ({ ...prev, [g.id]: true }))}
+                                      className="text-sky-600 focus:ring-sky-500 border-slate-300"
+                                    />
+                                    <span className="text-[11px] text-slate-700">是</span>
+                                  </label>
                                 </div>
-                              </div>
-
-                              <div>
-                                <label className="block text-[11px] font-medium text-slate-500 mb-1">
-                                  分析能力 (Analysis Capability) [可选]
-                                </label>
-                                <div className="flex flex-wrap gap-4 mt-1.5">
-                                  {CAPABILITY_OPTIONS.map((o) => (
-                                    <label key={o.value} className="flex items-center gap-1.5 cursor-pointer">
-                                      <input
-                                        type="radio"
-                                        name={`capability-${tg.id}-${g.id}`}
-                                        checked={g.capabilities.includes(o.value)}
-                                        onChange={() => setCapability(tg.id, g.id, o.value)}
-                                        className="text-sky-600 focus:ring-sky-500 border-slate-300"
+                                {isAggregationShown(g) && (
+                                  <div className="mt-2">
+                                    <label className="block text-[11px] font-medium text-slate-500 mb-1">拼数方式 (Data Aggregation)</label>
+                                    <div className="space-y-2">
+                                      <MultiSelect
+                                        options={AGGREGATION_OPTIONS}
+                                        selected={g.aggregationMethods}
+                                        onChange={(v) => setAggregationMethods(tg.id, g.id, v)}
+                                        placeholder="Select aggregation methods..."
                                       />
-                                      <span className="text-[11px] text-slate-700">{o.label}</span>
-                                    </label>
-                                  ))}
-                                  {g.capabilities.length > 0 && (
-                                    <button
-                                      onClick={() => clearCapabilities(tg.id, g.id)}
-                                      className="text-[10px] text-slate-400 hover:text-slate-600 underline ml-2"
-                                    >
-                                      清除
-                                    </button>
-                                  )}
-                                </div>
+                                      {g.aggregationMethods.includes('其他') && (
+                                        <input
+                                          type="text"
+                                          value={g.aggregationOtherText}
+                                          onChange={(e) => setAggregationOtherText(tg.id, g.id, e.target.value)}
+                                          placeholder="请填写具体其他方式…"
+                                          className="w-full bg-white border border-slate-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent mt-2"
+                                        />
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
 
                               <div>
-                                <label className="block text-[11px] font-medium text-slate-500 mb-1">指标字段 (field_list)</label>
-                                <div className="flex flex-wrap gap-1.5 mb-1.5">
-                                  {g.fieldList.map((f, fi) => (
-                                    <span
-                                      key={fi}
-                                      className="bg-sky-50 text-sky-700 px-2 py-0.5 rounded text-xs flex items-center gap-1"
-                                    >
-                                      {f}
-                                      <button onClick={() => delFieldListItem(tg.id, g.id, fi)} className="hover:text-red-600">
-                                        ×
+                                <label className="block text-[11px] font-medium text-slate-500 mb-1">是否分析</label>
+                                <div className="flex gap-4">
+                                  <label className="flex items-center gap-1.5 cursor-pointer">
+                                    <input
+                                      type="radio"
+                                      name={`has-analysis-${g.id}`}
+                                      checked={!isAnalysisShown(g)}
+                                      onChange={() => setShowAnalysis((prev) => ({ ...prev, [g.id]: false }))}
+                                      className="text-sky-600 focus:ring-sky-500 border-slate-300"
+                                    />
+                                    <span className="text-[11px] text-slate-700">否</span>
+                                  </label>
+                                  <label className="flex items-center gap-1.5 cursor-pointer">
+                                    <input
+                                      type="radio"
+                                      name={`has-analysis-${g.id}`}
+                                      checked={isAnalysisShown(g)}
+                                      onChange={() => setShowAnalysis((prev) => ({ ...prev, [g.id]: true }))}
+                                      className="text-sky-600 focus:ring-sky-500 border-slate-300"
+                                    />
+                                    <span className="text-[11px] text-slate-700">是</span>
+                                  </label>
+                                </div>
+                                {isAnalysisShown(g) && (
+                                  <div className="mt-2">
+                                    <label className="block text-[11px] font-medium text-slate-500 mb-1">
+                                      分析能力 (Analysis Capability)
+                                    </label>
+                                    <div className="flex flex-wrap gap-4 mt-1.5">
+                                      {CAPABILITY_OPTIONS.map((o) => (
+                                        <label key={o.value} className="flex items-center gap-1.5 cursor-pointer">
+                                          <input
+                                            type="radio"
+                                            name={`capability-${tg.id}-${g.id}`}
+                                            checked={g.capabilities.includes(o.value)}
+                                            onChange={() => setCapability(tg.id, g.id, o.value)}
+                                            className="text-sky-600 focus:ring-sky-500 border-slate-300"
+                                          />
+                                          <span className="text-[11px] text-slate-700">{o.label}</span>
+                                        </label>
+                                      ))}
+                                      {g.capabilities.length > 0 && (
+                                        <button
+                                          onClick={() => clearCapabilities(tg.id, g.id)}
+                                          className="text-[10px] text-slate-400 hover:text-slate-600 underline ml-2"
+                                        >
+                                          清除
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div>
+                                <label className="block text-[11px] font-medium text-slate-500 mb-1">是否字段</label>
+                                <div className="flex gap-4">
+                                  <label className="flex items-center gap-1.5 cursor-pointer">
+                                    <input
+                                      type="radio"
+                                      name={`has-fields-${g.id}`}
+                                      checked={!isFieldListShown(g)}
+                                      onChange={() => setShowFieldList((prev) => ({ ...prev, [g.id]: false }))}
+                                      className="text-sky-600 focus:ring-sky-500 border-slate-300"
+                                    />
+                                    <span className="text-[11px] text-slate-700">否</span>
+                                  </label>
+                                  <label className="flex items-center gap-1.5 cursor-pointer">
+                                    <input
+                                      type="radio"
+                                      name={`has-fields-${g.id}`}
+                                      checked={isFieldListShown(g)}
+                                      onChange={() => setShowFieldList((prev) => ({ ...prev, [g.id]: true }))}
+                                      className="text-sky-600 focus:ring-sky-500 border-slate-300"
+                                    />
+                                    <span className="text-[11px] text-slate-700">是</span>
+                                  </label>
+                                </div>
+                                {isFieldListShown(g) && (
+                                  <div className="mt-2">
+                                    <label className="block text-[11px] font-medium text-slate-500 mb-1">指标字段 (field_list)</label>
+                                    <div className="flex flex-wrap gap-1.5 mb-1.5">
+                                      {g.fieldList.map((f, fi) => (
+                                        <span
+                                          key={fi}
+                                          className="bg-sky-50 text-sky-700 px-2 py-0.5 rounded text-xs flex items-center gap-1"
+                                        >
+                                          {f}
+                                          <button onClick={() => delFieldListItem(tg.id, g.id, fi)} className="hover:text-red-600">
+                                            ×
+                                          </button>
+                                        </span>
+                                      ))}
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <input
+                                        type="text"
+                                        placeholder="如：Stat Date"
+                                        value={fieldDrafts[g.id] || ''}
+                                        onChange={(e) => setFieldDrafts((prev) => ({ ...prev, [g.id]: e.target.value }))}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') {
+                                            addFieldListItem(tg.id, g.id);
+                                            e.preventDefault();
+                                          }
+                                        }}
+                                        className="flex-1 bg-white border border-slate-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                                      />
+                                      <button
+                                        onClick={() => addFieldListItem(tg.id, g.id)}
+                                        className="text-slate-600 hover:text-sky-600 bg-white border border-slate-200 hover:border-sky-200 px-3 py-1 rounded text-xs font-medium transition-colors shadow-sm"
+                                      >
+                                        + 添加
                                       </button>
-                                    </span>
-                                  ))}
-                                </div>
-                                <div className="flex gap-2">
-                                  <input
-                                    type="text"
-                                    placeholder="如：Stat Date"
-                                    value={fieldDrafts[g.id] || ''}
-                                    onChange={(e) => setFieldDrafts((prev) => ({ ...prev, [g.id]: e.target.value }))}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') {
-                                        addFieldListItem(tg.id, g.id);
-                                        e.preventDefault();
-                                      }
-                                    }}
-                                    className="flex-1 bg-white border border-slate-300 rounded px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
-                                  />
-                                  <button
-                                    onClick={() => addFieldListItem(tg.id, g.id)}
-                                    className="text-slate-600 hover:text-sky-600 bg-white border border-slate-200 hover:border-sky-200 px-3 py-1 rounded text-xs font-medium transition-colors shadow-sm"
-                                  >
-                                    + 添加
-                                  </button>
-                                </div>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
