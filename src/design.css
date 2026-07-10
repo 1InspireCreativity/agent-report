@@ -534,7 +534,7 @@ input[type="color"]{padding:4px 6px;height:36px;cursor:pointer;border-radius:var
 }
 
 /* ══════════ STORYLINE SIDEBAR ══════════ */
-.sl-layout{display:flex;align-items:stretch;height:calc(100vh - 56px);max-width:1320px;margin:0 auto;}
+.sl-layout{display:flex;align-items:stretch;height:calc(100vh - 56px);}
 .sl-sidebar{
   width:var(--sl-sidebar-w,272px);flex-shrink:0;background:var(--c-surface);
   border-right:1px solid var(--c-border);
