@@ -202,7 +202,7 @@ export default function ReportTab({ state, setState, toast, onSave, onUndo, onRe
           </div>
           <div className="field" style={{ margin: '16px 0 0' }}>
             <div className="field-label">
-              Template ID <span className="req">*</span> <span className="hint">支持添加多个 Template ID</span>
+              Template ID <span className="req">*</span> <span className="hint">支持添加多个 Template ID (键盘Enter来添加)</span>
             </div>
             <div className="tags-wrap">
               {state.templateIds.map((t, i) => (
