@@ -117,11 +117,8 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
     updateChartGroup(tgId, groupId, (g) => ({ ...g, aggregationOtherText: value }));
   };
 
-  const toggleCapability = (tgId: number, groupId: number, cap: ChartCapability) => {
-    updateChartGroup(tgId, groupId, (g) => ({
-      ...g,
-      capabilities: g.capabilities.includes(cap) ? g.capabilities.filter((c) => c !== cap) : [...g.capabilities, cap],
-    }));
+  const setCapability = (tgId: number, groupId: number, cap: ChartCapability) => {
+    updateChartGroup(tgId, groupId, (g) => ({ ...g, capabilities: [cap] }));
   };
 
   const clearCapabilities = (tgId: number, groupId: number) => {
@@ -489,10 +486,11 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                                   {CAPABILITY_OPTIONS.map((o) => (
                                     <label key={o.value} className="flex items-center gap-1.5 cursor-pointer">
                                       <input
-                                        type="checkbox"
+                                        type="radio"
+                                        name={`capability-${tg.id}-${g.id}`}
                                         checked={g.capabilities.includes(o.value)}
-                                        onChange={() => toggleCapability(tg.id, g.id, o.value)}
-                                        className="text-sky-600 focus:ring-sky-500 border-slate-300 rounded"
+                                        onChange={() => setCapability(tg.id, g.id, o.value)}
+                                        className="text-sky-600 focus:ring-sky-500 border-slate-300"
                                       />
                                       <span className="text-[11px] text-slate-700">{o.label}</span>
                                     </label>

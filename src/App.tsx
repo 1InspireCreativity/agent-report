@@ -11,6 +11,7 @@ import {
   loadFolders,
   normalizeReport,
   normalizeStoryline,
+  saveFolders,
   todayYYYYMMDD,
   upsertFolder,
 } from './utils';
@@ -267,6 +268,27 @@ function App() {
       // ignore quota errors
     }
   }, [storyline, report]);
+
+  // Live-sync the active storyline folder: every edit (including renaming via
+  // 报告名称) persists to the folder immediately, without pressing Save.
+  useEffect(() => {
+    if (!storylineActiveId) return;
+    try {
+      const arr = loadFolders<StorylineState>('storylineFolders');
+      const idx = arr.findIndex((f) => f.id === storylineActiveId);
+      if (idx < 0) return;
+      arr[idx] = {
+        ...arr[idx],
+        name: storyline.topic.trim() || arr[idx].name,
+        state: storyline,
+        updated_at: new Date().toLocaleString(),
+      };
+      saveFolders('storylineFolders', arr);
+      setStorylineRefresh((v) => v + 1);
+    } catch {
+      // ignore quota errors
+    }
+  }, [storyline, storylineActiveId]);
 
   const handleExport = () => {
     const payload = activeTab === 'report' ? report : storyline;

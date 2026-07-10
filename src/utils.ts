@@ -223,7 +223,7 @@ export function defaultStoryline(): StorylineState {
             queryLinks: ['https://mmm.tiktok-row.net/apps/analytics/biportal/report/edit/1145582?dataset=1159057&queryId=648947878'],
             aggregationMethods: ['Q'],
             aggregationOtherText: '',
-            capabilities: ['basic', 'attribution'],
+            capabilities: ['basic'],
           },
           {
             id: 2,
@@ -428,8 +428,9 @@ function normalizeChartGroup(raw: Record<string, unknown> | undefined): ChartGro
     queryLinks,
     aggregationMethods,
     aggregationOtherText: typeof r.aggregationOtherText === 'string' ? r.aggregationOtherText : '',
+    // 分析能力 is single-select; older saves may hold multiple, keep only the first.
     capabilities: Array.isArray(r.capabilities)
-      ? (r.capabilities as ChartCapability[]).filter((c) => VALID_CAPABILITIES.includes(c))
+      ? (r.capabilities as ChartCapability[]).filter((c) => VALID_CAPABILITIES.includes(c)).slice(0, 1)
       : ['basic'],
   };
 }
