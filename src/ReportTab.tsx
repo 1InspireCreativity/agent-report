@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Undo2, Redo2 } from 'lucide-react';
+import { Undo2, Redo2, Folder } from 'lucide-react';
 import type { ReportState } from './types';
 import { buildReportPayload, CYCLE_OPTIONS, CHART_TYPE_OPTIONS } from './utils';
 import { submitReportConfig } from './api';
@@ -127,154 +127,141 @@ export default function ReportTab({ state, setState, toast, onSave, onUndo, onRe
         </div>
       </div>
 
-      {/* Existing content, unchanged */}
+      {/* Editor Content */}
       <div className="flex-1 overflow-y-auto p-6">
-    <div className="tab-panel active">
-      <div className="page-head">
-        <div className="page-head-row">
-          <div>
-            <div className="page-head-title">报告取数配置</div>
-          </div>
-        </div>
-      </div>
+        <div className="max-w-4xl mx-auto space-y-6 pb-20">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-visible">
+            {/* Folder Header */}
+            <div className="bg-slate-100 border-b border-slate-200 px-5 py-4 flex items-center justify-between rounded-t-xl">
+              <div className="flex-1 flex items-center gap-3">
+                <div className="bg-indigo-200 text-indigo-800 p-1.5 rounded flex-shrink-0">
+                  <Folder className="w-5 h-5" />
+                </div>
+                <div className="flex-1 flex items-center gap-2 relative">
+                  <span className="text-sm font-medium text-slate-600 whitespace-nowrap">名称</span>
+                  <input
+                    type="text"
+                    placeholder="NAAP Weekly Report"
+                    value={state.name}
+                    onChange={(e) => update('name', e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow font-medium"
+                  />
+                </div>
+              </div>
+            </div>
 
-      {/* 报告信息 */}
-      <div className="section-label">报告信息</div>
-      <div className="card">
-        <div className="card-head">
-          <div className="card-icon-wrap" style={{ background: '#FFFBEB' }}>
-            📋
-          </div>
-          <div className="card-head-text">
-            <div className="card-head-title">基础设置</div>
-          </div>
-        </div>
-        <div className="card-body">
-          <div className="field" style={{ margin: 0, marginBottom: 16 }}>
-            <div className="field-label">
-              报告名称 <span className="req">*</span>
-            </div>
-            <input
-              type="text"
-              placeholder="NAAP Weekly Report"
-              value={state.name}
-              onChange={(e) => update('name', e.target.value)}
-            />
-          </div>
-          <div className="field" style={{ margin: 0, marginBottom: 16 }}>
-            <div className="field-label">
-              报告描述 <span className="opt">可选</span>
-            </div>
-            <textarea
-              placeholder="例：CNOB分析报告给XX周会使用"
-              value={state.description}
-              onChange={(e) => update('description', e.target.value)}
-            />
-          </div>
-          <div className="grid-2" style={{ margin: 0 }}>
-            <div className="field" style={{ margin: 0 }}>
-              <div className="field-label">
-                汇报周期 <span className="req">*</span>
+            {/* Configuration */}
+            <div className="px-5 py-4 border-b border-slate-200 bg-white grid gap-4 grid-cols-1 md:grid-cols-2">
+              <div className="md:col-span-2">
+                <label className="block text-xs font-medium text-slate-500 mb-1">报告描述 (可选)</label>
+                <textarea
+                  placeholder="例：CNOB分析报告给XX周会使用"
+                  value={state.description}
+                  onChange={(e) => update('description', e.target.value)}
+                  className="w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent min-h-[60px]"
+                />
               </div>
-              <select value={state.cycle} onChange={(e) => update('cycle', e.target.value as ReportState['cycle'])}>
-                <option value="">请选择…</option>
-                {CYCLE_OPTIONS.map((o) => (
-                  <option value={o.value} key={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="field" style={{ margin: 0 }}>
-              <div className="field-label">
-                图表类型 <span className="req">*</span>
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">汇报周期</label>
+                <select
+                  value={state.cycle}
+                  onChange={(e) => update('cycle', e.target.value as ReportState['cycle'])}
+                  className="w-full bg-white border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  <option value="">请选择…</option>
+                  {CYCLE_OPTIONS.map((o) => (
+                    <option value={o.value} key={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <select
-                value={state.chartType}
-                onChange={(e) => update('chartType', e.target.value as ReportState['chartType'])}
-              >
-                <option value="">请选择…</option>
-                {CHART_TYPE_OPTIONS.map((o) => (
-                  <option value={o.value} key={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="field" style={{ margin: '16px 0 0' }}>
-            <div className="field-label">
-              Template ID <span className="req">*</span> <span className="hint">支持添加多个 Template ID (键盘Enter来添加)</span>
-            </div>
-            <div className="tags-wrap">
-              {state.templateIds.map((t, i) => (
-                <span className="tag" title={t} key={i}>
-                  <span className="tag-text">{t}</span>
-                  <button className="tag-x" onClick={() => delTemplateId(i)}>
-                    ×
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">图表类型</label>
+                <select
+                  value={state.chartType}
+                  onChange={(e) => update('chartType', e.target.value as ReportState['chartType'])}
+                  className="w-full bg-white border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  <option value="">请选择…</option>
+                  {CHART_TYPE_OPTIONS.map((o) => (
+                    <option value={o.value} key={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-medium text-slate-500 mb-1">
+                  Template ID (支持添加多个，键盘Enter来添加)
+                </label>
+                <div className="flex flex-wrap gap-1.5 mb-1.5">
+                  {state.templateIds.map((t, i) => (
+                    <span key={i} className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-xs flex items-center gap-1">
+                      {t}
+                      <button onClick={() => delTemplateId(i)} className="hover:text-red-600">
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="motz7cum6ntsj6"
+                    value={templateIdDraft}
+                    onChange={(e) => setTemplateIdDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        addTemplateId();
+                        e.preventDefault();
+                      }
+                    }}
+                    className="flex-1 bg-white border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                  <button
+                    onClick={addTemplateId}
+                    className="text-slate-600 hover:text-indigo-600 bg-white border border-slate-200 hover:border-indigo-200 px-3 py-1 rounded-md text-xs font-medium transition-colors shadow-sm"
+                  >
+                    + 添加
                   </button>
-                </span>
-              ))}
-            </div>
-            <div className="tag-input-row">
-              <input
-                type="text"
-                placeholder="motz7cum6ntsj6"
-                value={templateIdDraft}
-                onChange={(e) => setTemplateIdDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    addTemplateId();
-                    e.preventDefault();
-                  }
-                }}
-              />
-              <button className="btn btn-secondary btn-xs" onClick={addTemplateId}>
-                + 添加
-              </button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Submission History */}
-      <div className="section-label" style={{ marginTop: 20 }}>
-        提交记录
-      </div>
-      <SubmitHistoryPanel
-        records={submitHistory}
-        onCopy={(json) => {
-          navigator.clipboard.writeText(json).then(() => toast('✅ 已复制到剪贴板'));
-        }}
-        onDelete={(id) => {
-          setSubmitHistory(deleteSubmissionRecord(REPORT_SUBMIT_HISTORY_KEY, id));
-          toast('✅ 已删除该提交记录');
-        }}
-        onClear={() => {
-          if (!confirm('确认清空全部提交记录？此操作不可撤销。')) return;
-          setSubmitHistory(clearSubmissionHistory(REPORT_SUBMIT_HISTORY_KEY));
-          toast('✅ 已清空提交记录');
-        }}
-      />
+          <SubmitHistoryPanel
+            records={submitHistory}
+            onCopy={(json) => {
+              navigator.clipboard.writeText(json).then(() => toast('✅ 已复制到剪贴板'));
+            }}
+            onDelete={(id) => {
+              setSubmitHistory(deleteSubmissionRecord(REPORT_SUBMIT_HISTORY_KEY, id));
+              toast('✅ 已删除该提交记录');
+            }}
+            onClear={() => {
+              if (!confirm('确认清空全部提交记录？此操作不可撤销。')) return;
+              setSubmitHistory(clearSubmissionHistory(REPORT_SUBMIT_HISTORY_KEY));
+              toast('✅ 已清空提交记录');
+            }}
+          />
 
-      <div className="footer-bar" style={{ border: 'none', paddingTop: 16 }}>
-        <button className="btn btn-ghost btn-sm" onClick={reset}>
-          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-            <path d="M3 12a9 9 0 109-9M3 3v5h5"></path>
-          </svg>
-          重置
-        </button>
-        <button className="btn btn-success" onClick={submit} disabled={submitting}>
-          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
-            <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
-          </svg>
-          {submitting ? '提交中…' : '提交报告取数配置给Agent'}
-        </button>
-        <div className="autosave">
-          <div className="autosave-dot"></div>自动保存中
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              onClick={reset}
+              className="text-slate-600 hover:text-slate-800 bg-white border border-slate-300 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              重置
+            </button>
+            <button
+              onClick={submit}
+              disabled={submitting}
+              className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-5 py-2 rounded-md shadow-sm font-medium transition-all text-sm"
+            >
+              {submitting ? '提交中…' : '提交报告取数配置给Agent'}
+            </button>
+          </div>
         </div>
-      </div>
-    </div>
       </div>
     </div>
   );

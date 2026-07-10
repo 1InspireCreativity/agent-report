@@ -36,7 +36,7 @@ export const STORYLINE_TYPE_OPTIONS: { value: StorylineDataType; label: string }
 
 // Matches backend "group" values (Q/M/W are the recognized composable groups;
 // 其他/无需拼数处理 mark a chart that stands alone / needs no composing).
-export const AGGREGATION_OPTIONS = ['Q', 'M', 'W', '无需拼数处理', '其他'];
+export const AGGREGATION_OPTIONS = ['Q', 'M', 'W', '其他'];
 
 /** Parses report_id / dataset_id / query_id out of a pasted BI Portal report link. */
 export function parseQueryLink(link: string): { reportId: string; datasetId: string; queryId: string } {

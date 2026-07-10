@@ -35,11 +35,11 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
   const [showAnalysis, setShowAnalysis] = useState<Record<number, boolean>>({});
   const [showFieldList, setShowFieldList] = useState<Record<number, boolean>>({});
 
-  // Hidden by default; once data already exists (loaded from a saved folder) or the
-  // user explicitly answers 是, the section stays visible.
-  const isAggregationShown = (g: ChartGroup) => showAggregation[g.id] ?? g.aggregationMethods.length > 0;
-  const isAnalysisShown = (g: ChartGroup) => showAnalysis[g.id] ?? g.capabilities.length > 0;
-  const isFieldListShown = (g: ChartGroup) => showFieldList[g.id] ?? g.fieldList.length > 0;
+  // Hidden by default until the user explicitly checks the box, regardless of
+  // whether the chart already has data for it.
+  const isAggregationShown = (g: ChartGroup) => showAggregation[g.id] ?? false;
+  const isAnalysisShown = (g: ChartGroup) => showAnalysis[g.id] ?? false;
+  const isFieldListShown = (g: ChartGroup) => showFieldList[g.id] ?? false;
 
   const update = <K extends keyof StorylineState>(key: K, value: StorylineState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }));
