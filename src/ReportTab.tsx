@@ -138,7 +138,7 @@ export default function ReportTab({ state, setState, toast, onSave, onUndo, onRe
                   <Folder className="w-5 h-5" />
                 </div>
                 <div className="flex-1 flex items-center gap-2 relative">
-                  <span className="text-sm font-medium text-slate-600 whitespace-nowrap">名称</span>
+                  <span className="text-sm font-medium text-slate-600 whitespace-nowrap">报告名称</span>
                   <input
                     type="text"
                     placeholder="NAAP Weekly Report"

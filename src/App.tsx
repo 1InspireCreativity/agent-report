@@ -436,16 +436,25 @@ function App() {
               refreshToken={reportRefresh}
             />
             <div style={{ flex: 1, minWidth: 0, alignSelf: 'stretch' }}>
-              <ReportTab
-                state={report}
-                setState={setReport}
-                toast={toast}
-                onSave={saveReportFolder}
-                onUndo={undoReport}
-                onRedo={redoReport}
-                canUndo={canUndoReport}
-                canRedo={canRedoReport}
-              />
+              {reportActiveId ? (
+                <ReportTab
+                  state={report}
+                  setState={setReport}
+                  toast={toast}
+                  onSave={saveReportFolder}
+                  onUndo={undoReport}
+                  onRedo={redoReport}
+                  canUndo={canUndoReport}
+                  canRedo={canRedoReport}
+                />
+              ) : (
+                <div className="flex-1 h-full flex items-center justify-center text-slate-400 bg-slate-50">
+                  <div className="text-center">
+                    <Folder className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                    <p>请从左侧选择一个文件夹，或新建一个。</p>
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}
