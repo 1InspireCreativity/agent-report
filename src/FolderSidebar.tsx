@@ -83,7 +83,7 @@ export default function FolderSidebar<T>({
   onActiveIdChange: setActiveId,
   refreshToken,
   listTemplates,
-  showTemplateCatalog = true,
+  showTemplateCatalog = false,
 }: Props<T>) {
   const [collapsed, setCollapsed] = useState(false);
   const [folders, setFolders] = useState<SavedFolder<T>[]>([]);

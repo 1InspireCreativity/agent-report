@@ -15,7 +15,7 @@ import {
   todayYYYYMMDD,
   upsertFolder,
 } from './utils';
-import type { ReportState, StorylineDataType, StorylineState } from './types';
+import type { ReportState, StorylineState } from './types';
 
 const STORAGE_KEY = 'agentReportAppState';
 
@@ -190,10 +190,18 @@ function App() {
     canUndo: canUndoStoryline,
     canRedo: canRedoStoryline,
   } = useHistory<StorylineState>(defaultStoryline);
-  const [report, setReport] = useState<ReportState>(defaultReport);
+  const {
+    value: report,
+    setValue: setReport,
+    undo: undoReport,
+    redo: redoReport,
+    canUndo: canUndoReport,
+    canRedo: canRedoReport,
+  } = useHistory<ReportState>(defaultReport);
   const [storylineActiveId, setStorylineActiveId] = useState('');
   const [reportActiveId, setReportActiveId] = useState('');
   const [storylineRefresh, setStorylineRefresh] = useState(0);
+  const [reportRefresh, setReportRefresh] = useState(0);
   const { msg, visible, toast } = useToast();
 
   const saveStorylineFolder = () => {
@@ -223,24 +231,26 @@ function App() {
     }
   };
 
-  const saveReportFolder = (visibility: StorylineDataType) => {
+  const saveReportFolder = () => {
     const name = report.name.trim();
     if (!name) {
       toast('⚠️ 请先填写报告名称');
       return;
     }
     try {
+      const existing = loadFolders<ReportState>('reportFolders').find((f) => f.id === reportActiveId);
       const item = upsertFolder({
         storageKey: 'reportFolders',
         activeId: reportActiveId,
         parentId: null,
         name,
         owner: '',
-        visibility,
+        visibility: existing?.visibility || 'public',
         state: report,
       });
       setReportActiveId(item.id);
-      toast(`✅ 已保存为${visibility === 'public' ? ' Public' : ' Personal'} 文件夹：` + name);
+      setReportRefresh((v) => v + 1);
+      toast('✅ 已保存：' + name);
     } catch (e) {
       toast('⚠️ 保存失败：' + (e instanceof Error ? e.message : String(e)));
     }
@@ -289,6 +299,26 @@ function App() {
       // ignore quota errors
     }
   }, [storyline, storylineActiveId]);
+
+  // Live-sync the active report folder the same way, without pressing Save.
+  useEffect(() => {
+    if (!reportActiveId) return;
+    try {
+      const arr = loadFolders<ReportState>('reportFolders');
+      const idx = arr.findIndex((f) => f.id === reportActiveId);
+      if (idx < 0) return;
+      arr[idx] = {
+        ...arr[idx],
+        name: report.name.trim() || arr[idx].name,
+        state: report,
+        updated_at: new Date().toLocaleString(),
+      };
+      saveFolders('reportFolders', arr);
+      setReportRefresh((v) => v + 1);
+    } catch {
+      // ignore quota errors
+    }
+  }, [report, reportActiveId]);
 
   const handleExport = () => {
     const payload = activeTab === 'report' ? report : storyline;
@@ -361,7 +391,6 @@ function App() {
               onActiveIdChange={setStorylineActiveId}
               refreshToken={storylineRefresh}
               listTemplates={(s) => s.templateGroups.map((tg) => tg.businessScene || tg.templateId || '(未命名 Template)')}
-              showTemplateCatalog={false}
             />
             <div style={{ flex: 1, minWidth: 0, alignSelf: 'stretch' }}>
               {storylineActiveId ? (
@@ -404,9 +433,19 @@ function App() {
               seed={REPORT_FOLDER_SEED}
               activeId={reportActiveId}
               onActiveIdChange={setReportActiveId}
+              refreshToken={reportRefresh}
             />
-            <div className="page" style={{ margin: 0, flex: 1 }}>
-              <ReportTab state={report} setState={setReport} toast={toast} onSave={saveReportFolder} />
+            <div style={{ flex: 1, minWidth: 0, alignSelf: 'stretch' }}>
+              <ReportTab
+                state={report}
+                setState={setReport}
+                toast={toast}
+                onSave={saveReportFolder}
+                onUndo={undoReport}
+                onRedo={redoReport}
+                canUndo={canUndoReport}
+                canRedo={canRedoReport}
+              />
             </div>
           </>
         )}

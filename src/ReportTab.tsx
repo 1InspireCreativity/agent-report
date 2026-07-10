@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { ReportState, StorylineDataType } from './types';
+import { Undo2, Redo2 } from 'lucide-react';
+import type { ReportState } from './types';
 import { buildReportPayload, CYCLE_OPTIONS, CHART_TYPE_OPTIONS } from './utils';
 import { submitReportConfig } from './api';
 import PayloadPanel from './PayloadPanel';
@@ -16,13 +17,24 @@ interface Props {
   state: ReportState;
   setState: React.Dispatch<React.SetStateAction<ReportState>>;
   toast: (msg: string) => void;
-  onSave: (visibility: StorylineDataType) => void;
+  onSave: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
 }
 
-export default function ReportTab({ state, setState, toast, onSave }: Props) {
+export default function ReportTab({ state, setState, toast, onSave, onUndo, onRedo, canUndo, canRedo }: Props) {
   const [templateIdDraft, setTemplateIdDraft] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const [submitHistory, setSubmitHistory] = useState(() => loadSubmissionHistory(REPORT_SUBMIT_HISTORY_KEY));
+
+  const handleSave = () => {
+    onSave();
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 2000);
+  };
 
   const update = <K extends keyof ReportState>(key: K, value: ReportState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }));
@@ -87,6 +99,39 @@ export default function ReportTab({ state, setState, toast, onSave }: Props) {
   const payload = buildReportPayload(state);
 
   return (
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50/50">
+      {/* Editor Toolbar */}
+      <div className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm shrink-0">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onUndo}
+            disabled={!canUndo}
+            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-600 disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
+            title="Undo"
+          >
+            <Undo2 size={18} />
+          </button>
+          <button
+            onClick={onRedo}
+            disabled={!canRedo}
+            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-600 disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
+            title="Redo"
+          >
+            <Redo2 size={18} />
+          </button>
+        </div>
+        <div>
+          <button
+            onClick={handleSave}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-1.5 rounded-md shadow-sm font-medium transition-all text-sm w-24 flex justify-center"
+          >
+            {isSaved ? 'Saved!' : 'Save'}
+          </button>
+        </div>
+      </div>
+
+      {/* Existing content, unchanged */}
+      <div className="flex-1 overflow-y-auto p-6">
     <div className="tab-panel active">
       <div className="page-head">
         <div className="page-head-row">
@@ -190,22 +235,6 @@ export default function ReportTab({ state, setState, toast, onSave }: Props) {
               </button>
             </div>
           </div>
-          <div className="footer-bar" style={{ padding: '14px 0 0', marginTop: 14 }}>
-            <button className="btn btn-secondary btn-sm" onClick={() => onSave('public')}>
-              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="9"></circle>
-                <path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"></path>
-              </svg>
-              存为 Public
-            </button>
-            <button className="btn btn-secondary btn-sm" onClick={() => onSave('personal')}>
-              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <rect x="5" y="11" width="14" height="9" rx="2"></rect>
-                <path d="M8 11V7a4 4 0 018 0v4"></path>
-              </svg>
-              存为 Personal
-            </button>
-          </div>
         </div>
       </div>
 
@@ -256,6 +285,8 @@ export default function ReportTab({ state, setState, toast, onSave }: Props) {
         <div className="autosave">
           <div className="autosave-dot"></div>自动保存中
         </div>
+      </div>
+    </div>
       </div>
     </div>
   );
