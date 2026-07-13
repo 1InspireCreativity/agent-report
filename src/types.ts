@@ -23,11 +23,6 @@ export interface TemplateGroup {
   chartGroups: ChartGroup[];
 }
 
-/** One folder-level filter row, applied as a WHERE condition to every query in the folder. */
-export interface GlobalFilter {
-  field: string; // Group / Team Name
-  value: string;
-}
 
 export type ReportCycle = '' | 'W' | '2W' | 'M';
 export type ChartType = '' | 'wuhuaro' | 'fensi' | 'maomaochong' | 'bar';
@@ -39,7 +34,7 @@ export interface StorylineState {
   regions: string[];
   timeStart: string; // 时间周期 start date, YYYY-MM-DD
   timeEnd: string; // 时间周期 end date, YYYY-MM-DD
-  filters: GlobalFilter[]; // folder-level WHERE filters shared by every query
+  filters: string[]; // folder-level filter fields (Group / Team Name), applied to every query
   templateGroups: TemplateGroup[];
 }
 

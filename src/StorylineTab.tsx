@@ -76,12 +76,12 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
   const setTemplateAvailable = (tgId: number, value: boolean) => updateTemplateGroup(tgId, (tg) => ({ ...tg, available: value }));
 
   const addFilter = () => {
-    setState((prev) => ({ ...prev, filters: [...prev.filters, { field: FILTER_FIELD_OPTIONS[0], value: '' }] }));
+    setState((prev) => ({ ...prev, filters: [...prev.filters, FILTER_FIELD_OPTIONS[0]] }));
   };
-  const setFilterAt = (idx: number, patch: Partial<{ field: string; value: string }>) => {
+  const setFilterAt = (idx: number, field: string) => {
     setState((prev) => ({
       ...prev,
-      filters: prev.filters.map((f, i) => (i === idx ? { ...f, ...patch } : f)),
+      filters: prev.filters.map((f, i) => (i === idx ? field : f)),
     }));
   };
   const delFilter = (idx: number) => {
@@ -310,16 +310,16 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                 </div>
                 {state.filters.length === 0 ? (
                   <p className="text-[11px] text-slate-400 italic pl-1">
-                    未设置全局 Filter。例：分享模板给销售时，加一条 Team Name = 客户团队，所有图表按此过滤。
+                    未设置全局 Filter。添加 Group / Team Name 作为过滤维度，folder 内所有 Query 都会应用。
                   </p>
                 ) : (
                   <div className="space-y-2">
                     {state.filters.map((f, fi) => (
                       <div key={fi} className="flex items-center gap-2 relative group">
                         <select
-                          value={f.field}
-                          onChange={(e) => setFilterAt(fi, { field: e.target.value })}
-                          className="w-40 bg-white border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                          value={f}
+                          onChange={(e) => setFilterAt(fi, e.target.value)}
+                          className="w-56 bg-white border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         >
                           {FILTER_FIELD_OPTIONS.map((o) => (
                             <option value={o} key={o}>
@@ -327,14 +327,6 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                             </option>
                           ))}
                         </select>
-                        <span className="text-xs text-slate-400">=</span>
-                        <input
-                          type="text"
-                          placeholder="过滤值，如：GBS-NA-Team1"
-                          value={f.value}
-                          onChange={(e) => setFilterAt(fi, { value: e.target.value })}
-                          className="flex-1 bg-white border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        />
                         <button
                           onClick={() => delFilter(fi)}
                           className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-1"

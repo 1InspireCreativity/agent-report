@@ -515,15 +515,15 @@ export function normalizeStoryline(
       ? [raw.region]
       : ['NAAP'];
 
+  // Back-compat: filters were briefly { field, value } rows before becoming field names.
   const filters = Array.isArray(raw.filters)
     ? (raw.filters as unknown[])
         .map((f) => {
-          const r = f as { field?: unknown; value?: unknown };
-          return {
-            field: typeof r?.field === 'string' ? r.field : FILTER_FIELD_OPTIONS[0],
-            value: typeof r?.value === 'string' ? r.value : '',
-          };
+          if (typeof f === 'string') return f;
+          const field = (f as { field?: unknown })?.field;
+          return typeof field === 'string' ? field : '';
         })
+        .filter(Boolean)
     : [];
 
   return {
