@@ -87,6 +87,7 @@ function naapRevenueVariant(name: string, chartId: string) {
         drillDimensions: [],
         type: 'public' as const,
         tags: ['Performance'],
+        available: true,
         chartGroups: [
           {
             id: 1,
@@ -120,6 +121,7 @@ const STORYLINE_FOLDER_SEED = [
           drillDimensions: [],
           type: 'public' as const,
           tags: ['Performance'],
+          available: true,
           chartGroups: [
             {
               id: 1,
@@ -162,6 +164,7 @@ const STORYLINE_FOLDER_SEED = [
           drillDimensions: [],
           type: 'public' as const,
           tags: ['Performance'],
+          available: true,
           chartGroups: [
             {
               id: 1,

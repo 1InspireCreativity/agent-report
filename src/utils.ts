@@ -61,6 +61,19 @@ export const REGION_OPTIONS = [
   'ENT',
 ];
 
+// 时间周期 dimension for the folder (Tab 1), separate from Tab 2's 汇报周期.
+export const TIME_CYCLE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'D', label: '每日（D）' },
+  { value: 'W', label: '每周（W）' },
+  { value: '2W', label: '双周（2W）' },
+  { value: 'M', label: '每月（M）' },
+  { value: 'Q', label: '每季（Q）' },
+];
+
+// Folder-level filter fields; each filter row becomes a WHERE condition on every query,
+// so a shared template can be scoped to e.g. one sales team without editing each link.
+export const FILTER_FIELD_OPTIONS = ['Group', 'Team Name'];
+
 export const CAPABILITY_OPTIONS: { value: ChartCapability; label: string }[] = [
   { value: 'basic', label: '基础画图' },
   { value: 'attribution', label: '归因 / 下钻' },
@@ -207,6 +220,8 @@ export function defaultStoryline(): StorylineState {
     date: todayYYYYMMDD(),
     background: '',
     regions: ['NAAP'],
+    timeCycle: '',
+    filters: [],
     templateGroups: [
       {
         id: 1,
@@ -215,6 +230,7 @@ export function defaultStoryline(): StorylineState {
         drillDimensions: ['NAAP Lever L1', 'Industry 4.0 Level 1'],
         type: 'public',
         tags: ['Performance', 'Advertising'],
+        available: true,
         chartGroups: [
           {
             id: 1,
@@ -243,6 +259,7 @@ export function defaultStoryline(): StorylineState {
         drillDimensions: ['NAAP Lever L1', 'Industry 4.0 Level 1'],
         type: 'personal',
         tags: [],
+        available: true,
         chartGroups: [
           {
             id: 3,
@@ -265,6 +282,8 @@ export function blankStoryline(name = ''): StorylineState {
     date: todayYYYYMMDD(),
     background: '',
     regions: [],
+    timeCycle: '',
+    filters: [],
     templateGroups: [],
   };
 }
@@ -400,6 +419,7 @@ export function emptyTemplateGroup(): TemplateGroup {
     drillDimensions: [],
     type: 'public',
     tags: [],
+    available: true,
     chartGroups: [],
   };
 }
@@ -465,6 +485,7 @@ function normalizeTemplateGroup(raw: Record<string, unknown> | undefined, legacy
         : legacyDrillDims,
     type: r.type === 'personal' || r.type === 'public' ? r.type : 'public',
     tags: normalizeTags(r.tags),
+    available: r.available !== false, // older saves lack the flag; treat them as usable
     chartGroups: chartGroupsRaw.map(normalizeChartGroup),
   };
 }
@@ -501,11 +522,24 @@ export function normalizeStoryline(
       ? [raw.region]
       : ['NAAP'];
 
+  const filters = Array.isArray(raw.filters)
+    ? (raw.filters as unknown[])
+        .map((f) => {
+          const r = f as { field?: unknown; value?: unknown };
+          return {
+            field: typeof r?.field === 'string' ? r.field : FILTER_FIELD_OPTIONS[0],
+            value: typeof r?.value === 'string' ? r.value : '',
+          };
+        })
+    : [];
+
   return {
     topic: typeof raw.topic === 'string' ? raw.topic : base.topic,
     date: typeof raw.date === 'string' && raw.date ? raw.date : base.date,
     background: typeof raw.background === 'string' ? raw.background : base.background,
     regions,
+    timeCycle: typeof raw.timeCycle === 'string' ? raw.timeCycle : '',
+    filters,
     templateGroups,
   };
 }

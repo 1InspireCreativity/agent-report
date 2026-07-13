@@ -11,6 +11,8 @@ import {
   REGION_OPTIONS,
   STORYLINE_TYPE_OPTIONS,
   TAG_OPTIONS,
+  TIME_CYCLE_OPTIONS,
+  FILTER_FIELD_OPTIONS,
 } from './utils';
 import { submitChartConfig } from './api';
 import MultiSelect from './MultiSelect';
@@ -72,6 +74,20 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
   const setTemplateId = (tgId: number, value: string) => updateTemplateGroup(tgId, (tg) => ({ ...tg, templateId: value }));
   const setBusinessScene = (tgId: number, value: string) => updateTemplateGroup(tgId, (tg) => ({ ...tg, businessScene: value }));
   const setTemplateType = (tgId: number, value: StorylineDataType) => updateTemplateGroup(tgId, (tg) => ({ ...tg, type: value }));
+  const setTemplateAvailable = (tgId: number, value: boolean) => updateTemplateGroup(tgId, (tg) => ({ ...tg, available: value }));
+
+  const addFilter = () => {
+    setState((prev) => ({ ...prev, filters: [...prev.filters, { field: FILTER_FIELD_OPTIONS[0], value: '' }] }));
+  };
+  const setFilterAt = (idx: number, patch: Partial<{ field: string; value: string }>) => {
+    setState((prev) => ({
+      ...prev,
+      filters: prev.filters.map((f, i) => (i === idx ? { ...f, ...patch } : f)),
+    }));
+  };
+  const delFilter = (idx: number) => {
+    setState((prev) => ({ ...prev, filters: prev.filters.filter((_, i) => i !== idx) }));
+  };
 
   const addDrillDimension = (tgId: number) => {
     const val = (drillDrafts[tgId] || '').trim();
@@ -251,7 +267,7 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
 
             {/* Folder Configuration */}
             <div className="px-5 py-4 border-b border-slate-200 bg-white grid gap-4 grid-cols-1 md:grid-cols-2">
-              <div className="md:col-span-2">
+              <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">数据范围 (Data Range)</label>
                 <MultiSelect
                   options={REGION_OPTIONS}
@@ -260,6 +276,73 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                   placeholder="Select data ranges..."
                   className="z-20"
                 />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">时间周期 (Time Cycle)</label>
+                <select
+                  value={state.timeCycle}
+                  onChange={(e) => update('timeCycle', e.target.value)}
+                  className="w-full bg-white border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  <option value="">请选择…</option>
+                  {TIME_CYCLE_OPTIONS.map((o) => (
+                    <option value={o.value} key={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="md:col-span-2">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium text-slate-500">
+                    Filter (全局过滤，作为 where 条件应用到 folder 内所有 Query)
+                  </label>
+                  <button
+                    onClick={addFilter}
+                    className="text-slate-600 hover:text-indigo-600 bg-white border border-slate-200 hover:border-indigo-200 px-2 py-1 rounded text-xs font-medium transition-colors flex items-center gap-1 shadow-sm"
+                  >
+                    <Plus className="w-3 h-3" />
+                    添加 Filter
+                  </button>
+                </div>
+                {state.filters.length === 0 ? (
+                  <p className="text-[11px] text-slate-400 italic pl-1">
+                    未设置全局 Filter。例：分享模板给销售时，加一条 Team Name = 客户团队，所有图表按此过滤。
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {state.filters.map((f, fi) => (
+                      <div key={fi} className="flex items-center gap-2 relative group">
+                        <select
+                          value={f.field}
+                          onChange={(e) => setFilterAt(fi, { field: e.target.value })}
+                          className="w-40 bg-white border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        >
+                          {FILTER_FIELD_OPTIONS.map((o) => (
+                            <option value={o} key={o}>
+                              {o}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="text-xs text-slate-400">=</span>
+                        <input
+                          type="text"
+                          placeholder="过滤值，如：GBS-NA-Team1"
+                          value={f.value}
+                          onChange={(e) => setFilterAt(fi, { value: e.target.value })}
+                          className="flex-1 bg-white border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        />
+                        <button
+                          onClick={() => delFilter(fi)}
+                          className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-1"
+                          title="删除 Filter"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="md:col-span-2">
                 <label className="block text-xs font-medium text-slate-500 mb-1">背景描述 (Background Description)</label>
@@ -303,6 +386,11 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                         </div>
                       </div>
                       <div className="flex items-center gap-2 pl-4">
+                        {!tg.available && (
+                          <span className="text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded whitespace-nowrap">
+                            不可用
+                          </span>
+                        )}
                         <button
                           onClick={() => addChartGroup(tg.id)}
                           className="text-slate-600 hover:text-purple-600 bg-white border border-slate-200 hover:border-purple-200 px-2.5 py-1 rounded-md text-xs font-medium transition-colors flex items-center gap-1 shadow-sm"
@@ -344,6 +432,19 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                               {o.label}
                             </option>
                           ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">是否可用 (Availability)</label>
+                        <select
+                          value={tg.available ? 'available' : 'unavailable'}
+                          onChange={(e) => setTemplateAvailable(tg.id, e.target.value === 'available')}
+                          className={`w-full bg-white border rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                            tg.available ? 'border-slate-300 text-slate-700' : 'border-amber-300 text-amber-700 bg-amber-50'
+                          }`}
+                        >
+                          <option value="available">可用</option>
+                          <option value="unavailable">不可用</option>
                         </select>
                       </div>
                       <div className="sm:col-span-2">

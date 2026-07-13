@@ -19,7 +19,14 @@ export interface TemplateGroup {
   drillDimensions: string[];
   type: StorylineDataType;
   tags: string[];
+  available: boolean; // 可用/不可用 — user can park a template that is not ready yet
   chartGroups: ChartGroup[];
+}
+
+/** One folder-level filter row, applied as a WHERE condition to every query in the folder. */
+export interface GlobalFilter {
+  field: string; // Group / Team Name
+  value: string;
 }
 
 export type ReportCycle = '' | 'W' | '2W' | 'M';
@@ -30,6 +37,8 @@ export interface StorylineState {
   date: string; // YYYYMMDD, set to today on creation and refreshed on each Save
   background: string;
   regions: string[];
+  timeCycle: string; // 时间周期 dimension for the whole folder
+  filters: GlobalFilter[]; // folder-level WHERE filters shared by every query
   templateGroups: TemplateGroup[];
 }
 
