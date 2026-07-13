@@ -3,7 +3,6 @@ import { Folder as FolderIcon, Copy as CopyIcon } from 'lucide-react';
 import type { SavedFolder, SavedTemplate, StorylineDataType } from './types';
 import {
   deleteTemplate,
-  descendantIds,
   folderIconColor,
   folderPath,
   loadFolders,
@@ -178,13 +177,12 @@ export default function FolderSidebar<T>({
     toast('✅ 已载入文件夹：' + f.name);
   };
 
-  const startNew = (parentId: string | null) => {
+  const startNew = () => {
     const arr = loadFolders<T>(storageKey);
-    const siblings = arr.filter((f) => f.parentId === parentId);
-    const name = `新文件夹 ${siblings.length + 1}`;
+    const name = `新文件夹 ${arr.length + 1}`;
     const item: SavedFolder<T> = {
       id: String(Date.now()),
-      parentId,
+      parentId: null,
       name,
       owner: getOwner(state),
       visibility: 'public',
@@ -197,7 +195,6 @@ export default function FolderSidebar<T>({
     setFolders(arr);
     onLoad(item.state);
     setActiveId(item.id);
-    if (parentId) setExpandedIds((prev) => new Set(prev).add(parentId));
     toast('✅ 已新建文件夹：' + name);
   };
 
@@ -233,13 +230,12 @@ export default function FolderSidebar<T>({
 
   const deleteFolder = (f: SavedFolder<T>, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm(`确认删除文件夹「${f.name}」及其所有子文件夹？此操作不可撤销。`)) return;
+    if (!confirm(`确认删除文件夹「${f.name}」？此操作不可撤销。`)) return;
     const arr = loadFolders<T>(storageKey);
-    const toRemove = new Set([f.id, ...descendantIds(arr, f.id)]);
-    const next = arr.filter((x) => !toRemove.has(x.id));
+    const next = arr.filter((x) => x.id !== f.id);
     saveFolders(storageKey, next);
     setFolders(next);
-    if (toRemove.has(activeId)) setActiveId('');
+    if (activeId === f.id) setActiveId('');
     toast('✅ 已删除文件夹：' + f.name);
   };
 
@@ -321,12 +317,11 @@ export default function FolderSidebar<T>({
     toast('✅ 已删除模板：' + t.name);
   };
 
-  const renderFolderNode = (f: SavedFolder<T>, depth: number): React.ReactNode => {
-    const children = folders.filter((c) => c.parentId === f.id && matchesFilter(c));
-    // The active folder always shows its templates/subfolders, without needing
-    // a manual toggle click first.
+  const renderFolderNode = (f: SavedFolder<T>): React.ReactNode => {
+    // The active folder always shows its templates, without needing a manual
+    // toggle click first. Folders are a flat list — no nesting.
     const isExpanded = expandedIds.has(f.id) || f.id === activeId;
-    const indent = 8 + depth * 16;
+    const indent = 8;
 
     if (editingId === f.id) {
       return (
@@ -381,7 +376,7 @@ export default function FolderSidebar<T>({
               e.stopPropagation();
               toggleExpand(f.id);
             }}
-            title={isExpanded ? '收起子文件夹' : '展开子文件夹'}
+            title={isExpanded ? '收起模板列表' : '展开模板列表'}
           >
             <svg
               className="sl-folder-chevron"
@@ -454,14 +449,6 @@ export default function FolderSidebar<T>({
                   </span>
                 </div>
               ))}
-            {children.map((c) => renderFolderNode(c, depth + 1))}
-            <div
-              className="sl-folder-add-child"
-              style={{ paddingLeft: indent + 16 }}
-              onClick={() => startNew(f.id)}
-            >
-              + 新建子文件夹
-            </div>
           </div>
         )}
       </div>
@@ -500,7 +487,9 @@ export default function FolderSidebar<T>({
     );
   }
 
-  const topLevel = folders.filter((f) => f.parentId === null && matchesFilter(f));
+  // Flat folder list — legacy nested folders (from the removed subfolder feature)
+  // surface at the top level instead of disappearing.
+  const topLevel = folders.filter(matchesFilter);
 
   return (
     <div
@@ -532,7 +521,7 @@ export default function FolderSidebar<T>({
 
         <div className="sl-folders-head">
           <span>FOLDERS</span>
-          <button className="sl-sidebar-toggle" onClick={() => startNew(null)} title="新建文件夹">
+          <button className="sl-sidebar-toggle" onClick={startNew} title="新建文件夹">
             <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
               <path d="M12 5v14M5 12h14"></path>
             </svg>
@@ -541,7 +530,7 @@ export default function FolderSidebar<T>({
 
         <div className="sl-folder-list">
           {topLevel.length === 0 && <div className="sl-folder-empty">暂无文件夹</div>}
-          {topLevel.map((f) => renderFolderNode(f, 0))}
+          {topLevel.map((f) => renderFolderNode(f))}
         </div>
 
         {showTemplateCatalog && (

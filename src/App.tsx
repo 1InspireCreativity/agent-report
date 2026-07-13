@@ -73,38 +73,6 @@ const REPORT_FOLDER_SEED = (['W', '2W', 'M'] as const).map((cycle) => ({
   state: { ...defaultReport(), name: cycle, cycle },
 }));
 
-function naapRevenueVariant(name: string, chartId: string) {
-  return {
-    ...blankStoryline(),
-    topic: name,
-    background: `NAAP 大盘 Revenue（${name}）归因分析。`,
-    regions: ['NAAP'],
-    templateGroups: [
-      {
-        id: 1,
-        templateId: 'naap_revenue_template',
-        businessScene: `${name} Revenue`,
-        drillDimensions: [],
-        type: 'public' as const,
-        tags: ['Performance'],
-        available: true,
-        chartGroups: [
-          {
-            id: 1,
-            chartId,
-            fieldList: [],
-            queryLinks: [],
-            aggregationMethods: [],
-            aggregationOtherText: '',
-            capabilities: ['basic' as const],
-            threshold: '',
-          },
-        ],
-      },
-    ],
-  };
-}
-
 const STORYLINE_FOLDER_SEED = [
   {
     name: 'NAAP Revenue',
@@ -137,17 +105,6 @@ const STORYLINE_FOLDER_SEED = [
         },
       ],
     },
-    children: [
-      {
-        name: '202606',
-        state: naapRevenueVariant('202606', 'NAAPRev202606'),
-        children: [
-          { name: '2026WK1_20251229-20260104', state: naapRevenueVariant('2026WK1_20251229-20260104', 'NAAPRevWK1') },
-          { name: '2026WK2_20260105-20260111', state: naapRevenueVariant('2026WK2_20260105-20260111', 'NAAPRevWK2') },
-        ],
-      },
-      { name: '202607', state: naapRevenueVariant('202607', 'NAAPRev202607') },
-    ],
   },
   {
     name: 'NA YOY',
