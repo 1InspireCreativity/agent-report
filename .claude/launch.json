@@ -6,7 +6,7 @@
       "runtimeExecutable": "bash",
       "runtimeArgs": [
         "-c",
-        "PATH=/private/tmp/claude-501/-Users-bytedance-Downloads-agent-report/688ca474-22b9-4a49-9574-92ecf0ac86d1/scratchpad/node-v22.12.0-darwin-arm64/bin:$PATH npm run dev -- --port 5173"
+        "cd /Users/bytedance/Downloads/agent-report && PATH=/private/tmp/claude-501/-Users-bytedance-Downloads-agent-report/688ca474-22b9-4a49-9574-92ecf0ac86d1/scratchpad/node-v22.12.0-darwin-arm64/bin:$PATH ./node_modules/.bin/vite --port 5173"
       ],
       "port": 5173
     }

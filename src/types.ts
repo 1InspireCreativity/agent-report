@@ -10,6 +10,11 @@ export interface ChartGroup {
   aggregationMethods: string[]; // Q/M/W/无需拼数处理/其他, chart-level
   aggregationOtherText: string;
   capabilities: ChartCapability[];
+  // 是否拼数/是否分析/是否字段 checkbox state — persisted so a checked-and-saved
+  // section stays visible on return, instead of resetting to hidden every load.
+  showAggregation: boolean;
+  showAnalysis: boolean;
+  showFieldList: boolean;
 }
 
 export interface TemplateGroup {

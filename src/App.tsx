@@ -19,6 +19,15 @@ import type { ReportState, StorylineState } from './types';
 
 const STORAGE_KEY = 'agentReportAppState';
 
+// One-time cleanup: the demo folders seeded via STORYLINE_FOLDER_SEED/REPORT_FOLDER_SEED
+// (below) always get id `seed-N`; real user folders use Date.now(). The user has since
+// built their own reference folders, so strip any leftover demo ones from both tabs.
+for (const key of ['storylineFolders', 'reportFolders']) {
+  const arr = loadFolders(key);
+  const cleaned = arr.filter((f) => !f.id.startsWith('seed-'));
+  if (cleaned.length !== arr.length) saveFolders(key, cleaned);
+}
+
 type TabId = 'storyline' | 'report';
 
 interface HistoryState<T> {
@@ -99,7 +108,9 @@ const STORYLINE_FOLDER_SEED = [
               aggregationMethods: [],
               aggregationOtherText: '',
               capabilities: ['basic' as const],
-              threshold: '',
+              showAggregation: false,
+              showAnalysis: false,
+              showFieldList: false,
             },
           ],
         },
@@ -131,7 +142,9 @@ const STORYLINE_FOLDER_SEED = [
               aggregationMethods: [],
               aggregationOtherText: '',
               capabilities: ['basic' as const],
-              threshold: '',
+              showAggregation: false,
+              showAnalysis: false,
+              showFieldList: false,
             },
           ],
         },

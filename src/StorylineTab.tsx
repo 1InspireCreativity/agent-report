@@ -40,16 +40,7 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
   const [drillDrafts, setDrillDrafts] = useState<Record<number, string>>({});
   const [isSaved, setIsSaved] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [showAggregation, setShowAggregation] = useState<Record<number, boolean>>({});
-  const [showAnalysis, setShowAnalysis] = useState<Record<number, boolean>>({});
-  const [showFieldList, setShowFieldList] = useState<Record<number, boolean>>({});
   const [submitHistory, setSubmitHistory] = useState(() => loadSubmissionHistory(STORYLINE_SUBMIT_HISTORY_KEY));
-
-  // Hidden by default until the user explicitly checks the box, regardless of
-  // whether the chart already has data for it.
-  const isAggregationShown = (g: ChartGroup) => showAggregation[g.id] ?? false;
-  const isAnalysisShown = (g: ChartGroup) => showAnalysis[g.id] ?? false;
-  const isFieldListShown = (g: ChartGroup) => showFieldList[g.id] ?? false;
 
   const update = <K extends keyof StorylineState>(key: K, value: StorylineState[K]) => {
     setState((prev) => ({ ...prev, [key]: value }));
@@ -569,13 +560,13 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                                 <label className="flex items-center gap-2 cursor-pointer w-fit">
                                   <input
                                     type="checkbox"
-                                    checked={isAggregationShown(g)}
-                                    onChange={() => setShowAggregation((prev) => ({ ...prev, [g.id]: !isAggregationShown(g) }))}
+                                    checked={g.showAggregation}
+                                    onChange={() => updateChartGroup(tg.id, g.id, (cg) => ({ ...cg, showAggregation: !cg.showAggregation }))}
                                     className="text-sky-600 focus:ring-sky-500 border-slate-300 rounded"
                                   />
                                   <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded">是否拼数</span>
                                 </label>
-                                {isAggregationShown(g) && (
+                                {g.showAggregation && (
                                   <div className="mt-2">
                                     <label className="block text-[11px] font-medium text-slate-500 mb-1">拼数方式 (Data Aggregation)</label>
                                     <div className="space-y-2">
@@ -603,13 +594,13 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                                 <label className="flex items-center gap-2 cursor-pointer w-fit">
                                   <input
                                     type="checkbox"
-                                    checked={isAnalysisShown(g)}
-                                    onChange={() => setShowAnalysis((prev) => ({ ...prev, [g.id]: !isAnalysisShown(g) }))}
+                                    checked={g.showAnalysis}
+                                    onChange={() => updateChartGroup(tg.id, g.id, (cg) => ({ ...cg, showAnalysis: !cg.showAnalysis }))}
                                     className="text-sky-600 focus:ring-sky-500 border-slate-300 rounded"
                                   />
                                   <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded">是否分析</span>
                                 </label>
-                                {isAnalysisShown(g) && (
+                                {g.showAnalysis && (
                                   <div className="mt-2">
                                     <div className="flex flex-wrap gap-4">
                                       {CAPABILITY_OPTIONS.map((o) => (
@@ -641,13 +632,13 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
                                 <label className="flex items-center gap-2 cursor-pointer w-fit">
                                   <input
                                     type="checkbox"
-                                    checked={isFieldListShown(g)}
-                                    onChange={() => setShowFieldList((prev) => ({ ...prev, [g.id]: !isFieldListShown(g) }))}
+                                    checked={g.showFieldList}
+                                    onChange={() => updateChartGroup(tg.id, g.id, (cg) => ({ ...cg, showFieldList: !cg.showFieldList }))}
                                     className="text-sky-600 focus:ring-sky-500 border-slate-300 rounded"
                                   />
                                   <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded">是否字段</span>
                                 </label>
-                                {isFieldListShown(g) && (
+                                {g.showFieldList && (
                                   <div className="mt-2">
                                     <label className="block text-[11px] font-medium text-slate-500 mb-1">指标字段 (field_list)</label>
                                     <div className="flex flex-wrap gap-1.5 mb-1.5">

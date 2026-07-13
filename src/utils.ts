@@ -232,6 +232,9 @@ export function defaultStoryline(): StorylineState {
             aggregationMethods: ['Q'],
             aggregationOtherText: '',
             capabilities: ['basic'],
+            showAggregation: true,
+            showAnalysis: true,
+            showFieldList: true,
           },
           {
             id: 2,
@@ -241,6 +244,9 @@ export function defaultStoryline(): StorylineState {
             aggregationMethods: [],
             aggregationOtherText: '',
             capabilities: ['basic'],
+            showAggregation: false,
+            showAnalysis: false,
+            showFieldList: false,
           },
         ],
       },
@@ -261,6 +267,9 @@ export function defaultStoryline(): StorylineState {
             aggregationMethods: ['Q'],
             aggregationOtherText: '',
             capabilities: ['basic'],
+            showAggregation: true,
+            showAnalysis: true,
+            showFieldList: false,
           },
         ],
       },
@@ -401,6 +410,9 @@ export function emptyChartGroup(): ChartGroup {
     aggregationMethods: [],
     aggregationOtherText: '',
     capabilities: ['basic'],
+    showAggregation: false,
+    showAnalysis: false,
+    showFieldList: false,
   };
 }
 
@@ -445,6 +457,12 @@ function normalizeChartGroup(raw: Record<string, unknown> | undefined): ChartGro
     capabilities: Array.isArray(r.capabilities)
       ? (r.capabilities as ChartCapability[]).filter((c) => VALID_CAPABILITIES.includes(c)).slice(0, 1)
       : ['basic'],
+    // Back-compat: older saves predate these flags. Fall back to "was this section
+    // ever filled in" so existing data does not appear to vanish behind a hidden toggle.
+    showAggregation: typeof r.showAggregation === 'boolean' ? r.showAggregation : aggregationMethods.length > 0,
+    showAnalysis: typeof r.showAnalysis === 'boolean' ? r.showAnalysis : Array.isArray(r.capabilities) && r.capabilities.length > 0,
+    showFieldList:
+      typeof r.showFieldList === 'boolean' ? r.showFieldList : Array.isArray(r.fieldList) && r.fieldList.length > 0,
   };
 }
 
