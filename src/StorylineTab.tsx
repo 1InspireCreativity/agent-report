@@ -11,7 +11,6 @@ import {
   REGION_OPTIONS,
   STORYLINE_TYPE_OPTIONS,
   TAG_OPTIONS,
-  TIME_CYCLE_OPTIONS,
   FILTER_FIELD_OPTIONS,
 } from './utils';
 import { submitChartConfig } from './api';
@@ -279,18 +278,22 @@ export default function StorylineTab({ state, setState, toast, onSave, onUndo, o
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">时间周期 (Time Cycle)</label>
-                <select
-                  value={state.timeCycle}
-                  onChange={(e) => update('timeCycle', e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                >
-                  <option value="">请选择…</option>
-                  {TIME_CYCLE_OPTIONS.map((o) => (
-                    <option value={o.value} key={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={state.timeStart}
+                    onChange={(e) => update('timeStart', e.target.value)}
+                    className="flex-1 min-w-0 bg-white border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                  <span className="text-xs text-slate-400 shrink-0">至</span>
+                  <input
+                    type="date"
+                    value={state.timeEnd}
+                    min={state.timeStart || undefined}
+                    onChange={(e) => update('timeEnd', e.target.value)}
+                    className="flex-1 min-w-0 bg-white border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                </div>
               </div>
               <div className="md:col-span-2">
                 <div className="flex items-center justify-between mb-1">

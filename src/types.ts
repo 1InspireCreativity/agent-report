@@ -37,7 +37,8 @@ export interface StorylineState {
   date: string; // YYYYMMDD, set to today on creation and refreshed on each Save
   background: string;
   regions: string[];
-  timeCycle: string; // 时间周期 dimension for the whole folder
+  timeStart: string; // 时间周期 start date, YYYY-MM-DD
+  timeEnd: string; // 时间周期 end date, YYYY-MM-DD
   filters: GlobalFilter[]; // folder-level WHERE filters shared by every query
   templateGroups: TemplateGroup[];
 }

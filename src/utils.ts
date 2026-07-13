@@ -61,15 +61,6 @@ export const REGION_OPTIONS = [
   'ENT',
 ];
 
-// 时间周期 dimension for the folder (Tab 1), separate from Tab 2's 汇报周期.
-export const TIME_CYCLE_OPTIONS: { value: string; label: string }[] = [
-  { value: 'D', label: '每日（D）' },
-  { value: 'W', label: '每周（W）' },
-  { value: '2W', label: '双周（2W）' },
-  { value: 'M', label: '每月（M）' },
-  { value: 'Q', label: '每季（Q）' },
-];
-
 // Folder-level filter fields; each filter row becomes a WHERE condition on every query,
 // so a shared template can be scoped to e.g. one sales team without editing each link.
 export const FILTER_FIELD_OPTIONS = ['Group', 'Team Name'];
@@ -220,7 +211,8 @@ export function defaultStoryline(): StorylineState {
     date: todayYYYYMMDD(),
     background: '',
     regions: ['NAAP'],
-    timeCycle: '',
+    timeStart: '',
+    timeEnd: '',
     filters: [],
     templateGroups: [
       {
@@ -282,7 +274,8 @@ export function blankStoryline(name = ''): StorylineState {
     date: todayYYYYMMDD(),
     background: '',
     regions: [],
-    timeCycle: '',
+    timeStart: '',
+    timeEnd: '',
     filters: [],
     templateGroups: [],
   };
@@ -538,7 +531,8 @@ export function normalizeStoryline(
     date: typeof raw.date === 'string' && raw.date ? raw.date : base.date,
     background: typeof raw.background === 'string' ? raw.background : base.background,
     regions,
-    timeCycle: typeof raw.timeCycle === 'string' ? raw.timeCycle : '',
+    timeStart: typeof raw.timeStart === 'string' ? raw.timeStart : '',
+    timeEnd: typeof raw.timeEnd === 'string' ? raw.timeEnd : '',
     filters,
     templateGroups,
   };
